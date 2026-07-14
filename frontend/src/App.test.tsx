@@ -27,15 +27,30 @@ describe("App", () => {
     expect(screen.getAllByText("Valve status").length).toBeGreaterThan(0);
     expect(screen.getByText("Workspace health")).toBeInTheDocument();
     expect(screen.getByText("Production preview")).toBeInTheDocument();
-    expect(screen.getByText("Responsive readiness")).toBeInTheDocument();
-    expect(screen.getByText("Quality assurance console")).toBeInTheDocument();
-    expect(screen.getByText("Keyboard, states and export checks")).toBeInTheDocument();
     expect(screen.getByLabelText("Project selector")).toBeInTheDocument();
     const navigation = screen.getByRole("navigation", { name: "Main navigation" });
     expect(navigation).toHaveTextContent("Settings");
     expect(navigation.compareDocumentPosition(screen.getByText("Workspace health")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getAllByText("Smart Irrigation").length).toBeGreaterThan(0);
     expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
+  });
+
+  it("uses the Gemini dashboard shell and cockpit header architecture", async () => {
+    render(<App />);
+
+    const shell = await screen.findByTestId("app-shell");
+    expect(shell).toHaveClass("app-shell", "dashboard-shell");
+    expect(screen.getByTestId("cockpit-header")).toHaveClass("cockpit-header");
+    expect(screen.getByText("Redronix Cloud")).toBeInTheDocument();
+    expect(screen.queryByText("Rectronx Cloud")).not.toBeInTheDocument();
+    expect(screen.queryByText("Responsive readiness")).not.toBeInTheDocument();
+    expect(screen.queryByText("Quality assurance console")).not.toBeInTheDocument();
+
+    expect(screen.getByTestId("dashboard-action-bar")).toBeInTheDocument();
+    expect(screen.getByText("Virtual IoT Simulator Connected")).toBeInTheDocument();
+    expect(screen.getByText("Water, pressure, flow models synced with scheduler output")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Edit labels/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Publish Changes/i })).toBeInTheDocument();
   });
 
   it("toggles the demo solenoid switch immediately on the dashboard", async () => {

@@ -75,14 +75,14 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
   return (
     <section className="overview-page">
       <DashboardHero dashboard={dashboard} devices={devices} latest={latest} realtimeLabel={connected ? "Realtime connected" : "Realtime offline"} />
-      <div className="dashboard-toolbar">
+      <div className="dashboard-toolbar" data-testid="dashboard-action-bar">
         <div className={connected ? "command-status online" : "command-status"}>
           <Activity size={16} />
           <span><strong>{connected ? "Realtime connected" : "Realtime offline"}</strong><small>Live device stream</small></span>
         </div>
         <div className="command-actions">
-          <button className={edit ? "action-button active" : "action-button"} onClick={() => setEdit(!edit)}><Edit3 size={16} />{edit ? "Editing enabled" : "Edit dashboard"}</button>
-          <button className="primary action-button" onClick={save}><Save size={16} />Save changes</button>
+          <button className={edit ? "action-button active" : "action-button"} onClick={() => setEdit(!edit)}><Edit3 size={16} />{edit ? "Editing enabled" : "Edit labels"}</button>
+          <button className="primary action-button" onClick={save}><Save size={16} />Publish Changes</button>
         </div>
       </div>
       <div className={edit ? "layout edit-mode" : "layout"}>
@@ -188,15 +188,15 @@ export function LocalDashboardPage({
   return (
     <section className="overview-page">
       <DashboardHero dashboard={dashboard} devices={devices} latest={latest} realtimeLabel="Live board demo active" />
-      <div className="dashboard-toolbar">
+      <div className="dashboard-toolbar" data-testid="dashboard-action-bar">
         <div className="command-status online">
           <Activity size={16} />
-          <span><strong>Live board demo active</strong><small>MQTT/HTTP telemetry with local simulator fallback</small></span>
+          <span><strong>Virtual IoT Simulator Connected</strong><small>Water, pressure, flow models synced with scheduler output</small></span>
         </div>
         <div className="command-actions">
           <button className="action-button" onClick={simulateTelemetry}><Play size={16} />Simulate data</button>
-          <button className={edit ? "action-button active" : "action-button"} onClick={() => setEdit(!edit)}><Edit3 size={16} />{edit ? "Editing enabled" : "Edit dashboard"}</button>
-          <button className="primary action-button" onClick={() => setEdit(false)}><Save size={16} />Save changes</button>
+          <button className={edit ? "action-button active" : "action-button"} onClick={() => setEdit(!edit)}><Edit3 size={16} />{edit ? "Editing enabled" : "Edit labels"}</button>
+          <button className="primary action-button" onClick={() => setEdit(false)}><Save size={16} />Publish Changes</button>
         </div>
       </div>
       <div className={edit ? "layout edit-mode" : "layout"}>

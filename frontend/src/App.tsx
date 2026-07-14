@@ -1,4 +1,4 @@
-import { ArrowRight, Bell, CheckCircle2, ClipboardCheck, Copy, Cpu, Database, Gauge, LayoutDashboard, Lock, MapPinned, PlugZap, Plus, RadioTower, Settings, Smartphone, TerminalSquare, Workflow } from "lucide-react";
+import { ArrowRight, Bell, CheckCircle2, ClipboardCheck, Copy, Cpu, Database, Gauge, LayoutDashboard, Lock, MapPinned, PlugZap, Plus, RadioTower, Settings, TerminalSquare, Workflow } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { LocalDashboardPage } from "./pages/DashboardPage";
 import { DevicesPage } from "./pages/DevicesPage";
@@ -80,29 +80,33 @@ export function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={view === "dashboard" ? "app-shell dashboard-shell" : "app-shell"} data-testid="app-shell">
       <aside className="sidebar">
-        <div className="brand"><Smartphone size={22} /><div><strong>Spark IoT</strong><span>Rectronx Cloud</span></div></div>
+        <div className="brand"><span className="brand-icon"><Cpu size={22} /></span><div><strong>Spark IoT</strong><span>Redronix Cloud</span></div></div>
         <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
         <div className="workspace-card">
           <span className="section-kicker">Workspace health</span>
           <div><CheckCircle2 size={16} /><strong>Demo realtime active</strong></div>
           <small>3 projects · 3 devices · 30-day data window</small>
         </div>
-        <div className="responsive-card">
-          <span className="section-kicker">Responsive readiness</span>
-          <strong>Mobile, tablet and desktop</strong>
-          <small>Overflow-safe panels, tables, code and dashboard cards</small>
-        </div>
-        <div className="qa-card">
-          <span className="section-kicker">Quality assurance console</span>
-          <div><ClipboardCheck size={16} /><strong>Keyboard, states and export checks</strong></div>
-          <small>Visible focus, empty states and readable production handoff surfaces</small>
-        </div>
-        <div className="plan-card"><Gauge size={18} /><strong>Starter RM25</strong><span>3 devices, 3 dashboards, 30-day GPS and camera access</span></div>
+        {view !== "dashboard" && (
+          <>
+            <div className="responsive-card">
+              <span className="section-kicker">Responsive readiness</span>
+              <strong>Mobile, tablet and desktop</strong>
+              <small>Overflow-safe panels, tables, code and dashboard cards</small>
+            </div>
+            <div className="qa-card">
+              <span className="section-kicker">Quality assurance console</span>
+              <div><ClipboardCheck size={16} /><strong>Keyboard, states and export checks</strong></div>
+              <small>Visible focus, empty states and readable production handoff surfaces</small>
+            </div>
+            <div className="plan-card"><Gauge size={18} /><strong>Starter RM25</strong><span>3 devices, 3 dashboards, 30-day GPS and camera access</span></div>
+          </>
+        )}
       </aside>
       <main className={view === "dashboard" ? "dashboard-main" : undefined}>
-        <header className="topbar">
+        <header className={view === "dashboard" ? "topbar cockpit-header" : "topbar"} data-testid="cockpit-header">
           <div className="cockpit-title-block">
             <div className="cockpit-kicker-row"><span className="eyebrow">{view === "dashboard" ? "Live control cockpit" : "Control Center"}</span>{view === "dashboard" && <span className="cockpit-badge">Premium industrial widgets</span>}</div>
             <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
