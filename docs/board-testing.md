@@ -84,6 +84,8 @@ In Spark IoT:
    - `BROKER_HOST`
 6. Upload to the board.
 
+The generated sketch includes command acknowledgement support for boolean virtual pins. When a dashboard switch sends a command, the board echoes the updated telemetry value and publishes an ACK packet back to Spark IoT so the `Live Test` command monitor can prove the full loop.
+
 ## 5. Seeded demo devices
 
 ### ESP32 Smart Irrigation

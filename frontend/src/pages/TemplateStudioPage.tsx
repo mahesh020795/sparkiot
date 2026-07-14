@@ -561,8 +561,9 @@ function buildArduinoSketch(template: DeviceTemplate, device?: Device) {
   const tenantId = extractTenantId(device?.telemetry_topic) ?? "demo-tenant";
   const commandRoot = `spark/v1/${tenantId}/${deviceId}/command/#`;
   const topicConstants = template.datastreams.map((stream) => `const char* TOPIC_TELEMETRY_${stream.pin} = "spark/v1/${tenantId}/${deviceId}/telemetry/${stream.pin}";`).join("\n");
+  const ackConstants = template.datastreams.filter((stream) => stream.dataType === "boolean").map((stream) => `const char* TOPIC_ACK_${stream.pin} = "spark/v1/${tenantId}/${deviceId}/ack/${stream.pin}";`).join("\n");
   const demoPublishes = template.datastreams.map((stream) => demoPublishLine(stream)).join("\n");
-  const commandCases = template.datastreams.filter((stream) => stream.dataType === "boolean").map((stream) => `  if (topicText.endsWith("/${stream.pin}")) {\n    bool state = payloadText == "1" || payloadText == "true" || payloadText.indexOf("\\\"value\\\":true") >= 0;\n    digitalWrite(LED_BUILTIN, state ? LOW : HIGH);\n    Serial.print("Command ${stream.pin} -> ");\n    Serial.println(state ? "ON" : "OFF");\n  }`).join("\n\n");
+  const commandCases = template.datastreams.filter((stream) => stream.dataType === "boolean").map((stream) => `  if (topicText.endsWith("/${stream.pin}")) {\n    bool state = payloadText == "1" || payloadText == "true" || payloadText.indexOf("\\\"value\\\":true") >= 0;\n    digitalWrite(LED_BUILTIN, state ? LOW : HIGH);\n    Serial.print("Command ${stream.pin} -> ");\n    Serial.println(state ? "ON" : "OFF");\n    publishJson(TOPIC_TELEMETRY_${stream.pin}, state ? "true" : "false", "");\n    publishAck(TOPIC_ACK_${stream.pin}, state, "${stream.pin} command applied");\n  }`).join("\n\n");
 
   return `${wifiInclude}
 #include <PubSubClient.h>
@@ -582,6 +583,7 @@ const char* SPARK_DEVICE_TOKEN = "${token}";
 const char* commandTopic = "${commandRoot}";
 
 ${topicConstants}
+${ackConstants ? `\n${ackConstants}` : ""}
 
 WiFiClient wifiClient;
 PubSubClient mqtt(wifiClient);
@@ -610,6 +612,16 @@ void publishJson(const char* topic, const char* valueJson, const char* unit) {
   }
   mqtt.publish(topic, payload);
   Serial.print("Published ");
+  Serial.print(topic);
+  Serial.print(" -> ");
+  Serial.println(payload);
+}
+
+void publishAck(const char* topic, bool value, const char* message) {
+  char payload[180];
+  snprintf(payload, sizeof(payload), "{\\"status\\":\\"ok\\",\\"value\\":%s,\\"message\\":\\"%s\\"}", value ? "true" : "false", message);
+  mqtt.publish(topic, payload);
+  Serial.print("ACK ");
   Serial.print(topic);
   Serial.print(" -> ");
   Serial.println(payload);

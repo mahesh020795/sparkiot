@@ -141,6 +141,9 @@ describe("App", () => {
     expect(screen.getByText(/SPARK_DEVICE_TOKEN = "spk_dev_irrigation_demo_9f3a"/)).toBeInTheDocument();
     expect(screen.getByText(/SPARK_DEVICE_ID = "device-irrigation"/)).toBeInTheDocument();
     expect(screen.getByText(/spark\/v1\/demo-tenant\/device-irrigation\/telemetry\/V0/)).toBeInTheDocument();
+    expect(screen.getByText(/spark\/v1\/demo-tenant\/device-irrigation\/ack\/V3/)).toBeInTheDocument();
+    expect(screen.getByText(/void publishAck\(const char\* topic, bool value, const char\* message\)/)).toBeInTheDocument();
+    expect(screen.getByText(/publishAck\(TOPIC_ACK_V3, state, "V3 command applied"\)/)).toBeInTheDocument();
     expect(screen.getByText(/subscribe\(commandTopic\)/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Templates"));
@@ -152,5 +155,6 @@ describe("App", () => {
     expect(screen.getByText(/SPARK_DEVICE_TOKEN = "spk_dev_home_demo_2c8b"/)).toBeInTheDocument();
     expect(screen.getByText(/SPARK_DEVICE_ID = "device-home"/)).toBeInTheDocument();
     expect(screen.getByText(/spark\/v1\/demo-tenant\/device-home\/telemetry\/V0/)).toBeInTheDocument();
+    expect(screen.getByText(/spark\/v1\/demo-tenant\/device-home\/ack\/V0/)).toBeInTheDocument();
   });
 });
