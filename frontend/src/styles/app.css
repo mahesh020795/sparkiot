@@ -874,6 +874,311 @@ main {
   background: #f8fafc;
 }
 
+/* Gemini cockpit match pass: dashboard uses flat header + operations deck, not the older hero-card layout. */
+.dashboard-main {
+  padding: 0;
+  background: #f4f7fb;
+}
+.dashboard-main .topbar {
+  align-items: flex-start;
+  margin: 0;
+  padding: 36px 40px 40px;
+  border-bottom: 1px solid #e8edf5;
+  background: #ffffff;
+}
+.dashboard-main .cockpit-title-block {
+  max-width: 720px;
+}
+.cockpit-kicker-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.dashboard-main .eyebrow {
+  color: #1455ff;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+.cockpit-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  color: #1455ff;
+  background: #eef5ff;
+  border: 1px solid #dbeafe;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.dashboard-main .topbar h1 {
+  margin: 0;
+  color: #071126;
+  font-size: clamp(36px, 3.6vw, 48px);
+  line-height: 0.96;
+  letter-spacing: -0.07em;
+}
+.dashboard-main .topbar p {
+  max-width: 660px;
+  margin: 14px 0 0;
+  color: #637089;
+  font-size: 21px;
+  line-height: 1.35;
+  font-weight: 500;
+}
+.cockpit-simulation-strip {
+  display: grid;
+  grid-template-columns: auto minmax(170px, 0.35fr) minmax(260px, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: min(640px, 100%);
+  margin-top: 22px;
+  padding: 11px 16px;
+  border: 1px solid #e5eaf3;
+  border-radius: 16px;
+  background: #f8fafc;
+  color: #1455ff;
+}
+.cockpit-simulation-strip strong {
+  color: #1455ff;
+  font-size: 14px;
+  line-height: 1.15;
+}
+.cockpit-simulation-strip span {
+  color: #8a95a8;
+  font-size: 15px;
+  line-height: 1.25;
+}
+.dashboard-main .top-actions {
+  flex: 1 1 720px;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 14px;
+}
+.dashboard-main .preview-status {
+  display: none;
+}
+.dashboard-main .top-actions select {
+  min-width: 200px;
+  min-height: 82px;
+  padding: 0 20px;
+  border-radius: 16px;
+  border-color: #e5eaf3;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  font-size: 18px;
+}
+.cockpit-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 14px;
+  flex: 1 1 auto;
+  max-width: 850px;
+}
+.cockpit-metrics span {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  gap: 2px 12px;
+  min-height: 82px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e8edf5;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.065);
+}
+.cockpit-metrics svg {
+  grid-row: span 2;
+  width: 44px;
+  height: 44px;
+  padding: 12px;
+  border-radius: 15px;
+  color: #2563eb;
+  background: #eef5ff;
+}
+.cockpit-metrics span:nth-child(1) svg { color: #10b981; background: #e9f8f0; }
+.cockpit-metrics span:nth-child(4) svg { color: #f59e0b; background: #fff7e6; }
+.cockpit-metrics strong {
+  align-self: end;
+  color: #071126;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.cockpit-metrics small {
+  align-self: start;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.dashboard-main .overview-page {
+  gap: 0;
+  background: #f4f7fb;
+}
+.dashboard-main .overview-hero {
+  display: none;
+}
+.dashboard-main .dashboard-toolbar {
+  margin: 0;
+  padding: 26px 40px 20px;
+  border: 0;
+  border-radius: 0;
+  background: #f4f7fb;
+  box-shadow: none;
+}
+.dashboard-main .command-status {
+  min-width: 420px;
+  min-height: 54px;
+  border-radius: 18px;
+  border-color: #bfdbfe;
+  background: #eaf3ff;
+}
+.dashboard-main .command-status svg {
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: 999px;
+  color: #10b981;
+  background: #dff7eb;
+}
+.dashboard-main .command-status strong {
+  color: #0f4fa8;
+  font-size: 15px;
+}
+.dashboard-main .command-status small {
+  color: #2563eb;
+  font-size: 12px;
+}
+.dashboard-main .command-actions {
+  margin-left: auto;
+  gap: 12px;
+}
+.dashboard-main .action-button {
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 14px;
+  border-color: #dbe5f2;
+  background: #ffffff;
+  color: #142033;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+.dashboard-main .action-button.primary {
+  min-width: 210px;
+  background: #091225;
+  border-color: #091225;
+  color: #ffffff;
+}
+.dashboard-main .layout {
+  min-height: 900px;
+  margin: 8px 40px 48px;
+  padding: 28px;
+  gap: 28px;
+  border-radius: 30px;
+  border-color: #dbe5f2;
+  background:
+    linear-gradient(rgba(37, 99, 235, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.035) 1px, transparent 1px),
+    #fbfdff;
+  background-size: 120px 120px, 120px 120px, auto;
+  box-shadow: inset 0 1px 0 #ffffff, 0 26px 70px rgba(15, 23, 42, 0.08);
+}
+.dashboard-main .widget {
+  padding: 28px;
+  border-radius: 28px;
+  border-color: #dbe5f2;
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.055);
+}
+.dashboard-main .widget::before {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.4));
+}
+.dashboard-main .widget::after {
+  background: linear-gradient(90deg, #2563eb, rgba(37, 99, 235, 0.1));
+}
+.dashboard-main .widget-header {
+  min-height: 52px;
+}
+.dashboard-main .widget-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 19px;
+  color: #2563eb;
+  background: #eef5ff;
+  box-shadow: inset 0 0 0 1px #bfdbfe;
+}
+.dashboard-main .widget-title-wrap span {
+  font-size: 18px;
+  color: #142033;
+  letter-spacing: -0.04em;
+}
+.dashboard-main .widget-title-wrap small {
+  color: #94a3b8;
+  font-size: 11px;
+  letter-spacing: 0.09em;
+}
+.dashboard-main .channel-badge {
+  min-width: 70px;
+  justify-content: center;
+  padding: 9px 13px;
+  border-radius: 999px;
+  color: #64748b;
+  background: #f8fafc;
+  border-color: #dbe5f2;
+}
+.dashboard-main .widget-live-value {
+  margin-top: 20px;
+  min-height: 64px;
+  padding: 14px 18px;
+  border-radius: 18px;
+}
+.dashboard-main .widget-live-value span,
+.dashboard-main .value-display span {
+  color: #64748b;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.dashboard-main .widget-live-value strong {
+  font-size: 32px;
+  color: #071126;
+}
+.dashboard-main .gauge-chart {
+  min-height: 250px;
+}
+.dashboard-main .value-display {
+  min-height: 260px;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+}
+.dashboard-main .value-display strong {
+  font-size: clamp(64px, 5vw, 86px);
+  color: #071126;
+}
+.dashboard-main .chart {
+  min-height: 270px;
+}
+.dashboard-main .media-frame {
+  min-height: 260px;
+}
+.dashboard-main .toggle {
+  min-height: 92px;
+  background: #f8fafc;
+  border-color: #e8edf5;
+}
+.dashboard-main .widget-footer {
+  margin-top: 22px;
+  padding-top: 18px;
+}
+
 @media (max-width: 1280px) {
   .rule-flow { grid-template-columns: minmax(220px, 1fr) minmax(96px, 0.45fr) minmax(96px, 0.45fr); }
   .rule-flow label:nth-child(4) { grid-column: span 2; }

@@ -20,9 +20,9 @@ afterEach(() => cleanup());
 describe("App", () => {
   it("opens directly on the Spark IoT dashboard without login", async () => {
     render(<App />);
-    expect(await screen.findByText("Control Center")).toBeInTheDocument();
-    expect(screen.getByText("Industrial widget system")).toBeInTheDocument();
-    expect(screen.getByText("Polished control cards, live states and production-grade telemetry visuals")).toBeInTheDocument();
+    expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();
+    expect(screen.getByText("Premium industrial widgets")).toBeInTheDocument();
+    expect(screen.getByText("Elevated radial scale sensors, interactive video streams, GIS field coordinate tracking")).toBeInTheDocument();
     expect(screen.getAllByText("Live value").length).toBeGreaterThan(0);
     expect(screen.getByText("Command surface")).toBeInTheDocument();
     expect(screen.getByText("Workspace health")).toBeInTheDocument();
