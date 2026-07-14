@@ -107,8 +107,8 @@ export function App() {
       </aside>
       <main className={view === "dashboard" ? "dashboard-main" : undefined}>
         <header className={view === "dashboard" ? "topbar app-page-header cockpit-header" : "topbar app-page-header"} data-testid="cockpit-header">
-          <div className={view === "dashboard" ? "dashboard-header-grid" : "standard-header-grid"} data-testid={view === "dashboard" ? "dashboard-header-grid" : undefined}>
-          <div className="cockpit-title-block" data-testid={view === "dashboard" ? "gemini-cockpit-title" : undefined}>
+          <div className={view === "dashboard" ? "dashboard-header-grid spark-page-header-grid" : "standard-header-grid"} data-testid={view === "dashboard" ? "dashboard-header-grid" : undefined}>
+          <div className={view === "dashboard" ? "cockpit-title-block spark-page-header-primary" : "cockpit-title-block"} data-testid={view === "dashboard" ? "dashboard-header-primary" : undefined}>
             <div className="cockpit-kicker-row"><span className="eyebrow">{view === "dashboard" ? "Live control cockpit" : "Control Center"}</span>{view === "dashboard" && <span className="cockpit-badge">Premium industrial widgets</span>}</div>
             <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
             {view === "dashboard" && <p>Elevated radial scale sensors, interactive video streams, GIS field coordinate tracking</p>}
@@ -116,13 +116,13 @@ export function App() {
           </div>
           <div className="top-actions">
             {view === "dashboard" && (
-              <label className="project-switcher">
+              <label className="project-switcher spark-page-header-selector" data-testid="dashboard-header-selector">
                 <span>Dashboard</span>
                 <select aria-label="Dashboard project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{demoProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
               </label>
             )}
             {view === "dashboard" && (
-              <div className="cockpit-metrics">
+              <div className="cockpit-metrics spark-page-header-metrics" data-testid="dashboard-header-metrics">
                 <span><PlugZap size={19} /><strong>{demoDevices.filter((device) => device.is_online).length}/{demoDevices.length}</strong><small>Nodes online</small></span>
                 <span><LayoutDashboard size={19} /><strong>{selectedTemplate.dashboard.widgets.length}</strong><small>Widgets active</small></span>
                 <span><RadioTower size={19} /><strong>{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</strong><small>Telemetry time</small></span>

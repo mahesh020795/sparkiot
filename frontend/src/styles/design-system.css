@@ -2350,3 +2350,261 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/*
+  Spark IoT UI Standard v2
+  This final layer intentionally sits after the older compatibility styles.
+  It defines the stable product rhythm: restrained typography, predictable
+  dashboard header regions, and shared page/card/control proportions.
+*/
+
+:root {
+  --spark-page-pad-x: clamp(1.25rem, 2vw, 2rem);
+  --spark-page-pad-y: clamp(1.35rem, 2vw, 2rem);
+  --spark-title-xl: clamp(2rem, 2.6vw, 2.85rem);
+  --spark-title-lg: clamp(1.55rem, 2vw, 2rem);
+  --spark-title-md: 1.15rem;
+  --spark-text-md: 0.94rem;
+  --spark-text-sm: 0.82rem;
+  --spark-text-xs: 0.72rem;
+  --spark-control-height: 44px;
+  --spark-card-radius: 20px;
+  --spark-card-border: #e5edf6;
+  --spark-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 16px 34px rgba(15, 23, 42, 0.04);
+}
+
+.spark-ui {
+  font-size: 16px;
+}
+
+.spark-ui .spark-page-header-grid.dashboard-header-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px);
+  grid-template-areas:
+    "primary selector"
+    "primary metrics";
+  gap: 1rem 1.25rem;
+  align-items: start;
+  width: 100%;
+  padding: var(--spark-page-pad-y) var(--spark-page-pad-x);
+}
+
+.spark-ui .spark-page-header-primary {
+  grid-area: primary;
+  min-width: 0;
+  max-width: 780px;
+}
+
+.spark-ui .spark-page-header-selector {
+  grid-area: selector;
+  align-self: start;
+}
+
+.spark-ui .spark-page-header-metrics {
+  grid-area: metrics;
+}
+
+.spark-ui.dashboard-shell .dashboard-main .topbar.cockpit-header,
+.spark-ui.dashboard-shell .topbar.cockpit-header {
+  min-height: auto;
+  padding: 0;
+  border-bottom: 1px solid var(--spark-border);
+  background: var(--spark-surface);
+  box-shadow: none;
+}
+
+.spark-ui.dashboard-shell .topbar h1,
+.spark-ui.dashboard-shell .dashboard-main .topbar h1,
+.spark-ui .topbar h1,
+.spark-ui .overview-hero h2,
+.spark-ui .support-hero h2 {
+  max-width: 100%;
+  color: var(--spark-text);
+  font-size: var(--spark-title-xl);
+  line-height: 1.06;
+  letter-spacing: -0.055em;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui.dashboard-shell .topbar p,
+.spark-ui.dashboard-shell .dashboard-main .topbar p,
+.spark-ui .topbar p,
+.spark-ui .overview-hero p,
+.spark-ui .support-hero p {
+  max-width: 660px;
+  color: var(--spark-muted);
+  font-size: var(--spark-text-md);
+  line-height: 1.58;
+  font-weight: 550;
+}
+
+.spark-ui .cockpit-kicker-row {
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.spark-ui .eyebrow,
+.spark-ui .cockpit-badge,
+.spark-ui .section-kicker {
+  font-size: var(--spark-text-xs);
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+}
+
+.spark-ui.dashboard-shell .top-actions {
+  display: contents;
+}
+
+.spark-ui.dashboard-shell .project-switcher {
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--spark-card-border);
+  border-radius: 16px;
+  background: var(--spark-surface);
+  box-shadow: var(--spark-card-shadow);
+}
+
+.spark-ui.dashboard-shell .project-switcher select {
+  height: var(--spark-control-height);
+  min-height: var(--spark-control-height);
+  font-size: var(--spark-text-md);
+  font-weight: 750;
+}
+
+.spark-ui.dashboard-shell .cockpit-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.spark-ui.dashboard-shell .cockpit-metrics span,
+.spark-ui .overview-metric,
+.spark-ui .support-metrics span,
+.spark-ui .project-stat-row span {
+  min-width: 0;
+  min-height: 68px;
+  padding: 0.75rem;
+  border: 1px solid var(--spark-card-border);
+  border-radius: 16px;
+  background: var(--spark-surface);
+  box-shadow: var(--spark-card-shadow);
+}
+
+.spark-ui.dashboard-shell .cockpit-metrics strong,
+.spark-ui .overview-metric strong,
+.spark-ui .support-metrics strong,
+.spark-ui .project-stat-row strong {
+  font-size: 1rem;
+  line-height: 1.05;
+}
+
+.spark-ui.dashboard-shell .cockpit-metrics small,
+.spark-ui .overview-metric small,
+.spark-ui .support-metrics small,
+.spark-ui .project-stat-row small {
+  font-size: 0.66rem;
+  line-height: 1.25;
+}
+
+.spark-ui.dashboard-shell .cockpit-simulation-strip,
+.spark-ui .cockpit-simulation-strip {
+  max-width: 620px;
+  margin-top: 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+}
+
+.spark-ui .dashboard-toolbar.gemini-action-strip,
+.spark-ui.dashboard-shell .dashboard-main .gemini-action-strip {
+  min-height: auto;
+  padding: 1rem var(--spark-page-pad-x);
+  border-bottom: 1px solid var(--spark-border);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.spark-ui .command-actions .action-button,
+.spark-ui.dashboard-shell .dashboard-main .gemini-action-strip .action-button,
+.spark-ui button,
+.spark-ui .action-button {
+  min-height: var(--spark-control-height);
+  border-radius: 13px;
+  font-size: var(--spark-text-md);
+}
+
+.spark-ui .gemini-widget-canvas,
+.spark-ui.dashboard-shell .dashboard-main .gemini-widget-canvas {
+  padding: 1.5rem var(--spark-page-pad-x) 2rem;
+  gap: 1.25rem;
+}
+
+.spark-ui .panel,
+.spark-ui .widget,
+.spark-ui.dashboard-shell .dashboard-main .widget {
+  border: 1px solid var(--spark-card-border);
+  border-radius: var(--spark-card-radius);
+  background: var(--spark-surface);
+  box-shadow: var(--spark-card-shadow);
+}
+
+.spark-ui.dashboard-shell .dashboard-main .widget,
+.spark-ui .widget {
+  padding: 1.25rem;
+}
+
+.spark-ui .widget-title-wrap > span,
+.spark-ui.dashboard-shell .dashboard-main .widget-title-wrap span,
+.spark-ui .panel h2,
+.spark-ui .template-library-card h2,
+.spark-ui .provisioning-card-head h2,
+.spark-ui .studio-section h2 {
+  font-size: var(--spark-title-md);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.spark-ui .widget-live-value strong,
+.spark-ui.dashboard-shell .dashboard-main .widget-live-value strong {
+  font-size: clamp(1.35rem, 1.8vw, 1.75rem);
+}
+
+.spark-ui .value-display strong,
+.spark-ui.dashboard-shell .dashboard-main .value-display strong {
+  font-size: clamp(2.35rem, 4vw, 3.75rem);
+}
+
+@media (max-width: 1380px) {
+  .spark-ui .spark-page-header-grid.dashboard-header-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  }
+
+  .spark-ui.dashboard-shell .cockpit-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1120px) {
+  .spark-ui .spark-page-header-grid.dashboard-header-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "primary"
+      "selector"
+      "metrics";
+  }
+
+  .spark-ui.dashboard-shell .cockpit-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .spark-ui.dashboard-shell .cockpit-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .spark-ui .dashboard-toolbar.gemini-action-strip {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -43,13 +43,16 @@ describe("App", () => {
     const shell = await screen.findByTestId("app-shell");
     expect(shell).toHaveClass("app-shell", "dashboard-shell", "spark-ui");
     expect(screen.getByTestId("cockpit-header")).toHaveClass("app-page-header", "cockpit-header");
-    expect(screen.getByTestId("dashboard-header-grid")).toHaveClass("dashboard-header-grid");
+    expect(screen.getByTestId("dashboard-header-grid")).toHaveClass("dashboard-header-grid", "spark-page-header-grid");
+    expect(screen.getByTestId("dashboard-header-primary")).toHaveClass("spark-page-header-primary");
+    expect(screen.getByTestId("dashboard-header-selector")).toHaveClass("spark-page-header-selector");
+    expect(screen.getByTestId("dashboard-header-metrics")).toHaveClass("spark-page-header-metrics");
     expect(screen.getByText("Redronix Cloud")).toBeInTheDocument();
     expect(screen.getByText("edgesensor_high")).toHaveClass("material-symbols-outlined");
     expect(screen.queryByText("Rectronx Cloud")).not.toBeInTheDocument();
     expect(screen.queryByText("Responsive readiness")).not.toBeInTheDocument();
     expect(screen.queryByText("Quality assurance console")).not.toBeInTheDocument();
-    expect(screen.getByTestId("gemini-cockpit-title")).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-header-primary")).toBeInTheDocument();
     expect(screen.queryByTestId("dashboard-legacy-hero")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Dashboard project selector")).toBeInTheDocument();
     expect(screen.getByText("Energy Monitor")).toBeInTheDocument();
