@@ -147,11 +147,15 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Devices"));
 
+    expect(screen.getByTestId("devices-page")).toHaveClass("device-system-page");
+    expect(screen.getByTestId("device-provisioning-hero")).toHaveClass("device-system-hero");
+    expect(screen.getByTestId("device-provisioning-grid")).toHaveClass("device-system-grid");
     expect(screen.getByText("Provisioning center")).toBeInTheDocument();
     expect(screen.getByText("3/3 devices used")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Provision device/i })).toBeDisabled();
 
     const irrigationDevice = screen.getByRole("article", { name: /ESP32 Irrigation Node provisioning card/i });
+    expect(irrigationDevice).toHaveClass("device-system-card");
     expect(within(irrigationDevice).getByText("Smart Irrigation")).toBeInTheDocument();
     expect(within(irrigationDevice).getByText("ESP32")).toBeInTheDocument();
     expect(within(irrigationDevice).getByText("Device token")).toBeInTheDocument();
@@ -165,6 +169,10 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Live Test"));
 
+    expect(screen.getByTestId("live-test-page")).toHaveClass("live-system-page");
+    expect(screen.getByTestId("live-test-hero")).toHaveClass("live-system-hero");
+    expect(screen.getByTestId("live-test-grid")).toHaveClass("live-system-grid");
+    expect(screen.getByTestId("live-command-monitor")).toHaveClass("live-system-command-monitor");
     expect(screen.getByText("Live board test")).toBeInTheDocument();
     expect(screen.getByText("MQTT broker")).toBeInTheDocument();
     expect(screen.getByText("device-irrigation")).toBeInTheDocument();

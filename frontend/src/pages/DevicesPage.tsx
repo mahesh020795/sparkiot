@@ -8,8 +8,8 @@ export function DevicesPage({ devices, templates }: { devices: Device[]; templat
   const onlineCount = devices.filter((device) => device.is_online).length;
 
   return (
-    <section className="support-page device-provisioning-page">
-      <div className="support-hero device-provisioning-hero">
+    <section className="support-page device-provisioning-page device-system-page" data-testid="devices-page">
+      <div className="support-hero device-provisioning-hero device-system-hero" data-testid="device-provisioning-hero">
         <div>
           <span className="section-kicker">Provisioning center</span>
           <h2>Bind boards to templates and ship firmware-ready credentials</h2>
@@ -33,12 +33,12 @@ export function DevicesPage({ devices, templates }: { devices: Device[]; templat
         </button>
       </div>
 
-      <section className="device-provisioning-grid">
+      <section className="device-provisioning-grid device-system-grid" data-testid="device-provisioning-grid">
         {devices.map((device) => {
           const template = templates.find((item) => item.dashboard.project_id === device.project_id);
           const firstWritable = template?.datastreams.find((stream) => stream.dataType === "boolean") ?? template?.datastreams[0];
           return (
-            <article className="panel provisioning-card" key={device.id} aria-label={`${device.name} provisioning card`}>
+            <article className="panel provisioning-card device-system-card" key={device.id} aria-label={`${device.name} provisioning card`}>
               <div className="provisioning-card-head">
                 <span className="device-icon"><Router size={20} /></span>
                 <div>

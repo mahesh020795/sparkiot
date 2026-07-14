@@ -794,6 +794,440 @@ body {
   }
 }
 
+/* Devices + Live Test standardization: board testing and provisioning surfaces. */
+.spark-ui .device-system-page,
+.spark-ui .live-system-page {
+  gap: var(--spark-space-6);
+}
+
+.spark-ui .device-system-hero,
+.spark-ui .live-system-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.spark-ui .device-system-hero::after,
+.spark-ui .live-system-hero::after {
+  content: "";
+  position: absolute;
+  right: -120px;
+  top: -160px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.08), transparent 68%);
+  pointer-events: none;
+}
+
+.spark-ui .device-system-hero > *,
+.spark-ui .live-system-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.spark-ui .library-toolbar,
+.spark-ui .provisioning-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spark-space-4);
+  padding: var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-lg);
+  background: var(--spark-surface);
+  box-shadow: var(--spark-shadow-soft);
+}
+
+.spark-ui .library-toolbar > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.spark-ui .library-toolbar strong {
+  color: var(--spark-text);
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.spark-ui .library-toolbar span {
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  font-weight: 700;
+}
+
+.spark-ui .device-system-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--spark-space-5);
+}
+
+.spark-ui .device-system-card {
+  min-width: 0;
+  display: grid;
+  gap: var(--spark-space-4);
+  padding: var(--spark-space-5);
+}
+
+.spark-ui .provisioning-card-head {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--spark-space-3);
+  align-items: center;
+}
+
+.spark-ui .device-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dbeafe;
+  border-radius: 15px;
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary);
+}
+
+.spark-ui .provisioning-card-head h2 {
+  margin: 0 0 3px;
+  color: var(--spark-text);
+  font-size: 1rem;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  font-weight: 900;
+}
+
+.spark-ui .provisioning-card-head p {
+  margin: 0;
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  font-weight: 750;
+}
+
+.spark-ui .pill,
+.spark-ui .online-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-pill);
+  background: var(--spark-surface-muted);
+  color: var(--spark-muted);
+  font-size: var(--spark-label);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .online-pill {
+  border-color: #bbf7d0;
+  background: var(--spark-success-soft);
+  color: #047857;
+}
+
+.spark-ui .provisioning-meta-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .provisioning-meta-row span,
+.spark-ui .live-value-card {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-muted);
+  box-shadow: none;
+}
+
+.spark-ui .provisioning-meta-row strong,
+.spark-ui .live-value-card strong {
+  min-width: 0;
+  color: var(--spark-text);
+  font-size: 1.05rem;
+  letter-spacing: -0.04em;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spark-ui .provisioning-meta-row small,
+.spark-ui .live-value-card span {
+  color: var(--spark-muted-2);
+  font-size: var(--spark-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .provisioning-secret {
+  min-width: 0;
+  display: grid;
+  gap: var(--spark-space-2);
+}
+
+.spark-ui .provisioning-secret span,
+.spark-ui .arduino-bind-card > div {
+  display: flex;
+  align-items: center;
+  gap: var(--spark-space-2);
+  color: var(--spark-muted);
+  font-size: var(--spark-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .provisioning-secret span svg,
+.spark-ui .arduino-bind-card svg {
+  color: var(--spark-primary);
+}
+
+.spark-ui .provisioning-secret code,
+.spark-ui .arduino-bind-card code,
+.spark-ui .connection-line code,
+.spark-ui .live-topic-card code,
+.spark-ui .command-log-row code {
+  margin: 0;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface-muted);
+  color: var(--spark-text-soft);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .arduino-bind-card {
+  display: grid;
+  gap: var(--spark-space-3);
+  padding: var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-muted);
+}
+
+.spark-ui .provisioning-actions button {
+  flex: 1 1 150px;
+  justify-content: center;
+}
+
+.spark-ui .provisioning-safety-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--spark-space-4);
+  align-items: center;
+  background: var(--spark-surface);
+}
+
+.spark-ui .provisioning-safety-card svg {
+  color: var(--spark-primary);
+}
+
+.spark-ui .provisioning-safety-card strong {
+  color: var(--spark-text);
+  font-weight: 900;
+}
+
+.spark-ui .live-system-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.92fr) minmax(360px, 1.08fr);
+  gap: var(--spark-space-5);
+}
+
+.spark-ui .live-connection-card,
+.spark-ui .live-topic-card,
+.spark-ui .live-values-panel,
+.spark-ui .live-system-command-monitor {
+  padding: var(--spark-space-5);
+}
+
+.spark-ui .panel-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .panel-title svg {
+  color: var(--spark-primary);
+}
+
+.spark-ui .connection-stack,
+.spark-ui .command-log-list {
+  display: grid;
+  gap: var(--spark-space-3);
+  margin-top: var(--spark-space-4);
+}
+
+.spark-ui .connection-line {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
+  gap: var(--spark-space-3);
+  align-items: center;
+  padding: var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-muted);
+}
+
+.spark-ui .connection-line span {
+  color: var(--spark-muted);
+  font-size: var(--spark-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .connection-line button {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  justify-content: center;
+  padding: 0;
+}
+
+.spark-ui .live-topic-card p,
+.spark-ui .command-monitor-panel p {
+  max-width: 760px;
+  margin: var(--spark-space-3) 0 0;
+  color: var(--spark-muted);
+  line-height: 1.55;
+}
+
+.spark-ui .live-topic-card > code {
+  margin-top: var(--spark-space-3);
+}
+
+.spark-ui .command-test-note {
+  display: grid;
+  gap: var(--spark-space-2);
+  margin-top: var(--spark-space-4);
+  padding: var(--spark-space-4);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-primary-soft);
+}
+
+.spark-ui .command-test-note strong {
+  color: var(--spark-text);
+  font-weight: 900;
+}
+
+.spark-ui .command-test-note span {
+  color: var(--spark-muted);
+  line-height: 1.55;
+}
+
+.spark-ui .command-test-note code {
+  display: inline-flex;
+  padding: 3px 6px;
+  white-space: normal;
+}
+
+.spark-ui .live-values-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--spark-space-3);
+  margin-top: var(--spark-space-4);
+}
+
+.spark-ui .live-value-card small {
+  color: var(--spark-muted);
+  font-weight: 750;
+}
+
+.spark-ui .command-log-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr) auto;
+  gap: var(--spark-space-3);
+  align-items: center;
+  padding: var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-muted);
+}
+
+.spark-ui .command-log-row.ack {
+  border-color: #bbf7d0;
+  background: var(--spark-success-soft);
+}
+
+.spark-ui .command-log-status {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 9px;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-pill);
+  background: var(--spark-surface);
+  color: var(--spark-muted);
+  font-size: var(--spark-label);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.spark-ui .command-log-row.ack .command-log-status {
+  border-color: #bbf7d0;
+  background: var(--spark-success-soft);
+  color: #047857;
+}
+
+.spark-ui .command-log-row div {
+  min-width: 0;
+  display: grid;
+  gap: var(--spark-space-2);
+}
+
+.spark-ui .command-log-row strong {
+  color: var(--spark-text);
+  font-weight: 900;
+}
+
+.spark-ui .command-log-row time {
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .spark-ui .device-system-grid,
+  .spark-ui .live-system-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spark-ui .library-toolbar,
+  .spark-ui .provisioning-safety-card {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .spark-ui .provisioning-card-head,
+  .spark-ui .provisioning-meta-row,
+  .spark-ui .connection-line,
+  .spark-ui .command-log-row {
+    grid-template-columns: 1fr;
+  }
+
+  .spark-ui .connection-line button,
+  .spark-ui .command-log-row time {
+    justify-self: start;
+  }
+}
+
 /* Template Studio standardization: Blynk-style flow, Spark UI proportions. */
 .spark-ui .spark-studio {
   display: grid;

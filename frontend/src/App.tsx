@@ -237,8 +237,8 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
   }, [device?.id]);
 
   return (
-    <section className="support-page live-test-page">
-      <div className="support-hero live-test-hero">
+    <section className="support-page live-test-page live-system-page" data-testid="live-test-page">
+      <div className="support-hero live-test-hero live-system-hero" data-testid="live-test-hero">
         <div>
           <span className="section-kicker">Live board test</span>
           <h2>Connect ESP32 or NodeMCU and watch real telemetry land here</h2>
@@ -251,7 +251,7 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
         </div>
       </div>
 
-      <section className="live-test-grid">
+      <section className="live-test-grid live-system-grid" data-testid="live-test-grid">
         <article className="panel live-connection-card">
           <div className="panel-title"><RadioTower size={18} /><h2>MQTT broker</h2></div>
           <div className="connection-stack">
@@ -288,7 +288,7 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
         </div>
       </section>
 
-      <section className="panel command-monitor-panel">
+      <section className="panel command-monitor-panel live-system-command-monitor" data-testid="live-command-monitor">
         <div className="panel-title"><TerminalSquare size={18} /><h2>Command monitor</h2></div>
         <p>Shows dashboard commands and board acknowledgements. This is how you prove the switch reached the ESP32/NodeMCU.</p>
         <div className="command-log-list">
