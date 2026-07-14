@@ -1179,6 +1179,163 @@ main {
   padding-top: 18px;
 }
 
+/* Gemini widget parity pass: richer industrial cockpit cards for irrigation operations. */
+.dashboard-main .widget-gps,
+.dashboard-main .widget-camera {
+  min-height: 360px;
+}
+.dashboard-main .cockpit-media-widget .media-frame {
+  min-height: 230px;
+}
+.dashboard-main .widget-schedule,
+.dashboard-main .widget-power-hub,
+.dashboard-main .widget-event-monitor,
+.dashboard-main .control {
+  min-height: 330px;
+}
+.schedule-body {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+.schedule-body label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.schedule-body label strong {
+  color: #1455ff;
+}
+.schedule-days,
+.schedule-times {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.schedule-days span {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-weight: 950;
+}
+.schedule-days span.active {
+  background: #10b981;
+  color: #ffffff;
+}
+.schedule-times span {
+  flex: 1 1 88px;
+  min-height: 58px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #1455ff;
+  font-size: 13px;
+  font-weight: 950;
+}
+.schedule-slider,
+.capacity-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eef2f7;
+}
+.schedule-slider span,
+.capacity-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #2563eb;
+}
+.power-hub-body {
+  display: grid;
+  gap: 12px;
+  margin-top: 54px;
+}
+.power-hub-body div:not(.capacity-bar) {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  color: #64748b;
+  font-weight: 850;
+}
+.power-hub-body strong {
+  color: #071126;
+}
+.capacity-bar span {
+  background: #10b981;
+}
+.event-console {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  margin-top: 24px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #030712;
+  color: #cbd5e1;
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.event-console span {
+  white-space: pre-wrap;
+}
+.event-console .ok { color: #34d399; }
+.event-console .warn { color: #facc15; }
+.event-console .info { color: #cbd5e1; }
+.dashboard-main .widget-event-monitor .widget-icon {
+  color: #e11d48;
+  background: #fff1f2;
+  box-shadow: inset 0 0 0 1px #fecdd3;
+}
+.dashboard-main .widget-schedule .widget-icon,
+.dashboard-main .control .widget-icon {
+  color: #f59e0b;
+  background: #fff7e6;
+  box-shadow: inset 0 0 0 1px #fde68a;
+}
+.dashboard-main .widget-power-hub .widget-icon {
+  color: #2563eb;
+  background: #eff6ff;
+}
+.dashboard-main .control .command-surface-label {
+  margin-top: 48px;
+  color: #142033;
+  font-size: 14px;
+  font-weight: 950;
+}
+.dashboard-main .control .toggle {
+  min-height: 92px;
+  margin-top: 12px;
+  padding: 18px;
+  justify-content: space-between;
+}
+.dashboard-main .control .toggle-copy strong {
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+.dashboard-main .widget-footer span {
+  color: #1455ff;
+  font-weight: 950;
+}
+.dashboard-main .widget-footer small {
+  color: #94a3b8;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 @media (max-width: 1280px) {
   .rule-flow { grid-template-columns: minmax(220px, 1fr) minmax(96px, 0.45fr) minmax(96px, 0.45fr); }
   .rule-flow label:nth-child(4) { grid-column: span 2; }

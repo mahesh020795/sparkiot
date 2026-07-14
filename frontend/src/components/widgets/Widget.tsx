@@ -1,5 +1,5 @@
 import * as echarts from "echarts";
-import { Battery, Camera, Circle, Clock, Droplets, Gauge, MapPinned, Power, Radio, Send, Signal, Sparkles, Thermometer, ToggleLeft, Zap } from "lucide-react";
+import { Battery, CalendarDays, Camera, Circle, Clock, Droplets, Gauge, MapPinned, PlugZap, Power, Radio, Send, Shield, Signal, SlidersHorizontal, Sparkles, Thermometer, ToggleLeft, Zap } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
@@ -14,6 +14,9 @@ export function Widget({ config, reading, devices, onCommand }: { config: Widget
   if (config.type === "chart") return <ChartWidget config={config} value={Number(raw ?? 0)} />;
   if (config.type === "gps") return <MapWidget config={config} value={value} />;
   if (config.type === "camera") return <CameraWidget config={config} value={value} />;
+  if (config.type === "schedule") return <ScheduleWidget config={config} value={value} />;
+  if (config.type === "power_hub") return <PowerHubWidget config={config} value={Number(raw ?? 12.4)} />;
+  if (config.type === "event_monitor") return <EventMonitorWidget config={config} value={String(raw ?? "")} />;
   if (config.type === "switch") return <ControlWidget icon={<ToggleLeft />} config={config} device={device} value={Boolean(raw)} onCommand={onCommand} />;
   if (config.type === "push_button") return <ControlWidget icon={<Send />} config={config} device={device} value={false} onCommand={onCommand} />;
   if (config.type === "led") return <ValuePanel icon={<Circle />} config={config} value={raw ? "ON" : "OFF"} accent={raw ? "green" : "grey"} />;
@@ -70,7 +73,8 @@ function GaugeWidget({ config, value }: { config: WidgetConfig; value: number })
 
   useResizeSignal(ref, () => chartRef.current?.resize?.());
 
-  return <article className={`widget widget-${config.type}`}><WidgetHeader config={config} /><div className="widget-live-value"><span>Live value</span><strong>{value}{config.unit ?? ""}</strong></div><div className="chart gauge-chart" ref={ref} /><WidgetFooter config={config} value={`${config.min ?? 0} - ${config.max ?? 100}${config.unit ? ` ${config.unit}` : ""}`} /></article>;
+  const isPressure = config.title.toLowerCase().includes("pressure");
+  return <article className={`widget widget-${config.type}`}><WidgetHeader config={config} /><div className="widget-live-value"><span>Live value</span><strong>{value}{config.unit ?? ""}</strong></div><div className="chart gauge-chart" ref={ref} /><WidgetFooter config={config} value={isPressure ? "PRESSURE OPTIMAL & SYSTEM NOMINAL" : `${config.min ?? 0} - ${config.max ?? 100}${config.unit ? ` ${config.unit}` : ""}`} /></article>;
 }
 
 function ChartWidget({ config, value }: { config: WidgetConfig; value: number }) {
@@ -132,11 +136,59 @@ function MapWidget({ config, value }: { config: WidgetConfig; value: any }) {
 
   useResizeSignal(ref, () => mapRef.current?.invalidateSize?.());
 
-  return <article className="widget widget-gps"><WidgetHeader config={config} icon={<MapPinned size={16} />} /><div className="media-frame"><div className="map" ref={ref} /></div><WidgetFooter config={config} value="GPS map access included" /></article>;
+  return <article className="widget widget-gps cockpit-media-widget"><WidgetHeader config={config} icon={<MapPinned size={16} />} /><div className="media-frame"><div className="map" ref={ref} /></div><WidgetFooter config={config} value="Click on map nodes to override solenoid output" label="SPATIAL MAP" /></article>;
 }
 
 function CameraWidget({ config, value }: { config: WidgetConfig; value: any }) {
-  return <article className="widget widget-camera"><WidgetHeader config={config} icon={<Camera size={16} />} /><div className="media-frame camera-frame"><img className="camera" src={value?.url ?? "https://placehold.co/640x360?text=ESP32-CAM"} alt="Camera snapshot" /><span className="camera-live-badge">Snapshot</span></div><WidgetFooter config={config} value="Direct camera URL" /></article>;
+  return <article className="widget widget-camera cockpit-media-widget"><WidgetHeader config={config} icon={<Camera size={16} />} /><div className="media-frame camera-frame"><img className="camera" src={value?.url ?? "https://placehold.co/640x360?text=ESP32-CAM"} alt="Camera snapshot" /><span className="camera-live-badge">Video out</span></div><WidgetFooter config={config} value="Use PTZ overlays to shift simulated camera horizon" label="VIDEO OUT" /></article>;
+}
+
+function ScheduleWidget({ config, value }: { config: WidgetConfig; value: any }) {
+  const selectedDays = new Set<string>(Array.isArray(value?.days) ? value.days : ["M", "W", "F"]);
+  const times: string[] = Array.isArray(value?.times) ? value.times.map(String) : ["06:00 AM", "12:00 PM", "06:00 PM"];
+  const duration = Number(value?.duration ?? 25);
+  const days = ["M", "T", "W", "T", "F", "S", "S"];
+  return (
+    <article className="widget widget-schedule">
+      <WidgetHeader config={config} icon={<CalendarDays size={16} />} />
+      <div className="schedule-body">
+        <label>1. Selected days</label>
+        <div className="schedule-days">{days.map((day, index) => <span className={selectedDays.has(day) && index !== 3 ? "active" : ""} key={`${day}-${index}`}>{day}</span>)}</div>
+        <label>2. Daily time cycles</label>
+        <div className="schedule-times">{times.map((time) => <span key={time}>{time}</span>)}</div>
+        <label>3. Cycle duration <strong>{duration} min</strong></label>
+        <div className="schedule-slider"><span style={{ width: `${Math.min(100, duration * 3)}%` }} /></div>
+      </div>
+      <WidgetFooter config={config} value="bypasses schedule on rain" label="SMART TRIGGER" />
+    </article>
+  );
+}
+
+function PowerHubWidget({ config, value }: { config: WidgetConfig; value: number }) {
+  return (
+    <article className="widget widget-power-hub">
+      <WidgetHeader config={config} icon={<PlugZap size={16} />} />
+      <div className="power-hub-body">
+        <div><span>Capacity</span><strong>88%</strong></div>
+        <div className="capacity-bar"><span style={{ width: "88%" }} /></div>
+        <div><span>Terminal Output</span><strong>{value.toFixed(1)} V</strong></div>
+      </div>
+      <WidgetFooter config={config} value="telemetry stack nominal" label="POWER BUS" />
+    </article>
+  );
+}
+
+function EventMonitorWidget({ config, value }: { config: WidgetConfig; value: string }) {
+  const lines = value.split("\n").filter(Boolean);
+  return (
+    <article className="widget widget-event-monitor">
+      <WidgetHeader config={config} icon={<Shield size={16} />} />
+      <div className="event-console">
+        {lines.map((line) => <span className={line.includes("WARN") ? "warn" : line.includes("INFO") ? "info" : "ok"} key={line}>{line}</span>)}
+      </div>
+      <WidgetFooter config={config} value="systemlog" label="SYSLOG V8" />
+    </article>
+  );
 }
 
 function ControlWidget({ config, device, value, icon, onCommand }: { config: WidgetConfig; device?: Device; value: boolean; icon: React.ReactNode; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
@@ -149,7 +201,8 @@ function ControlWidget({ config, device, value, icon, onCommand }: { config: Wid
     }
     if (device) void api.command(device.id, config.channel, nextValue);
   }
-  return <article className={`widget control widget-${config.type}`}><WidgetHeader config={config} icon={icon} /><div className="command-surface-label">Command surface</div><button className={value ? "toggle on" : "toggle"} onClick={sendCommand}><span className="toggle-track"><span className="toggle-dot" /></span><span className="toggle-copy"><strong>{isPush ? "SEND" : value ? "ON" : "OFF"}</strong><small>{value ? "Command active" : "Ready to send"}</small></span></button><WidgetFooter config={config} value={device?.name ?? "Demo device"} /></article>;
+  const solenoid = config.title.toLowerCase().includes("solenoid");
+  return <article className={`widget control widget-${config.type}`}><WidgetHeader config={config} icon={solenoid ? <SlidersHorizontal /> : icon} /><div className="command-surface-label">{solenoid ? "Valve status" : "Command surface"}</div><button className={value ? "toggle on" : "toggle"} onClick={sendCommand}><span className="toggle-track"><span className="toggle-dot" /></span><span className="toggle-copy"><strong>{isPush ? "SEND" : value ? solenoid ? "OPEN (FLOW ENABLED)" : "ON" : solenoid ? "CLOSED (BLOCKED)" : "OFF"}</strong><small>{value ? "Command active" : "Ready to send"}</small></span></button><WidgetFooter config={config} value={solenoid ? "manual override" : device?.name ?? "Demo device"} /></article>;
 }
 
 function ValuePanel({ config, value, icon, mono, accent }: { config: WidgetConfig; value: string; icon: React.ReactNode; mono?: boolean; accent?: string }) {
@@ -170,14 +223,18 @@ function WidgetHeader({ config, icon }: { config: WidgetConfig; icon?: React.Rea
   );
 }
 
-function WidgetFooter({ config, value }: { config: WidgetConfig; value: string }) {
-  return <footer className="widget-footer"><span>{config.channel}</span><small>{value}</small></footer>;
+function WidgetFooter({ config, value, label }: { config: WidgetConfig; value: string; label?: string }) {
+  return <footer className="widget-footer"><span>{label ?? config.channel}</span><small>{value}</small></footer>;
 }
 
 function iconForWidget(config: WidgetConfig) {
   const title = config.title.toLowerCase();
   if (title.includes("temp")) return <Thermometer size={16} />;
   if (title.includes("humidity") || title.includes("moisture") || title.includes("water")) return <Droplets size={16} />;
+  if (title.includes("pressure") || title.includes("flow")) return <Gauge size={16} />;
+  if (title.includes("schedule")) return <CalendarDays size={16} />;
+  if (title.includes("solenoid")) return <SlidersHorizontal size={16} />;
+  if (title.includes("event")) return <Shield size={16} />;
   if (title.includes("voltage") || title.includes("power") || title.includes("current")) return <Zap size={16} />;
   if (config.type === "meter" || config.type === "gauge") return <Gauge size={16} />;
   if (config.type === "battery") return <Battery size={16} />;

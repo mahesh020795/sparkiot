@@ -24,7 +24,7 @@ describe("App", () => {
     expect(screen.getByText("Premium industrial widgets")).toBeInTheDocument();
     expect(screen.getByText("Elevated radial scale sensors, interactive video streams, GIS field coordinate tracking")).toBeInTheDocument();
     expect(screen.getAllByText("Live value").length).toBeGreaterThan(0);
-    expect(screen.getByText("Command surface")).toBeInTheDocument();
+    expect(screen.getAllByText("Valve status").length).toBeGreaterThan(0);
     expect(screen.getByText("Workspace health")).toBeInTheDocument();
     expect(screen.getByText("Production preview")).toBeInTheDocument();
     expect(screen.getByText("Responsive readiness")).toBeInTheDocument();
@@ -38,16 +38,31 @@ describe("App", () => {
     expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
   });
 
-  it("toggles the demo pump switch immediately on the dashboard", async () => {
+  it("toggles the demo solenoid switch immediately on the dashboard", async () => {
     render(<App />);
 
-    const pumpCard = (await screen.findByText("Pump Control")).closest("article");
-    expect(pumpCard).not.toBeNull();
-    expect(within(pumpCard as HTMLElement).getByText("OFF")).toBeInTheDocument();
+    const solenoidCard = (await screen.findByText("Zone 1 Solenoid")).closest("article");
+    expect(solenoidCard).not.toBeNull();
+    expect(within(solenoidCard as HTMLElement).getByText("OPEN (FLOW ENABLED)")).toBeInTheDocument();
 
-    fireEvent.click(within(pumpCard as HTMLElement).getByRole("button"));
+    fireEvent.click(within(solenoidCard as HTMLElement).getByRole("button"));
 
-    expect(within(pumpCard as HTMLElement).getByText("ON")).toBeInTheDocument();
+    expect(within(solenoidCard as HTMLElement).getByText("CLOSED (BLOCKED)")).toBeInTheDocument();
+  });
+
+  it("renders the Gemini-style irrigation cockpit widget set", async () => {
+    render(<App />);
+
+    expect(await screen.findByText("Line Pressure")).toBeInTheDocument();
+    expect(screen.getByText("Irrigation Schedule")).toBeInTheDocument();
+    expect(screen.getByText("Zone 1 Solenoid")).toBeInTheDocument();
+    expect(screen.getByText("Zone 2 Solenoid")).toBeInTheDocument();
+    expect(screen.getByText("S-Power Hub")).toBeInTheDocument();
+    expect(screen.getByText("Event Monitor")).toBeInTheDocument();
+    expect(screen.getByText("SPATIAL MAP")).toBeInTheDocument();
+    expect(screen.getByText("VIDEO OUT")).toBeInTheDocument();
+    expect(screen.getByText("PRESSURE OPTIMAL & SYSTEM NOMINAL")).toBeInTheDocument();
+    expect(screen.getByText("[WARN] Soil moisture low at 31%")).toBeInTheDocument();
   });
 
   it("shows template builder with board, virtual pins, datastreams and notifications", async () => {
@@ -141,9 +156,9 @@ describe("App", () => {
     expect(screen.getByText(/SPARK_DEVICE_ID = "device-irrigation"/)).toBeInTheDocument();
     expect(screen.getByText(/SparkIoT\.begin\(WIFI_SSID, WIFI_PASSWORD, BROKER_HOST, BROKER_PORT, SPARK_TENANT_ID, SPARK_DEVICE_ID, SPARK_DEVICE_TOKEN\)/)).toBeInTheDocument();
     expect(screen.getByText(/SparkIoT\.virtualWrite\("V0", 50, "C"\)/)).toBeInTheDocument();
-    expect(screen.getByText(/SparkIoT\.setLocation\("V5", 3\.139, 101\.6869, 14, 8\)/)).toBeInTheDocument();
-    expect(screen.getByText(/SparkIoT\.onCommand\("V3", onV3Command\)/)).toBeInTheDocument();
-    expect(screen.getByText(/SparkIoT\.ack\("V3", state, "V3 command applied"\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.setLocation\("V7", 3\.139, 101\.6869, 14, 8\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.onCommand\("V4", onV4Command\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.ack\("V4", state, "V4 command applied"\)/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Templates"));
     const homeTemplateCard = screen.getByRole("article", { name: /Smart Home template/i });
