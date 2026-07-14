@@ -201,7 +201,29 @@ For camera snapshot URL:
 mosquitto_pub -h 127.0.0.1 -p 1883 -t spark/v1/demo-tenant/device-irrigation/telemetry/V6 -m "{\"token\":\"spk_dev_irrigation_demo_9f3a\",\"value\":{\"url\":\"https://placehold.co/640x360?text=ESP32-CAM\"}}"
 ```
 
-## 7. Manual MQTT command test from PC
+## 7. One-command board loop smoke test
+
+Use this when you want one repeatable check for the complete path:
+
+```text
+telemetry -> command -> ACK -> command log
+```
+
+Local Docker Compose:
+
+```bash
+python scripts/board_loop_smoke.py
+```
+
+Current Google Cloud VPS:
+
+```bash
+python scripts/board_loop_smoke.py --api-base http://34.73.29.12:8000/api/v1
+```
+
+The script publishes demo telemetry to `telemetry/V0`, calls the demo command API for `command/V3`, simulates the board ACK to `ack/V3`, then confirms the ACK appears in `/demo/devices/{device_id}/command-logs`.
+
+## 8. Manual MQTT command test from PC
 
 If you install Mosquitto clients locally, you can test command delivery:
 
@@ -211,7 +233,7 @@ mosquitto_pub -h 127.0.0.1 -p 1883 -t spark/v1/demo-tenant/device-irrigation/com
 
 The board serial monitor should show the command and toggle `LED_BUILTIN`.
 
-## 8. Dashboard command test
+## 9. Dashboard command test
 
 To prove Spark IoT dashboard controls are publishing MQTT commands, open a terminal on the VPS and subscribe to the command topic:
 
@@ -245,7 +267,7 @@ For NodeMCU ESP8266 Smart Home, the relay switch uses:
 spark/v1/demo-tenant/device-home/command/V0
 ```
 
-## 9. Manual ACK test from VPS
+## 10. Manual ACK test from VPS
 
 If you want to test the ACK monitor without a board, publish this from the VPS:
 
@@ -258,7 +280,7 @@ docker compose exec mosquitto mosquitto_pub \
 
 Then open `Live Test` and check the `Command monitor`.
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 - Board says MQTT failed: check `BROKER_HOST`, firewall, and Docker Compose `mosquitto` service.
 - Board WiFi never connects: check SSID/password and use 2.4 GHz WiFi for ESP8266.
