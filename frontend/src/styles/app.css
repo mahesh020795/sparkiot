@@ -2034,7 +2034,7 @@ main,
   }
 }
 
-/* Gemini exact cockpit pass: replace the old hero-style dashboard with a flat industrial control-room shell. */
+/* Legacy final duplicate dashboard layer disabled: Spark IoT UI Standard v2 owns these rules.
 .dashboard-shell {
   background: #f8fafc;
 }
@@ -2290,3 +2290,4 @@ main,
 .dashboard-main .widget-footer span {
   color: #1455ff;
 }
+*/
