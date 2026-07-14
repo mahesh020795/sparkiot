@@ -42,6 +42,7 @@ describe("App", () => {
     expect(shell).toHaveClass("app-shell", "dashboard-shell");
     expect(screen.getByTestId("cockpit-header")).toHaveClass("cockpit-header");
     expect(screen.getByText("Redronix Cloud")).toBeInTheDocument();
+    expect(screen.getByText("edgesensor_high")).toHaveClass("material-symbols-outlined");
     expect(screen.queryByText("Rectronx Cloud")).not.toBeInTheDocument();
     expect(screen.queryByText("Responsive readiness")).not.toBeInTheDocument();
     expect(screen.queryByText("Quality assurance console")).not.toBeInTheDocument();

@@ -82,7 +82,7 @@ export function App() {
   return (
     <div className={view === "dashboard" ? "app-shell dashboard-shell" : "app-shell"} data-testid="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-icon"><Cpu size={22} /></span><div><strong>Spark IoT</strong><span>Redronix Cloud</span></div></div>
+        <div className="brand"><span className="brand-icon"><span className="material-symbols-outlined" aria-hidden="true">edgesensor_high</span></span><div><strong>Spark IoT</strong><span>Redronix Cloud</span></div></div>
         <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
         <div className="workspace-card">
           <span className="section-kicker">Workspace health</span>
