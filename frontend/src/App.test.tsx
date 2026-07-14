@@ -26,12 +26,12 @@ describe("App", () => {
     expect(screen.getAllByText("Live value").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Valve status").length).toBeGreaterThan(0);
     expect(screen.getByText("Workspace health")).toBeInTheDocument();
-    expect(screen.getByText("Production preview")).toBeInTheDocument();
-    expect(screen.getByLabelText("Project selector")).toBeInTheDocument();
+    expect(screen.queryByText("Production preview")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Project selector")).not.toBeInTheDocument();
     const navigation = screen.getByRole("navigation", { name: "Main navigation" });
     expect(navigation).toHaveTextContent("Settings");
     expect(navigation.compareDocumentPosition(screen.getByText("Workspace health")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getAllByText("Smart Irrigation").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
     expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
   });
 
@@ -46,8 +46,11 @@ describe("App", () => {
     expect(screen.queryByText("Rectronx Cloud")).not.toBeInTheDocument();
     expect(screen.queryByText("Responsive readiness")).not.toBeInTheDocument();
     expect(screen.queryByText("Quality assurance console")).not.toBeInTheDocument();
+    expect(screen.getByTestId("gemini-cockpit-title")).toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-legacy-hero")).not.toBeInTheDocument();
 
-    expect(screen.getByTestId("dashboard-action-bar")).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-action-bar")).toHaveClass("gemini-action-strip");
+    expect(screen.getByTestId("gemini-widget-canvas")).toHaveClass("gemini-widget-canvas");
     expect(screen.getByText("Virtual IoT Simulator Connected")).toBeInTheDocument();
     expect(screen.getByText("Water, pressure, flow models synced with scheduler output")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Edit labels/i })).toBeInTheDocument();

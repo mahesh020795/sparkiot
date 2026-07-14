@@ -107,7 +107,7 @@ export function App() {
       </aside>
       <main className={view === "dashboard" ? "dashboard-main" : undefined}>
         <header className={view === "dashboard" ? "topbar cockpit-header" : "topbar"} data-testid="cockpit-header">
-          <div className="cockpit-title-block">
+          <div className="cockpit-title-block" data-testid={view === "dashboard" ? "gemini-cockpit-title" : undefined}>
             <div className="cockpit-kicker-row"><span className="eyebrow">{view === "dashboard" ? "Live control cockpit" : "Control Center"}</span>{view === "dashboard" && <span className="cockpit-badge">Premium industrial widgets</span>}</div>
             <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
             {view === "dashboard" && <p>Elevated radial scale sensors, interactive video streams, GIS field coordinate tracking</p>}
@@ -122,8 +122,8 @@ export function App() {
                 <span><Bell size={19} /><strong>Active</strong><small>Flow safety</small></span>
               </div>
             )}
-            <div className="preview-status"><RadioTower size={16} /><div><strong>Production preview</strong><small>Local MVP · no login mode</small></div></div>
-            <select aria-label="Project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{demoProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
+            {view !== "dashboard" && <div className="preview-status"><RadioTower size={16} /><div><strong>Production preview</strong><small>Local MVP · no login mode</small></div></div>}
+            {view !== "dashboard" && <select aria-label="Project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{demoProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>}
           </div>
         </header>
         {view === "dashboard" && <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />}

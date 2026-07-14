@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, Database, Edit3, Play, Router, Save, Signal } from "lucide-react";
+import { Activity, Edit3, Play, Save } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { api, getSession, realtimeUrl } from "../lib/api";
@@ -74,8 +74,7 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
 
   return (
     <section className="overview-page">
-      <DashboardHero dashboard={dashboard} devices={devices} latest={latest} realtimeLabel={connected ? "Realtime connected" : "Realtime offline"} />
-      <div className="dashboard-toolbar" data-testid="dashboard-action-bar">
+      <div className="dashboard-toolbar gemini-action-strip" data-testid="dashboard-action-bar">
         <div className={connected ? "command-status online" : "command-status"}>
           <Activity size={16} />
           <span><strong>{connected ? "Realtime connected" : "Realtime offline"}</strong><small>Live device stream</small></span>
@@ -85,7 +84,7 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
           <button className="primary action-button" onClick={save}><Save size={16} />Publish Changes</button>
         </div>
       </div>
-      <div className={edit ? "layout edit-mode" : "layout"}>
+      <div className={edit ? "layout edit-mode gemini-widget-canvas" : "layout gemini-widget-canvas"} data-testid="gemini-widget-canvas">
         {sortedWidgets.map((widget) => (
           <div
             className="grid-cell"
@@ -187,8 +186,7 @@ export function LocalDashboardPage({
 
   return (
     <section className="overview-page">
-      <DashboardHero dashboard={dashboard} devices={devices} latest={latest} realtimeLabel="Live board demo active" />
-      <div className="dashboard-toolbar" data-testid="dashboard-action-bar">
+      <div className="dashboard-toolbar gemini-action-strip" data-testid="dashboard-action-bar">
         <div className="command-status online">
           <Activity size={16} />
           <span><strong>Virtual IoT Simulator Connected</strong><small>Water, pressure, flow models synced with scheduler output</small></span>
@@ -199,7 +197,7 @@ export function LocalDashboardPage({
           <button className="primary action-button" onClick={() => setEdit(false)}><Save size={16} />Publish Changes</button>
         </div>
       </div>
-      <div className={edit ? "layout edit-mode" : "layout"}>
+      <div className={edit ? "layout edit-mode gemini-widget-canvas" : "layout gemini-widget-canvas"} data-testid="gemini-widget-canvas">
         {sortedWidgets.map((widget) => (
           <div
             className="grid-cell"
@@ -216,46 +214,4 @@ export function LocalDashboardPage({
       </div>
     </section>
   );
-}
-
-function DashboardHero({
-  dashboard,
-  devices,
-  latest,
-  realtimeLabel
-}: {
-  dashboard: Dashboard;
-  devices: Device[];
-  latest: Record<string, Telemetry>;
-  realtimeLabel: string;
-}) {
-  const onlineCount = devices.filter((device) => device.is_online).length;
-  const latestReading = Object.values(latest).sort((a, b) => new Date(b.server_at).getTime() - new Date(a.server_at).getTime())[0];
-  const updated = latestReading ? new Date(latestReading.server_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "No data";
-  const alertCount = dashboard.widgets.filter((widget) => widget.type === "led" || widget.type === "switch").length;
-
-  return (
-    <section className="overview-hero">
-      <div className="overview-hero-copy">
-        <span className="section-kicker">Live control center</span>
-        <span className="design-system-badge">Industrial widget system</span>
-        <h2>{dashboard.name}</h2>
-        <p>Polished control cards, live states and production-grade telemetry visuals</p>
-      </div>
-      <div className="overview-metrics">
-        <MetricCard icon={<Router size={18} />} label="Devices online" value={`${onlineCount}/${devices.length}`} tone="green" />
-        <MetricCard icon={<Database size={18} />} label="Widgets active" value={String(dashboard.widgets.length)} tone="orange" />
-        <MetricCard icon={<Signal size={18} />} label="Latest data" value={updated} tone="blue" />
-        <MetricCard icon={<AlertTriangle size={18} />} label="Control points" value={String(alertCount)} tone="purple" />
-      </div>
-      <div className="overview-live-strip">
-        <Activity size={16} />
-        <span><strong>{realtimeLabel}</strong><small>MQTT/WebSocket-ready telemetry surface</small></span>
-      </div>
-    </section>
-  );
-}
-
-function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone: "green" | "orange" | "blue" | "purple" }) {
-  return <article className={`overview-metric ${tone}`}><span>{icon}</span><div><strong>{value}</strong><small>{label}</small></div></article>;
 }
