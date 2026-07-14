@@ -3,10 +3,12 @@ import "react-grid-layout/css/styles.css";
 import {
   Bell,
   Camera,
+  CheckCircle2,
   ClipboardCopy,
   Copy,
   Cpu,
   Database,
+  Download,
   Expand,
   Grid2X2Plus,
   LayoutDashboard,
@@ -69,6 +71,8 @@ export function TemplateStudioPage({
   const selectedDatastream = template.datastreams.find((stream) => stream.id === selectedWidget?.datastreamId);
   const layout = useMemo(() => template.dashboard.widgets.map((widget) => ({ i: widget.id, x: widget.x, y: widget.y, w: widget.w, h: widget.h, minW: 2, minH: 2 })), [template.dashboard.widgets]);
   const code = useMemo(() => buildArduinoSketch(template, device), [template, device]);
+  const sketchFileName = useMemo(() => `${sanitizeSketchName(template.name)}_SparkIoT.ino`, [template.name]);
+  const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const saveLabel = saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : saveState === "error" ? "Save failed" : "Unsaved changes";
 
   function patchTemplate(patch: Partial<DeviceTemplate>) {
@@ -175,6 +179,24 @@ export function TemplateStudioPage({
 
   function updateNotification(id: string, patch: Partial<TemplateNotification>) {
     onChange({ ...template, notifications: template.notifications.map((rule) => rule.id === id ? { ...rule, ...patch } : rule) });
+  }
+
+  async function copySketch() {
+    await navigator.clipboard?.writeText(code);
+    setCopyState("copied");
+    window.setTimeout(() => setCopyState("idle"), 1600);
+  }
+
+  function downloadSketch() {
+    const blob = new Blob([code], { type: "text/x-arduino;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = sketchFileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -350,12 +372,39 @@ export function TemplateStudioPage({
               <h3>Arduino-ready sketch</h3>
               <p>Generate firmware that preserves Blynk-style virtual pins while publishing to Spark IoT topics.</p>
             </div>
-            <div className="section-title"><h2>Arduino IDE code generator</h2><button onClick={() => navigator.clipboard?.writeText(code)}><ClipboardCopy size={16} />Copy</button></div>
+            <div className="firmware-export-panel firmware-system-panel" data-testid="firmware-export-panel">
+              <div>
+                <span className="section-kicker">Firmware export package</span>
+                <h2>{sketchFileName}</h2>
+                <p>Generated from <strong>{template.name}</strong>, bound to <strong>{device?.name ?? "selected device"}</strong> and ready for Arduino IDE after WiFi credentials are filled in.</p>
+              </div>
+              <div className="firmware-export-actions">
+                <button onClick={copySketch}>{copyState === "copied" ? <CheckCircle2 size={16} /> : <ClipboardCopy size={16} />}{copyState === "copied" ? "Copied" : "Copy sketch"}</button>
+                <button className="primary" onClick={downloadSketch}><Download size={16} />Download .ino</button>
+              </div>
+              <div className="firmware-metadata-grid">
+                <span><small>Board</small><strong>{template.board}</strong></span>
+                <span><small>Device ID</small><strong>{device?.id ?? "YOUR_DEVICE_ID"}</strong></span>
+                <span><small>Token</small><strong>{device?.token ?? "YOUR_DEVICE_TOKEN"}</strong></span>
+                <span><small>Broker</small><strong>34.73.29.12:1883</strong></span>
+              </div>
+            </div>
+            <div className="section-title"><h2>Arduino IDE code generator</h2><button onClick={copySketch}><ClipboardCopy size={16} />Copy</button></div>
             <pre className="code-block">{code}</pre>
           </div>
           <div className="studio-section protocol-panel">
             <span className="section-kicker">Protocol</span>
             <h2>Protocol summary</h2>
+            <div className="firmware-install-card">
+              <span className="section-kicker">Board setup checklist</span>
+              <h3>Install SparkIoT library</h3>
+              <ol>
+                <li><strong>Copy folder to Documents/Arduino/libraries/SparkIoT</strong><span>Use the repo folder at arduino/SparkIoT.</span></li>
+                <li><strong>Install PubSubClient</strong><span>Arduino IDE Library Manager, Nick O'Leary package.</span></li>
+                <li><strong>Set WiFi and broker</strong><span>Do not use localhost from ESP32/ESP8266.</span></li>
+                <li><strong>Upload and watch Live Test</strong><span>Confirm telemetry, switch command and ACK loop.</span></li>
+              </ol>
+            </div>
             <div className="protocol-card">
               <strong>Telemetry topic</strong>
               <code>{device?.telemetry_topic ?? "spark/v1/{tenant_id}/{device_id}/telemetry/{channel}"}</code>
@@ -565,6 +614,10 @@ function colorForType(type: Datastream["dataType"]) {
   if (type === "image") return "#475569";
   if (type === "string") return "#334155";
   return "#f26a21";
+}
+
+function sanitizeSketchName(name: string) {
+  return name.trim().replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "SparkIoT_Template";
 }
 
 function buildArduinoSketch(template: DeviceTemplate, device?: Device) {

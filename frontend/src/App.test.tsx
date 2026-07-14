@@ -211,4 +211,27 @@ describe("App", () => {
     expect(screen.getByText(/SparkIoT\.onCommand\("V0", onV0Command\)/)).toBeInTheDocument();
     expect(screen.getByText(/SparkIoT\.ack\("V0", state, "V0 command applied"\)/)).toBeInTheDocument();
   });
+
+  it("shows a production-ready firmware export workflow in the Code tab", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Templates"));
+
+    const irrigationTemplateCard = screen.getByRole("article", { name: /Smart Irrigation template/i });
+    fireEvent.click(within(irrigationTemplateCard).getByRole("button", { name: /Open studio/i }));
+    fireEvent.click(screen.getByText("Code"));
+
+    expect(screen.getByTestId("firmware-export-panel")).toHaveClass("firmware-system-panel");
+    expect(screen.getByText("Firmware export package")).toBeInTheDocument();
+    expect(screen.getByText("Install SparkIoT library")).toBeInTheDocument();
+    expect(screen.getByText("Copy folder to Documents/Arduino/libraries/SparkIoT")).toBeInTheDocument();
+    expect(screen.getByText("Set WiFi and broker")).toBeInTheDocument();
+    expect(screen.getByText(/Do not use localhost/)).toBeInTheDocument();
+    expect(screen.getByText("Upload and watch Live Test")).toBeInTheDocument();
+    expect(screen.getByText("Download .ino")).toBeInTheDocument();
+    expect(screen.getByText("Copy sketch")).toBeInTheDocument();
+    expect(screen.getByText("Smart_Irrigation_SparkIoT.ino")).toBeInTheDocument();
+    expect(screen.getByText("ESP32")).toBeInTheDocument();
+    expect(screen.getByText("device-irrigation")).toBeInTheDocument();
+    expect(screen.getByText("spk_dev_irrigation_demo_9f3a")).toBeInTheDocument();
+  });
 });
