@@ -27,7 +27,9 @@ describe("App", () => {
     expect(screen.getAllByText("Valve status").length).toBeGreaterThan(0);
     expect(screen.getByText("Workspace health")).toBeInTheDocument();
     expect(screen.queryByText("Production preview")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Project selector")).not.toBeInTheDocument();
+    const dashboardSelector = screen.getByLabelText("Dashboard project selector");
+    expect(dashboardSelector).toBeInTheDocument();
+    expect(dashboardSelector).toHaveValue("project-irrigation");
     const navigation = screen.getByRole("navigation", { name: "Main navigation" });
     expect(navigation).toHaveTextContent("Settings");
     expect(navigation.compareDocumentPosition(screen.getByText("Workspace health")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -35,12 +37,13 @@ describe("App", () => {
     expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
   });
 
-  it("uses the Gemini dashboard shell and cockpit header architecture", async () => {
+  it("uses the standardized design-system shell and non-overlapping dashboard header", async () => {
     render(<App />);
 
     const shell = await screen.findByTestId("app-shell");
-    expect(shell).toHaveClass("app-shell", "dashboard-shell");
-    expect(screen.getByTestId("cockpit-header")).toHaveClass("cockpit-header");
+    expect(shell).toHaveClass("app-shell", "dashboard-shell", "spark-ui");
+    expect(screen.getByTestId("cockpit-header")).toHaveClass("app-page-header", "cockpit-header");
+    expect(screen.getByTestId("dashboard-header-grid")).toHaveClass("dashboard-header-grid");
     expect(screen.getByText("Redronix Cloud")).toBeInTheDocument();
     expect(screen.getByText("edgesensor_high")).toHaveClass("material-symbols-outlined");
     expect(screen.queryByText("Rectronx Cloud")).not.toBeInTheDocument();
@@ -48,6 +51,9 @@ describe("App", () => {
     expect(screen.queryByText("Quality assurance console")).not.toBeInTheDocument();
     expect(screen.getByTestId("gemini-cockpit-title")).toBeInTheDocument();
     expect(screen.queryByTestId("dashboard-legacy-hero")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Dashboard project selector")).toBeInTheDocument();
+    expect(screen.getByText("Energy Monitor")).toBeInTheDocument();
+    expect(screen.getByText("Smart Home")).toBeInTheDocument();
 
     expect(screen.getByTestId("dashboard-action-bar")).toHaveClass("gemini-action-strip");
     expect(screen.getByTestId("gemini-widget-canvas")).toHaveClass("gemini-widget-canvas");

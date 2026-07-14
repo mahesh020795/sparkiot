@@ -1,0 +1,795 @@
+/*
+  Spark IoT Design System v1
+  Canonical UI layer. Keep product-wide typography, spacing, color, layout,
+  controls and dashboard proportions here so every page follows one system.
+*/
+
+:root {
+  --spark-font-sans: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --spark-bg: #f7f9fc;
+  --spark-surface: #ffffff;
+  --spark-surface-raised: #ffffff;
+  --spark-surface-muted: #f1f5f9;
+  --spark-border: #e5edf6;
+  --spark-border-strong: #d6e1ee;
+
+  --spark-text: #0f172a;
+  --spark-text-soft: #334155;
+  --spark-muted: #64748b;
+  --spark-muted-2: #94a3b8;
+
+  --spark-primary: #2563eb;
+  --spark-primary-strong: #1455ff;
+  --spark-primary-soft: #eff6ff;
+  --spark-success: #10b981;
+  --spark-success-soft: #ecfdf5;
+  --spark-warning: #f59e0b;
+  --spark-warning-soft: #fffbeb;
+  --spark-danger: #ef4444;
+  --spark-danger-soft: #fff1f2;
+
+  --spark-radius-xs: 10px;
+  --spark-radius-sm: 12px;
+  --spark-radius-md: 16px;
+  --spark-radius-lg: 20px;
+  --spark-radius-xl: 24px;
+  --spark-radius-pill: 999px;
+
+  --spark-space-1: 0.25rem;
+  --spark-space-2: 0.5rem;
+  --spark-space-3: 0.75rem;
+  --spark-space-4: 1rem;
+  --spark-space-5: 1.25rem;
+  --spark-space-6: 1.5rem;
+  --spark-space-8: 2rem;
+  --spark-space-10: 2.5rem;
+
+  --spark-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 18px 44px rgba(15, 23, 42, 0.045);
+  --spark-shadow-soft: 0 12px 32px rgba(15, 23, 42, 0.055);
+
+  --spark-sidebar-width: 17rem;
+  --spark-page-pad-x: clamp(1.25rem, 2.4vw, 2.5rem);
+  --spark-page-title: clamp(2rem, 2.7vw, 2.75rem);
+  --spark-page-title-dashboard: clamp(2.05rem, 3vw, 2.85rem);
+  --spark-section-title: clamp(1.45rem, 2vw, 2rem);
+  --spark-card-title: 1rem;
+  --spark-label: 0.72rem;
+  --spark-body: 0.95rem;
+  --spark-small: 0.8rem;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
+}
+
+body {
+  font-family: var(--spark-font-sans);
+  color: var(--spark-text);
+  background: var(--spark-bg);
+}
+
+.spark-ui {
+  width: 100vw;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: var(--spark-sidebar-width) minmax(0, 1fr);
+  background: var(--spark-bg);
+  color: var(--spark-text);
+  overflow: hidden;
+}
+
+.spark-ui .sidebar {
+  position: sticky;
+  top: 0;
+  width: auto;
+  height: 100vh;
+  min-width: 0;
+  padding: 0;
+  border-right: 1px solid var(--spark-border);
+  background: var(--spark-surface);
+  box-shadow: none;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.spark-ui main,
+.spark-ui .dashboard-main {
+  min-width: 0;
+  height: 100vh;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--spark-bg);
+}
+
+.spark-ui button,
+.spark-ui input,
+.spark-ui select,
+.spark-ui textarea {
+  font-family: var(--spark-font-sans);
+}
+
+.spark-ui button,
+.spark-ui .action-button,
+.spark-ui .primary,
+.spark-ui .template-open-button {
+  min-height: 44px;
+  border-radius: var(--spark-radius-sm);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.spark-ui .primary,
+.spark-ui .action-button.primary,
+.spark-ui .template-open-button {
+  border-color: #0f172a;
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+}
+
+.spark-ui select,
+.spark-ui input,
+.spark-ui textarea {
+  min-height: 44px;
+  border: 1px solid var(--spark-border-strong);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface);
+  color: var(--spark-text);
+  font-size: 0.92rem;
+}
+
+.spark-ui .brand {
+  min-height: 104px;
+  padding: var(--spark-space-6);
+  gap: var(--spark-space-3);
+  border-bottom: 1px solid var(--spark-border);
+}
+
+.spark-ui .brand .brand-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 14px;
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary);
+}
+
+.spark-ui .brand strong {
+  color: var(--spark-text);
+  font-size: 1.1rem;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  font-weight: 900;
+}
+
+.spark-ui .brand div > span {
+  color: var(--spark-muted-2);
+  font-size: var(--spark-label);
+  line-height: 1.3;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 850;
+}
+
+.spark-ui .sidebar nav {
+  display: grid;
+  gap: var(--spark-space-2);
+  padding: var(--spark-space-6) var(--spark-space-4);
+}
+
+.spark-ui .sidebar nav button {
+  min-height: 46px;
+  justify-content: flex-start;
+  gap: var(--spark-space-3);
+  padding: 0 var(--spark-space-4);
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--spark-muted);
+  font-size: 0.92rem;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.spark-ui .sidebar nav button:hover {
+  background: var(--spark-surface-muted);
+  color: var(--spark-text-soft);
+}
+
+.spark-ui .sidebar nav button.active {
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary-strong);
+}
+
+.spark-ui .workspace-card,
+.spark-ui .responsive-card,
+.spark-ui .qa-card,
+.spark-ui .plan-card {
+  margin: 0 var(--spark-space-4) var(--spark-space-4);
+  padding: var(--spark-space-4);
+  border: 1px solid #dbeafe;
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-primary-soft);
+  box-shadow: none;
+}
+
+.spark-ui .section-kicker,
+.spark-ui .eyebrow,
+.spark-ui .cockpit-badge,
+.spark-ui .widget-title-wrap small,
+.spark-ui .channel-badge,
+.spark-ui .widget-live-value span,
+.spark-ui .value-display span,
+.spark-ui .widget-footer,
+.spark-ui .support-metrics small,
+.spark-ui .project-stat-row small {
+  color: var(--spark-primary);
+  font-size: var(--spark-label);
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .app-page-header {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--spark-border);
+  background: var(--spark-surface);
+}
+
+.spark-ui .dashboard-header-grid,
+.spark-ui .standard-header-grid {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: var(--spark-space-6);
+  padding: var(--spark-space-8) var(--spark-page-pad-x);
+}
+
+.spark-ui .standard-header-grid {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.spark-ui .dashboard-header-grid {
+  grid-template-columns: minmax(320px, 0.98fr) minmax(440px, 1fr);
+  align-items: start;
+}
+
+.spark-ui .cockpit-title-block {
+  min-width: 0;
+  max-width: 760px;
+}
+
+.spark-ui .cockpit-kicker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spark-space-2);
+  align-items: center;
+  margin: 0 0 var(--spark-space-3);
+}
+
+.spark-ui .cockpit-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 var(--spark-space-3);
+  border: 1px solid #dbeafe;
+  border-radius: var(--spark-radius-pill);
+  background: var(--spark-primary-soft);
+}
+
+.spark-ui .topbar h1,
+.spark-ui .support-hero h2,
+.spark-ui .overview-hero h2 {
+  margin: 0;
+  color: var(--spark-text);
+  font-size: var(--spark-page-title);
+  line-height: 1.05;
+  letter-spacing: -0.055em;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui.dashboard-shell .topbar h1 {
+  max-width: 760px;
+  font-size: var(--spark-page-title-dashboard);
+}
+
+.spark-ui .topbar p,
+.spark-ui .support-hero p,
+.spark-ui .overview-hero p,
+.spark-ui .panel p {
+  max-width: 720px;
+  margin: var(--spark-space-3) 0 0;
+  color: var(--spark-muted);
+  font-size: var(--spark-body);
+  line-height: 1.6;
+  font-weight: 550;
+}
+
+.spark-ui .top-actions {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: var(--spark-space-4);
+  align-items: start;
+}
+
+.spark-ui .project-switcher {
+  min-width: 0;
+  display: grid;
+  gap: var(--spark-space-2);
+  padding: var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-raised);
+  box-shadow: var(--spark-shadow-soft);
+}
+
+.spark-ui .project-switcher span {
+  color: var(--spark-muted);
+  font-size: var(--spark-label);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .project-switcher select {
+  width: 100%;
+  min-width: 0;
+  padding: 0 var(--spark-space-3);
+  border-radius: 12px;
+  font-weight: 750;
+}
+
+.spark-ui .cockpit-metrics {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(116px, 1fr));
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .cockpit-metrics span,
+.spark-ui .overview-metric,
+.spark-ui .support-metrics span,
+.spark-ui .project-stat-row span {
+  min-width: 0;
+  min-height: 74px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--spark-space-3);
+  padding: var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-raised);
+  box-shadow: var(--spark-shadow-soft);
+}
+
+.spark-ui .cockpit-metrics svg,
+.spark-ui .overview-metric > span {
+  width: 38px;
+  height: 38px;
+  padding: 9px;
+  border-radius: 13px;
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary);
+}
+
+.spark-ui .cockpit-metrics span:first-child svg {
+  background: var(--spark-success-soft);
+  color: var(--spark-success);
+}
+
+.spark-ui .cockpit-metrics span:last-child svg {
+  background: var(--spark-warning-soft);
+  color: var(--spark-warning);
+}
+
+.spark-ui .cockpit-metrics strong,
+.spark-ui .overview-metric strong,
+.spark-ui .support-metrics strong,
+.spark-ui .project-stat-row strong {
+  min-width: 0;
+  color: var(--spark-text);
+  font-size: 1.08rem;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spark-ui .cockpit-metrics small,
+.spark-ui .overview-metric small {
+  color: var(--spark-muted-2);
+  font-size: 0.68rem;
+  line-height: 1.25;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .cockpit-simulation-strip {
+  width: min(640px, 100%);
+  display: grid;
+  grid-template-columns: auto minmax(150px, auto) minmax(0, 1fr);
+  gap: var(--spark-space-3);
+  align-items: center;
+  margin-top: var(--spark-space-5);
+  padding: var(--spark-space-3) var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface-muted);
+  color: var(--spark-primary);
+  box-shadow: none;
+}
+
+.spark-ui .cockpit-simulation-strip strong,
+.spark-ui .cockpit-simulation-strip span {
+  min-width: 0;
+  font-size: var(--spark-small);
+  line-height: 1.35;
+}
+
+.spark-ui .cockpit-simulation-strip span {
+  color: var(--spark-muted-2);
+}
+
+.spark-ui .support-page,
+.spark-ui .overview-page {
+  display: grid;
+  gap: var(--spark-space-6);
+  padding: var(--spark-space-6) var(--spark-page-pad-x) var(--spark-space-10);
+}
+
+.spark-ui.dashboard-shell .overview-page {
+  gap: 0;
+  padding: 0;
+}
+
+.spark-ui .support-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spark-space-5);
+  align-items: center;
+  padding: var(--spark-space-6);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-xl);
+  background: var(--spark-surface);
+  box-shadow: var(--spark-shadow-card);
+}
+
+.spark-ui .support-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(100px, 1fr));
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .panel,
+.spark-ui .widget,
+.spark-ui .template-library-card,
+.spark-ui .provisioning-card,
+.spark-ui .live-connection-card,
+.spark-ui .live-topic-card,
+.spark-ui .live-values-panel,
+.spark-ui .command-monitor-panel {
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-xl);
+  background: var(--spark-surface);
+  box-shadow: var(--spark-shadow-card);
+}
+
+.spark-ui .panel {
+  padding: var(--spark-space-5);
+}
+
+.spark-ui .panel h2,
+.spark-ui .template-library-card h2,
+.spark-ui .provisioning-card-head h2,
+.spark-ui .studio-section h2 {
+  margin: 0;
+  color: var(--spark-text);
+  font-size: var(--spark-card-title);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  font-weight: 900;
+}
+
+.spark-ui .dashboard-toolbar.gemini-action-strip {
+  min-height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spark-space-4);
+  margin: 0;
+  padding: var(--spark-space-5) var(--spark-page-pad-x);
+  border: 0;
+  border-bottom: 1px solid var(--spark-border);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  box-shadow: none;
+}
+
+.spark-ui .command-status {
+  min-width: min(430px, 100%);
+  min-height: 56px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spark-space-3);
+  padding: var(--spark-space-3) var(--spark-space-4);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary);
+}
+
+.spark-ui .command-status strong {
+  color: #075985;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.spark-ui .command-status small {
+  color: var(--spark-primary);
+  font-size: 0.72rem;
+}
+
+.spark-ui .command-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .gemini-widget-canvas {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--spark-space-6);
+  margin: 0;
+  padding: var(--spark-space-6) var(--spark-page-pad-x) var(--spark-space-10);
+  border: 0;
+  border-radius: 0;
+  background:
+    linear-gradient(rgba(226, 232, 240, 0.48) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(226, 232, 240, 0.48) 1px, transparent 1px),
+    var(--spark-bg);
+  background-size: 80px 80px;
+  box-shadow: none;
+}
+
+.spark-ui .grid-cell {
+  min-width: 0;
+}
+
+.spark-ui .widget {
+  min-height: 100%;
+  padding: var(--spark-space-6);
+  overflow: hidden;
+}
+
+.spark-ui .widget::before,
+.spark-ui .widget::after {
+  display: none;
+}
+
+.spark-ui .widget-header {
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .widget-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary);
+}
+
+.spark-ui .widget-title-wrap {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.spark-ui .widget-title-wrap > span {
+  color: var(--spark-text);
+  font-size: var(--spark-card-title);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  font-weight: 900;
+}
+
+.spark-ui .channel-badge {
+  max-width: 45%;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 0 var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-pill);
+  background: var(--spark-surface-muted);
+  color: var(--spark-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spark-ui .widget-live-value,
+.spark-ui .data-surface,
+.spark-ui .media-frame {
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface);
+}
+
+.spark-ui .widget-live-value {
+  min-height: 56px;
+  margin-top: var(--spark-space-4);
+  padding: var(--spark-space-3) var(--spark-space-4);
+}
+
+.spark-ui .widget-live-value strong {
+  color: var(--spark-text);
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  line-height: 1;
+  letter-spacing: -0.055em;
+  font-weight: 900;
+}
+
+.spark-ui .value-display strong {
+  color: var(--spark-text);
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+  font-weight: 900;
+}
+
+.spark-ui .gauge-chart {
+  min-height: 230px;
+}
+
+.spark-ui .chart {
+  min-height: 220px;
+}
+
+.spark-ui .widget-footer {
+  margin-top: var(--spark-space-5);
+  padding-top: var(--spark-space-4);
+  border-top: 1px solid var(--spark-border);
+}
+
+.spark-ui .widget-footer span {
+  color: var(--spark-primary);
+}
+
+.spark-ui .widget-footer small {
+  min-width: 0;
+  color: var(--spark-muted-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spark-ui .data-history-panel,
+.spark-ui .notification-inbox {
+  overflow-x: auto;
+}
+
+.spark-ui table {
+  min-width: 720px;
+}
+
+@media (max-width: 1280px) {
+  .spark-ui .dashboard-header-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spark-ui .top-actions {
+    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .spark-ui {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .spark-ui .sidebar {
+    position: relative;
+    height: auto;
+    max-height: none;
+  }
+
+  .spark-ui .sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spark-ui main,
+  .spark-ui .dashboard-main {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .spark-ui .standard-header-grid,
+  .spark-ui .top-actions,
+  .spark-ui .support-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .spark-ui .cockpit-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spark-ui .dashboard-toolbar.gemini-action-strip {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .spark-ui .command-actions {
+    justify-content: stretch;
+  }
+
+  .spark-ui .command-actions button {
+    flex: 1 1 160px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --spark-page-title: clamp(1.7rem, 9vw, 2.15rem);
+    --spark-page-title-dashboard: clamp(1.75rem, 9vw, 2.25rem);
+  }
+
+  .spark-ui .sidebar nav,
+  .spark-ui .cockpit-metrics,
+  .spark-ui .support-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .spark-ui .dashboard-header-grid,
+  .spark-ui .standard-header-grid,
+  .spark-ui .dashboard-toolbar.gemini-action-strip,
+  .spark-ui .gemini-widget-canvas,
+  .spark-ui .support-page {
+    padding-left: var(--spark-space-4);
+    padding-right: var(--spark-space-4);
+  }
+
+  .spark-ui .cockpit-simulation-strip {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .spark-ui .cockpit-simulation-strip span {
+    grid-column: 1 / -1;
+  }
+
+  .spark-ui .gemini-widget-canvas {
+    grid-template-columns: 1fr;
+    gap: var(--spark-space-4);
+  }
+
+  .spark-ui .grid-cell {
+    grid-column: 1 / -1 !important;
+  }
+}

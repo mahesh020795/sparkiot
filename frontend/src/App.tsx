@@ -80,7 +80,7 @@ export function App() {
   }
 
   return (
-    <div className={view === "dashboard" ? "app-shell dashboard-shell" : "app-shell"} data-testid="app-shell">
+    <div className={view === "dashboard" ? "app-shell spark-ui dashboard-shell" : "app-shell spark-ui"} data-testid="app-shell">
       <aside className="sidebar">
         <div className="brand"><span className="brand-icon"><span className="material-symbols-outlined" aria-hidden="true">edgesensor_high</span></span><div><strong>Spark IoT</strong><span>Redronix Cloud</span></div></div>
         <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
@@ -106,7 +106,8 @@ export function App() {
         )}
       </aside>
       <main className={view === "dashboard" ? "dashboard-main" : undefined}>
-        <header className={view === "dashboard" ? "topbar cockpit-header" : "topbar"} data-testid="cockpit-header">
+        <header className={view === "dashboard" ? "topbar app-page-header cockpit-header" : "topbar app-page-header"} data-testid="cockpit-header">
+          <div className={view === "dashboard" ? "dashboard-header-grid" : "standard-header-grid"} data-testid={view === "dashboard" ? "dashboard-header-grid" : undefined}>
           <div className="cockpit-title-block" data-testid={view === "dashboard" ? "gemini-cockpit-title" : undefined}>
             <div className="cockpit-kicker-row"><span className="eyebrow">{view === "dashboard" ? "Live control cockpit" : "Control Center"}</span>{view === "dashboard" && <span className="cockpit-badge">Premium industrial widgets</span>}</div>
             <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
@@ -114,6 +115,12 @@ export function App() {
             {view === "dashboard" && <div className="cockpit-simulation-strip"><RadioTower size={16} /><strong>Interactive live simulation</strong><span>Solenoid outputs synchronized with maps & video stream</span></div>}
           </div>
           <div className="top-actions">
+            {view === "dashboard" && (
+              <label className="project-switcher">
+                <span>Dashboard</span>
+                <select aria-label="Dashboard project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{demoProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
+              </label>
+            )}
             {view === "dashboard" && (
               <div className="cockpit-metrics">
                 <span><PlugZap size={19} /><strong>{demoDevices.filter((device) => device.is_online).length}/{demoDevices.length}</strong><small>Nodes online</small></span>
@@ -124,6 +131,7 @@ export function App() {
             )}
             {view !== "dashboard" && <div className="preview-status"><RadioTower size={16} /><div><strong>Production preview</strong><small>Local MVP · no login mode</small></div></div>}
             {view !== "dashboard" && <select aria-label="Project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{demoProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>}
+          </div>
           </div>
         </header>
         {view === "dashboard" && <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />}
