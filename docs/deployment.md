@@ -71,9 +71,20 @@ cd ~/spark-iot
 bash scripts/deploy_vps.sh
 ```
 
-## GitHub Actions VPS deployment
+## GitHub Actions production VPS deployment
 
-The workflow `.github/workflows/deploy-vps.yml` deploys when manually run from the GitHub Actions tab. This avoids failed deployments before VPS secrets are configured.
+The workflow `.github/workflows/deploy-vps.yml` deploys automatically after the `ci` workflow passes on the `main` branch. This gives the production path:
+
+```text
+git push origin main
+→ GitHub CI tests/build/package
+→ GitHub deploy-vps
+→ SSH into VPS
+→ git pull + docker compose up -d --build
+→ health check
+```
+
+The workflow can also be run manually from the GitHub Actions tab.
 
 Configure these GitHub repository secrets:
 
@@ -90,13 +101,35 @@ The workflow SSHes into the VPS and runs:
 bash scripts/deploy_vps.sh
 ```
 
-After the secrets are confirmed working, you can make deployment automatic by adding this trigger back to `.github/workflows/deploy-vps.yml`:
+### One-time SSH key setup
 
-```yaml
-on:
-  workflow_dispatch:
-  push:
-    branches: [main]
+Create a dedicated deploy key on the VPS:
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-spark-iot" -f ~/.ssh/spark_iot_github_actions -N ""
+cat ~/.ssh/spark_iot_github_actions.pub >> ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+cat ~/.ssh/spark_iot_github_actions
+```
+
+Copy the private key output into GitHub secret `VPS_SSH_KEY`.
+
+### First automatic deployment after ZIP-based deployments
+
+If the VPS currently contains a non-git `~/spark-iot` folder from ZIP deployment, `scripts/deploy_vps.sh` safely backs it up and preserves its `.env` before cloning from GitHub.
+
+After GitHub secrets are configured, push any commit to `main` or run `deploy-vps` manually from GitHub Actions.
+
+### Production environment values
+
+Keep production-only values in VPS `.env`, never in Git:
+
+```env
+ENVIRONMENT=production
+CORS_ORIGINS=http://localhost:5173,http://localhost:8080,http://34.73.29.12:5173,http://34.73.29.12:8000
+VITE_API_BASE=http://34.73.29.12:8000/api/v1
+JWT_SECRET=<long-random-secret>
 ```
 
 ## Release ZIP

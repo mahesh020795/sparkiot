@@ -12,6 +12,8 @@ echo "REPO_URL=$REPO_URL"
 echo "BRANCH=$BRANCH"
 
 mkdir -p "$BACKUP_DIR"
+PRESERVED_ENV="$BACKUP_DIR/.env.preserved"
+rm -f "$PRESERVED_ENV"
 
 if [ -d "$APP_DIR/.git" ]; then
   cd "$APP_DIR"
@@ -20,10 +22,16 @@ if [ -d "$APP_DIR/.git" ]; then
   git pull --ff-only origin "$BRANCH"
 else
   if [ -d "$APP_DIR" ]; then
+    if [ -f "$APP_DIR/.env" ]; then
+      cp "$APP_DIR/.env" "$PRESERVED_ENV"
+    fi
     mv "$APP_DIR" "$BACKUP_DIR/spark-iot-$(date +%Y%m%d-%H%M%S)"
   fi
   git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
   cd "$APP_DIR"
+  if [ -f "$PRESERVED_ENV" ]; then
+    cp "$PRESERVED_ENV" .env
+  fi
 fi
 
 if [ ! -f .env ]; then

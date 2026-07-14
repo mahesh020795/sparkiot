@@ -138,3 +138,5 @@ After GitHub is connected, deploy updates on the VPS with:
 cd ~/spark-iot
 bash scripts/deploy_vps.sh
 ```
+
+For automatic production deployment, configure the GitHub repository secrets in `docs/deployment.md`. After that, every push to `main` runs CI first and deploys to the VPS only when CI passes.
