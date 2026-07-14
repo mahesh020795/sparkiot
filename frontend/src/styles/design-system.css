@@ -1130,8 +1130,96 @@ body {
 .spark-ui .live-connection-card,
 .spark-ui .live-topic-card,
 .spark-ui .live-values-panel,
+.spark-ui .board-quick-test,
 .spark-ui .live-system-command-monitor {
   padding: var(--spark-space-5);
+}
+
+.spark-ui .board-quick-test {
+  display: grid;
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .board-quick-test h2 {
+  margin: var(--spark-space-1) 0 var(--spark-space-2);
+  color: var(--spark-text);
+  font-size: var(--spark-title);
+  letter-spacing: -0.035em;
+}
+
+.spark-ui .board-quick-test p {
+  max-width: 880px;
+  margin: 0;
+  color: var(--spark-muted);
+  line-height: 1.55;
+}
+
+.spark-ui .quick-test-command-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(160px, 0.58fr) minmax(0, 1.2fr);
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .quick-test-command-grid span {
+  min-width: 0;
+  display: grid;
+  gap: var(--spark-space-2);
+  padding: var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-muted);
+}
+
+.spark-ui .quick-test-command-grid small {
+  color: var(--spark-muted-2);
+  font-size: var(--spark-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .quick-test-command-grid code {
+  margin: 0;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface);
+  color: var(--spark-text-soft);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .quick-test-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spark-space-3);
+  align-items: center;
+}
+
+.spark-ui .quick-test-status {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-pill);
+  background: var(--spark-surface-muted);
+  color: var(--spark-muted);
+  font-size: var(--spark-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .quick-test-status.published {
+  border-color: #bbf7d0;
+  background: var(--spark-success-soft);
+  color: #047857;
+}
+
+.spark-ui .quick-test-status.error {
+  border-color: #fecaca;
+  background: var(--spark-danger-soft);
+  color: #b91c1c;
 }
 
 .spark-ui .panel-title {
@@ -1290,7 +1378,8 @@ body {
   .spark-ui .device-system-grid,
   .spark-ui .live-system-grid,
   .spark-ui .connection-proof-timeline,
-  .spark-ui .proof-steps {
+  .spark-ui .proof-steps,
+  .spark-ui .quick-test-command-grid {
     grid-template-columns: 1fr;
   }
 

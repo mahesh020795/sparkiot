@@ -191,6 +191,7 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
   const [payload, setPayload] = useState<LiveBoardTestPayload>(fallback);
   const [commandLogs, setCommandLogs] = useState<CommandLogItem[]>([]);
   const [status, setStatus] = useState<"connecting" | "live" | "offline">("connecting");
+  const [quickTestStatus, setQuickTestStatus] = useState<"idle" | "publishing" | "published" | "error">("idle");
 
   useEffect(() => {
     let mounted = true;
@@ -219,6 +220,23 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
   const hasTelemetry = latestRows.length > 0;
   const hasCommand = commandLogs.some((log) => log.status !== "ack");
   const hasAck = commandLogs.some((log) => log.status === "ack");
+  const quickTestChannel = device?.id === "device-home" ? "V0" : "V3";
+  const quickTestTopic = (device?.command_topic ?? "spark/v1/demo-tenant/device-irrigation/command/{channel}").replace("{channel}", quickTestChannel);
+  const quickTestAckTopic = quickTestTopic.replace("/command/", "/ack/");
+  const quickTestPayload = "{\"value\":true}";
+
+  async function publishQuickTestCommand() {
+    if (!device?.id) return;
+    setQuickTestStatus("publishing");
+    try {
+      const response = await api.demoCommand(device.id, quickTestChannel, true);
+      setQuickTestStatus(response.status === "published" ? "published" : "error");
+      const next = await api.demoCommandLogs(device.id);
+      setCommandLogs(next);
+    } catch {
+      setQuickTestStatus("error");
+    }
+  }
 
   useEffect(() => {
     if (!device?.id) return;
@@ -301,6 +319,25 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
             <span>Click the dashboard switch. Spark IoT publishes <code>{(device?.command_topic ?? "spark/v1/demo-tenant/device-irrigation/command/{channel}").replace("{channel}", device?.id === "device-home" ? "V0" : "V3")}</code> with <code>{"{\"value\":true}"}</code> or <code>{"{\"value\":false}"}</code>.</span>
           </div>
         </article>
+      </section>
+
+      <section className="panel board-quick-test" data-testid="board-quick-test">
+        <div>
+          <span className="section-kicker">Board Quick Test</span>
+          <h2>Publish one command and confirm the board ACK</h2>
+          <p>This sends a real demo command to the selected device. Your sketch should receive it in `SparkIoT.onCommand`, apply the output, then call `SparkIoT.ack`.</p>
+        </div>
+        <div className="quick-test-command-grid">
+          <span><small>Test command topic</small><code>{quickTestTopic}</code></span>
+          <span><small>Payload</small><code>{quickTestPayload}</code></span>
+          <span><small>Expected board ACK</small><code>{quickTestAckTopic}</code></span>
+        </div>
+        <div className="quick-test-actions">
+          <button className="primary" onClick={publishQuickTestCommand} disabled={quickTestStatus === "publishing"}>
+            <PlugZap size={16} />{quickTestStatus === "publishing" ? "Publishing..." : "Publish test command"}
+          </button>
+          <span className={`quick-test-status ${quickTestStatus}`}>{quickTestStatus === "idle" ? "Ready to test" : quickTestStatus}</span>
+        </div>
       </section>
 
       <section className="panel live-values-panel">

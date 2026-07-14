@@ -181,6 +181,13 @@ describe("App", () => {
     expect(screen.getByText("3. Board ACK")).toBeInTheDocument();
     expect(screen.getByText("Latest V-pin readings are landing from the selected board.")).toBeInTheDocument();
     expect(screen.getByText("Waiting for switch/button command activity.")).toBeInTheDocument();
+    expect(screen.getByTestId("board-quick-test")).toHaveClass("board-quick-test");
+    expect(screen.getByText("Board Quick Test")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Publish test command/i })).toBeInTheDocument();
+    expect(screen.getByText("Test command topic")).toBeInTheDocument();
+    expect(screen.getAllByText("spark/v1/demo-tenant/device-irrigation/command/V3").length).toBeGreaterThan(0);
+    expect(screen.getByText("Expected board ACK")).toBeInTheDocument();
+    expect(screen.getByText("spark/v1/demo-tenant/device-irrigation/ack/V3")).toBeInTheDocument();
     expect(screen.getByText("MQTT broker")).toBeInTheDocument();
     expect(screen.getByText("device-irrigation")).toBeInTheDocument();
     expect(screen.getByText("spark/v1/demo-tenant/device-irrigation/telemetry/{channel}")).toBeInTheDocument();
