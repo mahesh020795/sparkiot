@@ -72,10 +72,10 @@ private:
   void handleMessage(char* topic, byte* payload, unsigned int length);
   const char* extractChannel(char* topic);
   bool parseBoolPayload(const char* payload);
+  void escapeJson(const char* input, char* output, size_t outputSize);
 
   static SparkIoTClient* _activeClient;
   static void mqttCallback(char* topic, byte* payload, unsigned int length);
 };
 
 extern SparkIoTClient SparkIoT;
-

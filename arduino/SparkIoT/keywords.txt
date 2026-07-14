@@ -1,0 +1,13 @@
+SparkIoT	KEYWORD1
+SparkIoTClient	KEYWORD1
+
+begin	KEYWORD2
+run	KEYWORD2
+connected	KEYWORD2
+virtualWrite	KEYWORD2
+setLocation	KEYWORD2
+setCameraUrl	KEYWORD2
+onCommand	KEYWORD2
+ack	KEYWORD2
+
+SparkIoTCommandCallback	DATA_TYPE

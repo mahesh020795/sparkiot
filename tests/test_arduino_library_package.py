@@ -7,6 +7,8 @@ LIBRARY = ROOT / "arduino" / "SparkIoT"
 
 def test_sparkiot_arduino_library_has_installable_package_shape():
     assert (LIBRARY / "library.properties").exists()
+    assert (LIBRARY / "keywords.txt").exists()
+    assert (LIBRARY / "README.md").exists()
     assert (LIBRARY / "src" / "SparkIoT.h").exists()
     assert (LIBRARY / "src" / "SparkIoT.cpp").exists()
 
@@ -14,6 +16,10 @@ def test_sparkiot_arduino_library_has_installable_package_shape():
     assert "name=SparkIoT" in manifest
     assert "architectures=esp32,esp8266" in manifest
     assert "depends=PubSubClient" in manifest
+
+    keywords = (LIBRARY / "keywords.txt").read_text(encoding="utf-8")
+    for expected in ["SparkIoT\tKEYWORD1", "virtualWrite\tKEYWORD2", "setLocation\tKEYWORD2", "onCommand\tKEYWORD2"]:
+        assert expected in keywords
 
 
 def test_sparkiot_library_exposes_clean_blynk_style_api():
@@ -39,10 +45,23 @@ def test_sparkiot_library_exposes_clean_blynk_style_api():
         "/telemetry/",
         "/command/#",
         "/ack/",
+        "escapeJson",
+        "\\\\n",
+        "\\\\\"",
         "PubSubClient",
         "SparkIoTClient SparkIoT;",
     ]:
         assert expected in implementation
+
+
+def test_sparkiot_library_documents_json_safe_payloads_and_vps_hosting():
+    docs = (ROOT / "docs" / "arduino-library.md").read_text(encoding="utf-8")
+    library_readme = (LIBRARY / "README.md").read_text(encoding="utf-8")
+
+    for content in [docs, library_readme]:
+        assert "quotes, backslashes, and newlines" in content
+        assert "Do not use `localhost` from a real board" in content
+        assert "34.73.29.12" in content
 
 
 def test_sparkiot_library_ships_beginner_friendly_examples():
@@ -57,4 +76,3 @@ def test_sparkiot_library_ships_beginner_friendly_examples():
         content = (LIBRARY / "examples" / relative_path).read_text(encoding="utf-8")
         for snippet in expected_snippets:
             assert snippet in content
-

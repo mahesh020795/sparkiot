@@ -82,8 +82,10 @@ bool SparkIoTClient::virtualWrite(const char* channel, bool value, const char* u
 }
 
 bool SparkIoTClient::virtualWrite(const char* channel, const char* value, const char* unit) {
+  char escapedValue[180];
   char valueJson[220];
-  snprintf(valueJson, sizeof(valueJson), "\"%s\"", value);
+  escapeJson(value, escapedValue, sizeof(escapedValue));
+  snprintf(valueJson, sizeof(valueJson), "\"%s\"", escapedValue);
   return publishJson("telemetry", channel, valueJson, unit);
 }
 
@@ -102,8 +104,10 @@ bool SparkIoTClient::setLocation(const char* channel, float lat, float lng, floa
 }
 
 bool SparkIoTClient::setCameraUrl(const char* channel, const char* url) {
+  char escapedUrl[220];
   char valueJson[260];
-  snprintf(valueJson, sizeof(valueJson), "{\"url\":\"%s\"}", url);
+  escapeJson(url, escapedUrl, sizeof(escapedUrl));
+  snprintf(valueJson, sizeof(valueJson), "{\"url\":\"%s\"}", escapedUrl);
   return publishJson("telemetry", channel, valueJson, "");
 }
 
@@ -123,13 +127,15 @@ void SparkIoTClient::onCommand(const char* channel, SparkIoTCommandCallback call
 }
 
 bool SparkIoTClient::ack(const char* channel, bool value, const char* message) {
+  char escapedMessage[120];
   char valueJson[180];
+  escapeJson(message, escapedMessage, sizeof(escapedMessage));
   snprintf(
     valueJson,
     sizeof(valueJson),
     "{\"status\":\"ok\",\"value\":%s,\"message\":\"%s\"}",
     value ? "true" : "false",
-    message
+    escapedMessage
   );
   return publishJson("ack", channel, valueJson, "");
 }
@@ -236,6 +242,53 @@ bool SparkIoTClient::parseBoolPayload(const char* payload) {
          strcmp(payload, "true") == 0 ||
          strstr(payload, "\"value\":true") != nullptr ||
          strstr(payload, "\"value\":1") != nullptr;
+}
+
+void SparkIoTClient::escapeJson(const char* input, char* output, size_t outputSize) {
+  if (!output || outputSize == 0) {
+    return;
+  }
+
+  if (!input) {
+    output[0] = '\0';
+    return;
+  }
+
+  size_t writeIndex = 0;
+  for (size_t readIndex = 0; input[readIndex] != '\0' && writeIndex + 1 < outputSize; readIndex++) {
+    const char character = input[readIndex];
+    const char* replacement = nullptr;
+
+    switch (character) {
+      case '\\':
+        replacement = "\\\\";
+        break;
+      case '"':
+        replacement = "\\\"";
+        break;
+      case '\n':
+        replacement = "\\n";
+        break;
+      case '\r':
+        replacement = "\\r";
+        break;
+      case '\t':
+        replacement = "\\t";
+        break;
+      default:
+        break;
+    }
+
+    if (replacement) {
+      for (size_t index = 0; replacement[index] != '\0' && writeIndex + 1 < outputSize; index++) {
+        output[writeIndex++] = replacement[index];
+      }
+    } else {
+      output[writeIndex++] = character;
+    }
+  }
+
+  output[writeIndex] = '\0';
 }
 
 void SparkIoTClient::mqttCallback(char* topic, byte* payload, unsigned int length) {

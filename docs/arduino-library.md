@@ -80,6 +80,8 @@ SparkIoT.onCommand("V3", onCommandCallback);
 SparkIoT.ack("V3", true, "Command applied");
 ```
 
+String telemetry, camera URLs, and ACK messages are escaped before publishing, so quotes, backslashes, and newlines do not break MQTT JSON payloads.
+
 ## Protocol mapping
 
 The library publishes to the same Spark IoT MQTT topics as the backend:
@@ -110,7 +112,7 @@ ACK packets do not include the token because they are used as command-log confir
 ## Notes for production
 
 - Use a domain and TLS before public customer use.
+- Do not use `localhost` from a real board. From ESP32/ESP8266, `localhost` means the board itself; use your VPS IP or production domain, such as `34.73.29.12` for the current test server.
 - Do not hard-code production tokens in public repositories.
 - Rotate device tokens from the Spark IoT device provisioning screen when a board is lost or shared.
 - Use the Code tab to generate the correct tenant, device, token, and virtual pin mappings from each customer template.
-
