@@ -1,5 +1,5 @@
 import * as echarts from "echarts";
-import { Battery, Camera, Circle, Clock, MapPinned, Power, Radio, Send, Sparkles, ToggleLeft } from "lucide-react";
+import { Battery, Camera, Circle, Clock, Droplets, Gauge, MapPinned, Power, Radio, Send, Signal, Sparkles, Thermometer, ToggleLeft, Zap } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
@@ -160,7 +160,7 @@ function WidgetHeader({ config, icon }: { config: WidgetConfig; icon?: React.Rea
   const typeLabel = config.type.replace(/_/g, " ");
   return (
     <header className="widget-header">
-      <span className="widget-icon">{icon ?? <Sparkles size={16} />}</span>
+      <span className="widget-icon">{icon ?? iconForWidget(config)}</span>
       <span className="widget-title-wrap">
         <span>{config.title}</span>
         <small>{typeLabel}</small>
@@ -172,6 +172,17 @@ function WidgetHeader({ config, icon }: { config: WidgetConfig; icon?: React.Rea
 
 function WidgetFooter({ config, value }: { config: WidgetConfig; value: string }) {
   return <footer className="widget-footer"><span>{config.channel}</span><small>{value}</small></footer>;
+}
+
+function iconForWidget(config: WidgetConfig) {
+  const title = config.title.toLowerCase();
+  if (title.includes("temp")) return <Thermometer size={16} />;
+  if (title.includes("humidity") || title.includes("moisture") || title.includes("water")) return <Droplets size={16} />;
+  if (title.includes("voltage") || title.includes("power") || title.includes("current")) return <Zap size={16} />;
+  if (config.type === "meter" || config.type === "gauge") return <Gauge size={16} />;
+  if (config.type === "battery") return <Battery size={16} />;
+  if (config.type === "signal") return <Signal size={16} />;
+  return <Sparkles size={16} />;
 }
 
 function useResizeSignal(ref: React.RefObject<HTMLElement | null>, onResize: () => void) {
