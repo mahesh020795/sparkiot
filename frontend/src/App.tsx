@@ -8,7 +8,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api } from "./lib/api";
-import type { Device, DeviceTemplate, LiveBoardTestPayload, Project, Telemetry } from "./lib/types";
+import type { CommandLogItem, Device, DeviceTemplate, LiveBoardTestPayload, Project, Telemetry } from "./lib/types";
 
 type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "history" | "notifications" | "settings";
 
@@ -109,6 +109,7 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
     latest
   };
   const [payload, setPayload] = useState<LiveBoardTestPayload>(fallback);
+  const [commandLogs, setCommandLogs] = useState<CommandLogItem[]>([]);
   const [status, setStatus] = useState<"connecting" | "live" | "offline">("connecting");
 
   useEffect(() => {
@@ -135,6 +136,25 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
 
   const device = payload.devices[0] ?? fallback.devices[0];
   const latestRows = Object.values(payload.latest).filter((reading) => reading.device_id === device?.id);
+
+  useEffect(() => {
+    if (!device?.id) return;
+    let mounted = true;
+    async function loadLogs() {
+      try {
+        const next = await api.demoCommandLogs(device.id);
+        if (mounted) setCommandLogs(next);
+      } catch {
+        if (mounted) setCommandLogs([]);
+      }
+    }
+    void loadLogs();
+    const id = window.setInterval(loadLogs, 4000);
+    return () => {
+      mounted = false;
+      window.clearInterval(id);
+    };
+  }, [device?.id]);
 
   return (
     <section className="support-page live-test-page">
@@ -187,6 +207,25 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
           )) : <div className="empty-state"><strong>No board data yet</strong><p>Publish MQTT telemetry to V0, V1 or another virtual pin and this panel will update.</p></div>}
         </div>
       </section>
+
+      <section className="panel command-monitor-panel">
+        <div className="panel-title"><TerminalSquare size={18} /><h2>Command monitor</h2></div>
+        <p>Shows dashboard commands and board acknowledgements. This is how you prove the switch reached the ESP32/NodeMCU.</p>
+        <div className="command-log-list">
+          {commandLogs.length ? commandLogs.map((log) => (
+            <article key={log.id} className={`command-log-row ${log.status}`}>
+              <span className="command-log-status">{log.status === "ack" ? "Board ACK" : log.status}</span>
+              <div>
+                <strong>{log.channel}</strong>
+                <code>{formatCommandValue(log.value)}</code>
+              </div>
+              <time>{new Date(log.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</time>
+            </article>
+          )) : (
+            <div className="empty-state compact"><strong>No command activity yet</strong><p>Click a dashboard switch, then publish an ACK from the board to see the full loop.</p></div>
+          )}
+        </div>
+      </section>
     </section>
   );
 }
@@ -196,6 +235,11 @@ function ConnectionLine({ label, value }: { label: string; value: string }) {
 }
 
 function formatLiveValue(value: unknown) {
+  if (typeof value === "object" && value !== null) return JSON.stringify(value);
+  return String(value);
+}
+
+function formatCommandValue(value: unknown) {
   if (typeof value === "object" && value !== null) return JSON.stringify(value);
   return String(value);
 }

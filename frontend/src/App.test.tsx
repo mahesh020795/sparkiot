@@ -124,6 +124,8 @@ describe("App", () => {
     expect(screen.getByText("device-irrigation")).toBeInTheDocument();
     expect(screen.getByText("spark/v1/demo-tenant/device-irrigation/telemetry/{channel}")).toBeInTheDocument();
     expect(screen.getByText("spk_dev_irrigation_demo_9f3a")).toBeInTheDocument();
+    expect(screen.getByText("Command monitor")).toBeInTheDocument();
+    expect(screen.getByText("Shows dashboard commands and board acknowledgements. This is how you prove the switch reached the ESP32/NodeMCU.")).toBeInTheDocument();
   });
 
   it("generates board-specific Arduino MQTT sketches from selected templates and devices", async () => {

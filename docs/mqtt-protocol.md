@@ -59,6 +59,7 @@ It subscribes to:
 
 ```text
 spark/v1/+/+/telemetry/+
+spark/v1/+/+/ack/+
 ```
 
 Telemetry payloads must be JSON objects:
@@ -89,3 +90,15 @@ Camera virtual pins can send a snapshot or stream URL:
   "value": { "url": "https://example.com/camera.jpg" }
 }
 ```
+
+Command acknowledgements are published by boards after receiving a command:
+
+```json
+{
+  "status": "ok",
+  "value": true,
+  "message": "Pump command applied"
+}
+```
+
+The backend stores ACK packets as command-log entries so the Live Test command monitor can show both the dashboard command and the board confirmation.

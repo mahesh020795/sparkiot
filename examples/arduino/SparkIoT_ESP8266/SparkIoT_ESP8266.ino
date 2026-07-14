@@ -20,6 +20,7 @@ const char* commandTopic = "spark/v1/demo-tenant/device-home/command/#";
 const char* TOPIC_TELEMETRY_V0 = "spark/v1/demo-tenant/device-home/telemetry/V0";
 const char* TOPIC_TELEMETRY_V1 = "spark/v1/demo-tenant/device-home/telemetry/V1";
 const char* TOPIC_TELEMETRY_V2 = "spark/v1/demo-tenant/device-home/telemetry/V2";
+const char* TOPIC_ACK_V0 = "spark/v1/demo-tenant/device-home/ack/V0";
 
 WiFiClient wifiClient;
 PubSubClient mqtt(wifiClient);
@@ -39,6 +40,16 @@ void publishJson(const char* topic, const char* valueJson, const char* unit) {
   Serial.println(payload);
 }
 
+void publishAck(const char* topic, bool value, const char* message) {
+  char payload[180];
+  snprintf(payload, sizeof(payload), "{\"status\":\"ok\",\"value\":%s,\"message\":\"%s\"}", value ? "true" : "false", message);
+  mqtt.publish(topic, payload);
+  Serial.print("ACK ");
+  Serial.print(topic);
+  Serial.print(" -> ");
+  Serial.println(payload);
+}
+
 void onMqttMessage(char* topic, byte* payload, unsigned int length) {
   String topicText = String(topic);
   String payloadText;
@@ -53,6 +64,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     bool relayOn = payloadText == "1" || payloadText == "true" || payloadText.indexOf("\"value\":true") >= 0;
     digitalWrite(LED_BUILTIN, relayOn ? LOW : HIGH);
     publishJson(TOPIC_TELEMETRY_V0, relayOn ? "true" : "false", "");
+    publishAck(TOPIC_ACK_V0, relayOn, "Relay command applied");
   }
 }
 

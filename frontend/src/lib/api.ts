@@ -1,4 +1,4 @@
-import type { Dashboard, Device, LiveBoardTestPayload, NotificationItem, Project, Telemetry } from "./types";
+import type { CommandLogItem, Dashboard, Device, LiveBoardTestPayload, NotificationItem, Project, Telemetry } from "./types";
 
 function defaultApiBase() {
   if (typeof window === "undefined") return "http://localhost:8000/api/v1";
@@ -49,6 +49,7 @@ export const api = {
   demoLatest: (projectId: string) => request<Record<string, Telemetry>>(`/demo/projects/${projectId}/latest`),
   demoBoardTest: (projectId: string) => request<LiveBoardTestPayload>(`/demo/projects/${projectId}/board-test`),
   demoCommand: (deviceId: string, channel: string, value: unknown) => request<{ status: string; topic: string; payload: { value: unknown } }>(`/demo/devices/${deviceId}/commands`, { method: "POST", body: JSON.stringify({ channel, value }) }),
+  demoCommandLogs: (deviceId: string) => request<CommandLogItem[]>(`/demo/devices/${deviceId}/command-logs`),
   history: (deviceId: string, channel: string) => request<Telemetry[]>(`/telemetry/devices/${deviceId}/history?channel=${encodeURIComponent(channel)}`),
   command: (deviceId: string, channel: string, value: unknown) => request(`/devices/${deviceId}/commands`, { method: "POST", body: JSON.stringify({ channel, value }) }),
   notifications: () => request<NotificationItem[]>("/notifications"),

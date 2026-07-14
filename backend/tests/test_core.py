@@ -1,5 +1,5 @@
 from app.services.mqtt import command_topic, parse_topic, telemetry_topic
-from app.services.mqtt_bridge import build_ingest_request, is_successful_connect, telemetry_event_payload
+from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request, is_successful_connect, telemetry_event_payload
 from app.services.telemetry import normalize_value
 from app.services.demo_live import build_board_test_payload, build_demo_command_response
 
@@ -37,6 +37,21 @@ def test_mqtt_payload_builds_ingest_request_for_virtual_pin():
     assert request.value == 29.4
     assert request.unit == "C"
     assert request.message_id == "m-1"
+
+
+def test_mqtt_ack_payload_builds_command_log_fields():
+    topic = parse_topic("spark/v1/demo-tenant/device-irrigation/ack/V3")
+    payload = b'{"status":"ok","value":true,"message":"Pump command applied"}'
+
+    log_payload = build_ack_log_payload(topic, payload)
+
+    assert log_payload == {
+        "tenant_id": "demo-tenant",
+        "device_id": "device-irrigation",
+        "channel": "V3",
+        "status": "ack",
+        "value": {"status": "ok", "value": True, "message": "Pump command applied"},
+    }
 
 
 def test_normalize_virtual_pin_gps_payload_by_shape():

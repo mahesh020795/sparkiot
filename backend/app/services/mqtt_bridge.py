@@ -9,6 +9,7 @@ import paho.mqtt.client as mqtt
 
 from app.core.config import Settings, get_settings
 from app.core.database import SessionLocal
+from app.models.domain import CommandLog, Device
 from app.schemas.api import TelemetryIngestRequest
 from app.services.mqtt import parse_topic
 from app.services.realtime import hub
@@ -17,7 +18,7 @@ from app.services.telemetry import ingest
 logger = logging.getLogger(__name__)
 
 
-TELEMETRY_SUBSCRIPTION = "spark/v1/+/+/telemetry/+"
+MQTT_SUBSCRIPTIONS = ("spark/v1/+/+/telemetry/+", "spark/v1/+/+/ack/+")
 
 
 def is_successful_connect(reason_code: Any) -> bool:
@@ -54,6 +55,24 @@ def build_ingest_request(topic_parts: dict[str, str], payload: bytes) -> Telemet
         quality=body.get("quality") or {},
         message_id=body.get("message_id"),
     )
+
+
+def build_ack_log_payload(topic_parts: dict[str, str], payload: bytes) -> dict[str, Any]:
+    if topic_parts.get("kind") != "ack":
+        raise ValueError("Only ack topics can be recorded as command logs")
+    try:
+        body = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("MQTT ack payload must be valid JSON") from exc
+    if not isinstance(body, dict):
+        body = {"value": body}
+    return {
+        "tenant_id": topic_parts["tenant_id"],
+        "device_id": topic_parts["device_id"],
+        "channel": topic_parts["channel"],
+        "status": "ack",
+        "value": body,
+    }
 
 
 def telemetry_event_payload(record: Any) -> dict[str, Any]:
@@ -101,22 +120,55 @@ class MqttIngestionBridge:
 
     def _on_connect(self, client: mqtt.Client, _userdata: Any, _flags: Any, reason_code: Any, _properties: Any) -> None:
         if is_successful_connect(reason_code):
-            client.subscribe(TELEMETRY_SUBSCRIPTION, qos=1)
-            logger.info("MQTT bridge subscribed to %s", TELEMETRY_SUBSCRIPTION)
+            for topic in MQTT_SUBSCRIPTIONS:
+                client.subscribe(topic, qos=1)
+            logger.info("MQTT bridge subscribed to %s", ", ".join(MQTT_SUBSCRIPTIONS))
         else:
             logger.warning("MQTT bridge connection rejected: %s", reason_code)
 
     def _on_message(self, _client: mqtt.Client, _userdata: Any, message: mqtt.MQTTMessage) -> None:
         try:
             topic_parts = parse_topic(message.topic)
-            request = build_ingest_request(topic_parts, message.payload)
-            with SessionLocal() as db:
-                record = ingest(db, topic_parts["tenant_id"], request)
-                event = telemetry_event_payload(record)
-            future = asyncio.run_coroutine_threadsafe(hub.publish(topic_parts["tenant_id"], {"type": "telemetry", "payload": event}), self.loop)
+            if topic_parts["kind"] == "telemetry":
+                event = self._record_telemetry(topic_parts, message.payload)
+                event_type = "telemetry"
+            elif topic_parts["kind"] == "ack":
+                event = self._record_ack(topic_parts, message.payload)
+                event_type = "command_ack"
+            else:
+                return
+            future = asyncio.run_coroutine_threadsafe(hub.publish(topic_parts["tenant_id"], {"type": event_type, "payload": event}), self.loop)
             future.add_done_callback(self._log_publish_error)
         except Exception as exc:  # noqa: BLE001 - broker callbacks must never crash the MQTT loop
-            logger.warning("MQTT telemetry rejected from %s: %s", message.topic, exc)
+            logger.warning("MQTT message rejected from %s: %s", message.topic, exc)
+
+    @staticmethod
+    def _record_telemetry(topic_parts: dict[str, str], payload: bytes) -> dict[str, Any]:
+        request = build_ingest_request(topic_parts, payload)
+        with SessionLocal() as db:
+            record = ingest(db, topic_parts["tenant_id"], request)
+            return telemetry_event_payload(record)
+
+    @staticmethod
+    def _record_ack(topic_parts: dict[str, str], payload: bytes) -> dict[str, Any]:
+        log_payload = build_ack_log_payload(topic_parts, payload)
+        with SessionLocal() as db:
+            device = db.get(Device, log_payload["device_id"])
+            if not device or device.tenant_id != log_payload["tenant_id"] or not device.is_active:
+                raise ValueError("ACK device is not active in this tenant")
+            record = CommandLog(**log_payload)
+            db.add(record)
+            db.commit()
+            db.refresh(record)
+            return {
+                "id": record.id,
+                "tenant_id": record.tenant_id,
+                "device_id": record.device_id,
+                "channel": record.channel,
+                "value": record.value,
+                "status": record.status,
+                "created_at": record.created_at,
+            }
 
     @staticmethod
     def _log_publish_error(future: asyncio.Future) -> None:

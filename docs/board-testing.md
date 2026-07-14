@@ -35,7 +35,7 @@ The FastAPI service also runs the local MQTT ingestion bridge by default:
 MQTT_CONSUMER_ENABLED=true
 ```
 
-That bridge subscribes to `spark/v1/+/+/telemetry/+`, validates the device token, stores telemetry, and broadcasts the update to connected dashboards.
+That bridge subscribes to `spark/v1/+/+/telemetry/+` and `spark/v1/+/+/ack/+`, validates device traffic, stores telemetry, and records board command acknowledgements.
 
 ## 2. Find your PC LAN IP
 
@@ -122,6 +122,12 @@ Command topic:
 spark/v1/demo-tenant/device-irrigation/command/#
 ```
 
+ACK topic:
+
+```text
+spark/v1/demo-tenant/device-irrigation/ack/V3
+```
+
 ### NodeMCU ESP8266 Smart Home
 
 Example file:
@@ -154,6 +160,12 @@ Command topic:
 
 ```text
 spark/v1/demo-tenant/device-home/command/#
+```
+
+ACK topic:
+
+```text
+spark/v1/demo-tenant/device-home/ack/V0
 ```
 
 ## 6. Manual MQTT telemetry test from PC
@@ -207,6 +219,11 @@ Then open the Spark IoT dashboard in your browser and click the Pump Control swi
 {"value":false}
 ```
 
+The `Live Test` tab also has a `Command monitor`. It should show:
+
+- `published` when the dashboard sends the command.
+- `Board ACK` when the ESP32/NodeMCU publishes its acknowledgement.
+
 For ESP32 Smart Irrigation, the pump switch uses:
 
 ```text
@@ -219,11 +236,25 @@ For NodeMCU ESP8266 Smart Home, the relay switch uses:
 spark/v1/demo-tenant/device-home/command/V0
 ```
 
-## 9. Troubleshooting
+## 9. Manual ACK test from VPS
+
+If you want to test the ACK monitor without a board, publish this from the VPS:
+
+```bash
+docker compose exec mosquitto mosquitto_pub \
+  -h localhost \
+  -t spark/v1/demo-tenant/device-irrigation/ack/V3 \
+  -m '{"status":"ok","value":true,"message":"Manual ACK test"}'
+```
+
+Then open `Live Test` and check the `Command monitor`.
+
+## 10. Troubleshooting
 
 - Board says MQTT failed: check `BROKER_HOST`, firewall, and Docker Compose `mosquitto` service.
 - Board WiFi never connects: check SSID/password and use 2.4 GHz WiFi for ESP8266.
 - Telemetry rejected: check the topic device ID, tenant ID, and token. They must match the seeded demo device.
 - Web app does not update from MQTT: check `MQTT_CONSUMER_ENABLED=true`, API logs, and whether the dashboard is connected to the same backend process.
 - Dashboard switch does not reach the board: subscribe to the command topic with `mosquitto_sub`, check `VITE_API_BASE`, and confirm CORS allows the frontend origin.
+- Command monitor shows `published` but no `Board ACK`: the board received or acted on the command but did not publish to the `ack` topic, or the board sketch is old.
 - Do not use `localhost` in Arduino sketches. Use your PC LAN IP.

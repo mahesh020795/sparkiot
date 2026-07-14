@@ -59,3 +59,29 @@ def demo_send_command(device_id: str, payload: CommandRequest, db: Session = Dep
     db.add(CommandLog(tenant_id=DEMO_TENANT_ID, device_id=device_id, channel=payload.channel, value={"raw": payload.value}, status=status))
     db.commit()
     return build_demo_command_response(tenant_id=DEMO_TENANT_ID, device_id=device_id, channel=payload.channel, value=payload.value, status=status)
+
+
+@router.get("/devices/{device_id}/command-logs")
+def demo_command_logs(device_id: str, db: Session = Depends(get_db)):
+    device = db.get(Device, device_id)
+    if not device or device.tenant_id != DEMO_TENANT_ID or not device.is_active:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="Demo device not found")
+    logs = db.scalars(
+        select(CommandLog)
+        .where(CommandLog.tenant_id == DEMO_TENANT_ID, CommandLog.device_id == device_id)
+        .order_by(CommandLog.created_at.desc())
+        .limit(40)
+    ).all()
+    return [
+        {
+            "id": item.id,
+            "device_id": item.device_id,
+            "channel": item.channel,
+            "value": item.value.get("raw", item.value) if isinstance(item.value, dict) else item.value,
+            "status": item.status,
+            "created_at": item.created_at,
+        }
+        for item in logs
+    ]
