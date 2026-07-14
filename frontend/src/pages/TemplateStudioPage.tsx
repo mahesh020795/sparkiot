@@ -46,12 +46,18 @@ export function TemplateStudioPage({
   selectedTemplateId,
   device,
   latest,
+  saveState,
+  saveError,
+  onSave,
   onChange
 }: {
   templates: DeviceTemplate[];
   selectedTemplateId: string;
   device?: Device;
   latest: Record<string, Telemetry>;
+  saveState: "saved" | "unsaved" | "saving" | "error";
+  saveError?: string;
+  onSave: () => void;
   onChange: (template: DeviceTemplate) => void;
 }) {
   const template = templates.find((item) => item.id === selectedTemplateId) ?? templates[0];
@@ -63,6 +69,7 @@ export function TemplateStudioPage({
   const selectedDatastream = template.datastreams.find((stream) => stream.id === selectedWidget?.datastreamId);
   const layout = useMemo(() => template.dashboard.widgets.map((widget) => ({ i: widget.id, x: widget.x, y: widget.y, w: widget.w, h: widget.h, minW: 2, minH: 2 })), [template.dashboard.widgets]);
   const code = useMemo(() => buildArduinoSketch(template, device), [template, device]);
+  const saveLabel = saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : saveState === "error" ? "Save failed" : "Unsaved changes";
 
   function patchTemplate(patch: Partial<DeviceTemplate>) {
     onChange({ ...template, ...patch });
@@ -182,12 +189,15 @@ export function TemplateStudioPage({
           </div>
         </div>
         <div className="wizard-stats">
+          <span className={`save-state ${saveState}`}>{saveLabel}</span>
           <span><strong>{template.datastreams.length}</strong> virtual pins</span>
           <span><strong>{template.dashboard.widgets.length}</strong> widgets</span>
           <span><strong>{template.notifications.length}</strong> alerts</span>
+          <button className="primary small" onClick={onSave} disabled={saveState === "saving"}><Save size={16} />{saveState === "saving" ? "Saving" : "Save"}</button>
           <button className="primary small" onClick={() => setFullBuilder((value) => !value)}><Expand size={16} />{fullBuilder ? "Exit full builder" : "Full builder"}</button>
         </div>
       </header>
+      {saveState === "error" && saveError && <div className="save-error-banner">{saveError}</div>}
 
       <nav className="wizard-steps" aria-label="Template setup steps">
         {stepConfig.map((step, index) => {
@@ -299,6 +309,8 @@ export function TemplateStudioPage({
           onUpdateWidget={updateWidget}
           onDuplicate={duplicateWidget}
           onDelete={deleteWidget}
+          saveState={saveState}
+          onSave={onSave}
         />
       )}
 
@@ -382,7 +394,7 @@ export function TemplateStudioPage({
   );
 }
 
-function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, selectedWidget, selectedDatastream, onSelect, onLayout, onAddWidget, onUpdateWidget, onDuplicate, onDelete }: {
+function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, selectedWidget, selectedDatastream, onSelect, onLayout, onAddWidget, onUpdateWidget, onDuplicate, onDelete, saveState, onSave }: {
   template: DeviceTemplate;
   device?: Device;
   latest: Record<string, Telemetry>;
@@ -396,6 +408,8 @@ function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, 
   onUpdateWidget: (id: string, patch: Partial<WidgetConfig>) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  saveState: "saved" | "unsaved" | "saving" | "error";
+  onSave: () => void;
 }) {
   return (
     <div className="studio-workbench">
@@ -417,7 +431,7 @@ function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, 
           <span className="pill">12-column grid</span>
           <span className="pill">{template.dashboard.widgets.length} widgets</span>
           <span className="muted-text">Drag from widget header. Resize from orange edges/corner.</span>
-          <button className="primary small"><Save size={16} />Save Template</button>
+          <button className="primary small" onClick={onSave} disabled={saveState === "saving"}><Save size={16} />{saveState === "saving" ? "Saving" : "Save Template"}</button>
         </div>
         <GridLayout className="rgl-layout" layout={layout} cols={12} rowHeight={72} margin={[14, 14]} isDraggable isResizable resizeHandles={["se", "e", "s", "n"]} draggableHandle=".widget-header" compactType={null} preventCollision={false} onLayoutChange={onLayout} onResizeStop={onLayout}>
           {template.dashboard.widgets.map((widget) => (

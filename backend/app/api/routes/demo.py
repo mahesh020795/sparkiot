@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, Request
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.database import get_db
-from app.models.domain import CommandLog, Device
-from app.schemas.api import CommandRequest
+from app.models.domain import CommandLog, Dashboard, Device, DeviceTemplateRecord
+from app.schemas.api import CommandRequest, TemplateStudioUpdate
 from app.services.demo_live import DEMO_TENANT_ID, build_board_test_payload, build_demo_command_response, build_latest_map
 from app.services.mqtt import publish_command
 from app.services.telemetry import latest_for_project
@@ -17,6 +19,84 @@ def _public_host(request: Request) -> str:
     forwarded = request.headers.get("x-forwarded-host")
     host = forwarded or request.headers.get("host", "localhost")
     return host.split(":")[0]
+
+
+def _template_payload(template: DeviceTemplateRecord, dashboard: Dashboard) -> dict:
+    return {
+        "id": template.id,
+        "name": template.name,
+        "board": template.board,
+        "description": template.description,
+        "revision": template.revision,
+        "datastreams": template.datastreams,
+        "notifications": template.notifications,
+        "dashboard": {
+            "id": dashboard.id,
+            "project_id": dashboard.project_id,
+            "name": dashboard.name,
+            "revision": dashboard.revision,
+            "widgets": dashboard.widgets,
+        },
+    }
+
+
+def _get_demo_template(db: Session, template_id: str) -> tuple[DeviceTemplateRecord, Dashboard]:
+    template = db.get(DeviceTemplateRecord, template_id)
+    if not template or template.tenant_id != DEMO_TENANT_ID:
+        raise HTTPException(status_code=404, detail="Demo template not found")
+    dashboard = db.get(Dashboard, template.dashboard_id)
+    if not dashboard or dashboard.tenant_id != DEMO_TENANT_ID:
+        raise HTTPException(status_code=404, detail="Demo dashboard not found")
+    return template, dashboard
+
+
+@router.get("/templates")
+def demo_templates(db: Session = Depends(get_db)):
+    rows = db.scalars(
+        select(DeviceTemplateRecord)
+        .where(DeviceTemplateRecord.tenant_id == DEMO_TENANT_ID)
+        .order_by(DeviceTemplateRecord.created_at.asc())
+    ).all()
+    dashboards = {
+        dashboard.id: dashboard
+        for dashboard in db.scalars(select(Dashboard).where(Dashboard.tenant_id == DEMO_TENANT_ID)).all()
+    }
+    return [_template_payload(template, dashboards[template.dashboard_id]) for template in rows if template.dashboard_id in dashboards]
+
+
+@router.get("/templates/{template_id}")
+def demo_template(template_id: str, db: Session = Depends(get_db)):
+    template, dashboard = _get_demo_template(db, template_id)
+    return _template_payload(template, dashboard)
+
+
+@router.put("/templates/{template_id}")
+def demo_update_template(template_id: str, payload: TemplateStudioUpdate, db: Session = Depends(get_db)):
+    template, dashboard = _get_demo_template(db, template_id)
+    if payload.revision != template.revision:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "stale_template_revision", "message": "Template was updated elsewhere. Refresh before saving again."},
+        )
+    if payload.dashboard.id != dashboard.id or payload.dashboard.project_id != template.project_id:
+        raise HTTPException(status_code=400, detail="Dashboard does not belong to this template")
+
+    template.name = payload.name
+    template.board = payload.board
+    template.description = payload.description
+    template.datastreams = [stream.model_dump(exclude_none=True) for stream in payload.datastreams]
+    template.notifications = [rule.model_dump(exclude_none=True) for rule in payload.notifications]
+    template.revision += 1
+    template.updated_at = datetime.now(UTC)
+
+    dashboard.name = payload.dashboard.name
+    dashboard.widgets = payload.dashboard.widgets
+    dashboard.revision += 1
+    dashboard.updated_at = datetime.now(UTC)
+    db.commit()
+    db.refresh(template)
+    db.refresh(dashboard)
+    return _template_payload(template, dashboard)
 
 
 @router.get("/projects/{project_id}/latest")
@@ -48,8 +128,6 @@ def demo_board_test(project_id: str, request: Request, db: Session = Depends(get
 def demo_send_command(device_id: str, payload: CommandRequest, db: Session = Depends(get_db)):
     device = db.get(Device, device_id)
     if not device or device.tenant_id != DEMO_TENANT_ID or not device.is_active:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="Demo device not found")
     try:
         publish_command(DEMO_TENANT_ID, device_id, payload.channel, payload.value)
@@ -65,8 +143,6 @@ def demo_send_command(device_id: str, payload: CommandRequest, db: Session = Dep
 def demo_command_logs(device_id: str, db: Session = Depends(get_db)):
     device = db.get(Device, device_id)
     if not device or device.tenant_id != DEMO_TENANT_ID or not device.is_active:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="Demo device not found")
     logs = db.scalars(
         select(CommandLog)

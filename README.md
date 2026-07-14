@@ -2,7 +2,7 @@
 
 Spark IoT is a Rectronx IoT SaaS starter for a lower-cost Blynk-style product. The current web-first build opens directly to the dashboard with local demo data, so customers can see the core control experience before login, project creation, templates and billing are added.
 
-The repository also includes the FastAPI modular monolith, PostgreSQL, Valkey, Mosquitto MQTT, WebSocket realtime foundation, seed data, MQTT ingestion bridge, and Arduino examples for real ESP32/ESP8266 testing.
+The repository also includes the FastAPI modular monolith, PostgreSQL, Valkey, Mosquitto MQTT, WebSocket realtime foundation, seed data, MQTT ingestion bridge, persisted Template Studio data, and Arduino examples for real ESP32/ESP8266 testing.
 
 ## Starter Plan
 
@@ -62,6 +62,16 @@ spark/v1/{tenant_id}/{device_id}/command/{channel}
 spark/v1/{tenant_id}/{device_id}/ack/{channel}
 spark/v1/{tenant_id}/{device_id}/status
 ```
+
+## Persistent Template Studio
+
+The no-login web MVP now loads and saves Template Studio data through the backend:
+
+- `GET /api/v1/demo/templates`
+- `GET /api/v1/demo/templates/{template_id}`
+- `PUT /api/v1/demo/templates/{template_id}`
+
+Saved data includes template name, board, description, virtual pins/datastreams, notification rules, and dashboard widget layout/config. The API uses optimistic `revision` checks so stale browser tabs cannot silently overwrite newer template changes.
 
 ## Test With ESP32 / NodeMCU ESP8266
 

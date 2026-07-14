@@ -2,6 +2,7 @@ from app.services.mqtt import command_topic, parse_topic, telemetry_topic
 from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request, is_successful_connect, telemetry_event_payload
 from app.services.telemetry import normalize_value
 from app.services.demo_live import build_board_test_payload, build_demo_command_response
+from app.schemas.api import TemplateStudioUpdate
 
 
 def test_topic_helpers_create_spark_namespace():
@@ -130,3 +131,75 @@ def test_demo_command_response_uses_command_namespace_and_raw_value():
         "topic": "spark/v1/demo-tenant/device-irrigation/command/V3",
         "payload": {"value": True},
     }
+
+
+def valid_template_payload() -> dict:
+    return {
+        "revision": 1,
+        "name": "Smart Irrigation",
+        "board": "ESP32",
+        "description": "Persistent template test",
+        "datastreams": [
+            {"id": "ds-temp", "name": "Temperature", "pin": "V0", "dataType": "float", "unit": "C", "min": 0, "max": 100, "color": "#2563eb"},
+            {"id": "ds-pump", "name": "Pump", "pin": "V1", "dataType": "boolean", "unit": "", "min": 0, "max": 1, "color": "#7c3aed"},
+        ],
+        "notifications": [
+            {"id": "rule-temp", "name": "Temperature Alert", "datastreamId": "ds-temp", "operator": ">", "threshold": 80, "channel": "push", "cooldownMinutes": 15}
+        ],
+        "dashboard": {
+            "id": "dashboard-1",
+            "project_id": "project-irrigation",
+            "name": "Smart Irrigation Dashboard",
+            "revision": 1,
+            "widgets": [
+                {"id": "w-temp", "type": "gauge", "title": "Temperature", "x": 0, "y": 0, "w": 4, "h": 3, "deviceId": "device-irrigation", "channel": "V0", "datastreamId": "ds-temp"}
+            ],
+        },
+    }
+
+
+def test_template_studio_update_accepts_professional_template_shape():
+    payload = TemplateStudioUpdate(**valid_template_payload())
+
+    assert payload.name == "Smart Irrigation"
+    assert payload.datastreams[0].pin == "V0"
+    assert payload.dashboard.widgets[0]["type"] == "gauge"
+
+
+def test_template_studio_rejects_duplicate_virtual_pins():
+    payload = valid_template_payload()
+    payload["datastreams"][1]["pin"] = "V0"
+
+    try:
+        TemplateStudioUpdate(**payload)
+    except ValueError as exc:
+        assert "Virtual pins must be unique" in str(exc)
+    else:
+        raise AssertionError("expected duplicate virtual pins to fail")
+
+
+def test_template_studio_rejects_rule_for_unknown_datastream():
+    payload = valid_template_payload()
+    payload["notifications"][0]["datastreamId"] = "missing-ds"
+
+    try:
+        TemplateStudioUpdate(**payload)
+    except ValueError as exc:
+        assert "unknown datastream" in str(exc)
+    else:
+        raise AssertionError("expected invalid notification target to fail")
+
+
+def test_template_studio_rejects_more_than_ten_widgets():
+    payload = valid_template_payload()
+    payload["dashboard"]["widgets"] = [
+        {"id": f"w-{index}", "type": "value", "title": f"Value {index}", "x": 0, "y": index, "w": 3, "h": 2, "deviceId": "device-irrigation", "channel": "V0"}
+        for index in range(11)
+    ]
+
+    try:
+        TemplateStudioUpdate(**payload)
+    except ValueError as exc:
+        assert "Starter plan allows 10 widgets" in str(exc)
+    else:
+        raise AssertionError("expected starter widget limit to fail")

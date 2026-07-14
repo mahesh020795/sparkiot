@@ -11,12 +11,15 @@ import { api } from "./lib/api";
 import type { CommandLogItem, Device, DeviceTemplate, LiveBoardTestPayload, Project, Telemetry } from "./lib/types";
 
 type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "history" | "notifications" | "settings";
+type SaveState = "saved" | "unsaved" | "saving" | "error";
 
 export function App() {
   const [view, setView] = useState<View>("dashboard");
   const [selectedProjectId, setSelectedProjectId] = useState<string>(demoProjects[0].id);
   const [templates, setTemplates] = useState<DeviceTemplate[]>(demoTemplates);
   const [templateStudioId, setTemplateStudioId] = useState<string | null>(null);
+  const [templateSaveStates, setTemplateSaveStates] = useState<Record<string, SaveState>>(() => Object.fromEntries(demoTemplates.map((template) => [template.id, "saved"])));
+  const [templateSaveError, setTemplateSaveError] = useState<string>("");
 
   const selectedProject = useMemo(() => demoProjects.find((project) => project.id === selectedProjectId), [selectedProjectId]);
   const selectedDevice = useMemo(() => demoDevices.find((device) => device.project_id === selectedProjectId), [selectedProjectId]);
@@ -32,6 +35,49 @@ export function App() {
     ["notifications", Bell, "Notifications"],
     ["settings", Settings, "Settings"]
   ] as const;
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadTemplates() {
+      try {
+        const persisted = await api.demoTemplates();
+        if (!mounted || !persisted.length) return;
+        setTemplates(persisted);
+        setTemplateSaveStates(Object.fromEntries(persisted.map((template) => [template.id, "saved"])));
+      } catch {
+        if (mounted) {
+          setTemplates(demoTemplates);
+          setTemplateSaveStates(Object.fromEntries(demoTemplates.map((template) => [template.id, "saved"])));
+        }
+      }
+    }
+    void loadTemplates();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  function updateTemplate(nextTemplate: DeviceTemplate) {
+    setTemplates((current) => current.map((item) => item.id === nextTemplate.id ? nextTemplate : item));
+    setTemplateSaveStates((current) => ({ ...current, [nextTemplate.id]: "unsaved" }));
+    setTemplateSaveError("");
+  }
+
+  async function saveTemplate(templateId: string) {
+    const template = templates.find((item) => item.id === templateId);
+    if (!template) return;
+    setTemplateSaveStates((current) => ({ ...current, [templateId]: "saving" }));
+    setTemplateSaveError("");
+    try {
+      const saved = await api.saveDemoTemplate(template);
+      setTemplates((current) => current.map((item) => item.id === saved.id ? saved : item));
+      setTemplateSaveStates((current) => ({ ...current, [templateId]: "saved" }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Save failed";
+      setTemplateSaveError(message.includes("stale_template_revision") ? "Template changed on the server. Refresh, then apply your latest edits again." : "Save failed. Check the API connection and try again.");
+      setTemplateSaveStates((current) => ({ ...current, [templateId]: "error" }));
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -67,7 +113,16 @@ export function App() {
         {view === "projects" && <ProjectsView projects={demoProjects} templates={templates} />}
         {view === "templates" && (
           templateStudioId ? (
-            <TemplateStudioPage templates={templates} selectedTemplateId={templateStudioId} device={selectedDevice} latest={demoLatest} onChange={(nextTemplate) => setTemplates((current) => current.map((item) => item.id === nextTemplate.id ? nextTemplate : item))} />
+            <TemplateStudioPage
+              templates={templates}
+              selectedTemplateId={templateStudioId}
+              device={selectedDevice}
+              latest={demoLatest}
+              saveState={templateSaveStates[templateStudioId] ?? "saved"}
+              saveError={templateSaveError}
+              onSave={() => void saveTemplate(templateStudioId)}
+              onChange={updateTemplate}
+            />
           ) : (
             <TemplateLibrary
               templates={templates}

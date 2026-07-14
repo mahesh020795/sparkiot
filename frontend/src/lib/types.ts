@@ -37,6 +37,7 @@ export type DeviceTemplate = {
   name: string;
   board: BoardType;
   description: string;
+  revision: number;
   datastreams: Datastream[];
   notifications: TemplateNotification[];
   dashboard: Dashboard;

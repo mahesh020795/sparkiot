@@ -81,6 +81,7 @@ function template(id: string, name: string, board: DeviceTemplate["board"], proj
     name,
     board,
     description: `${name} template for ${board}`,
+    revision: 1,
     datastreams,
     notifications: [
       { id: `${id}-alert`, name: `${datastreams[0].name} Alert`, datastreamId: datastreams[0].id, operator: ">", threshold: datastreams[0].max ? Math.round(datastreams[0].max * 0.8) : 1, channel: "push", cooldownMinutes: 15 }

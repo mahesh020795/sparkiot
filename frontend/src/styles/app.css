@@ -283,6 +283,12 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
 .wizard-stats { display: flex; flex-wrap: wrap; align-content: center; justify-content: flex-end; gap: 10px; min-width: 280px; position: relative; z-index: 1; }
 .wizard-stats span { min-width: 104px; display: grid; gap: 2px; padding: 10px 12px; border: 1px solid #dbe5f2; border-radius: 14px; background: rgba(255,255,255,0.8); color: #667085; font-size: 11px; text-transform: uppercase; font-weight: 800; }
 .wizard-stats strong { color: #152033; font-size: 18px; line-height: 1; }
+.wizard-stats .save-state { min-width: 132px; place-items: center; border-color: #d7e3f4; color: #475467; background: #ffffff; }
+.wizard-stats .save-state.saved { border-color: #bbf7d0; color: #047857; background: #f0fdf4; }
+.wizard-stats .save-state.unsaved { border-color: #fed7aa; color: #c2410c; background: #fff7ed; }
+.wizard-stats .save-state.saving { border-color: #bfdbfe; color: #1d4ed8; background: #eff6ff; }
+.wizard-stats .save-state.error { border-color: #fecaca; color: #b91c1c; background: #fef2f2; }
+.save-error-banner { margin: 0 24px 14px; padding: 12px 14px; border: 1px solid #fecaca; border-radius: 14px; background: #fff5f5; color: #991b1b; font-weight: 700; box-shadow: 0 12px 30px rgba(153, 27, 27, 0.08); }
 .wizard-steps { display: grid; grid-template-columns: repeat(7, minmax(124px, 1fr)); gap: 0; padding: 10px; background: #fff; border: 1px solid #e3e8f0; border-radius: 18px; box-shadow: 0 14px 34px rgba(16, 24, 40, 0.06); overflow-x: auto; }
 .wizard-step { position: relative; justify-content: flex-start; gap: 10px; min-height: 68px; border: 0; border-radius: 14px; background: transparent; color: #667085; font-weight: 800; padding: 10px 12px; }
 .wizard-step:not(:last-child)::after { content: ""; position: absolute; right: -1px; top: 19px; bottom: 19px; width: 1px; background: #edf1f7; }

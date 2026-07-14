@@ -85,6 +85,89 @@ class DashboardResponse(BaseModel):
     widgets: list[dict[str, Any]]
 
 
+class DatastreamDefinition(BaseModel):
+    id: str = Field(min_length=2, max_length=80)
+    name: str = Field(min_length=1, max_length=120)
+    pin: str = Field(pattern=r"^V([0-9]|[1-5][0-9]|6[0-3])$")
+    dataType: Literal["integer", "float", "string", "boolean", "gps", "image", "time", "date"]
+    unit: str | None = Field(default="", max_length=24)
+    min: float | None = None
+    max: float | None = None
+    color: str = Field(default="#2563eb", pattern=r"^#[0-9a-fA-F]{6}$")
+
+    @field_validator("max")
+    @classmethod
+    def validate_range(cls, max_value: float | None, info):
+        min_value = info.data.get("min")
+        if max_value is not None and min_value is not None and max_value < min_value:
+            raise ValueError("Datastream max must be greater than or equal to min")
+        return max_value
+
+
+class TemplateNotificationDefinition(BaseModel):
+    id: str = Field(min_length=2, max_length=100)
+    name: str = Field(min_length=1, max_length=120)
+    datastreamId: str = Field(min_length=2, max_length=80)
+    operator: Literal[">", ">=", "<", "<=", "==", "changes"]
+    threshold: float | None = None
+    channel: Literal["push", "in_app", "email"]
+    cooldownMinutes: int = Field(ge=1, le=1440)
+
+
+class TemplateDashboardPayload(BaseModel):
+    id: str
+    project_id: str
+    name: str
+    revision: int
+    widgets: list[dict[str, Any]]
+
+    @field_validator("widgets")
+    @classmethod
+    def validate_template_widgets(cls, widgets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return DashboardUpdate(revision=1, widgets=widgets).widgets
+
+
+class TemplateStudioUpdate(BaseModel):
+    revision: int
+    name: str = Field(min_length=2, max_length=160)
+    board: Literal["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"]
+    description: str = Field(default="", max_length=500)
+    datastreams: list[DatastreamDefinition] = Field(min_length=1, max_length=64)
+    notifications: list[TemplateNotificationDefinition] = Field(default_factory=list, max_length=20)
+    dashboard: TemplateDashboardPayload
+
+    @field_validator("datastreams")
+    @classmethod
+    def validate_unique_virtual_pins(cls, streams: list[DatastreamDefinition]) -> list[DatastreamDefinition]:
+        pins = [stream.pin for stream in streams]
+        if len(pins) != len(set(pins)):
+            raise ValueError("Virtual pins must be unique")
+        ids = [stream.id for stream in streams]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Datastream IDs must be unique")
+        return streams
+
+    @field_validator("notifications")
+    @classmethod
+    def validate_notification_targets(cls, notifications: list[TemplateNotificationDefinition], info):
+        stream_ids = {stream.id for stream in info.data.get("datastreams", [])}
+        for rule in notifications:
+            if rule.datastreamId not in stream_ids:
+                raise ValueError(f"Notification {rule.id} references an unknown datastream")
+        return notifications
+
+
+class TemplateStudioResponse(BaseModel):
+    id: str
+    name: str
+    board: str
+    description: str
+    revision: int
+    datastreams: list[dict[str, Any]]
+    notifications: list[dict[str, Any]]
+    dashboard: DashboardResponse
+
+
 class TelemetryIngestRequest(BaseModel):
     device_id: str
     token: str

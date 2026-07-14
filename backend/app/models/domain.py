@@ -81,6 +81,26 @@ class Dashboard(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
+class DeviceTemplateRecord(Base):
+    __tablename__ = "device_templates"
+    __table_args__ = (
+        Index("ix_device_templates_tenant_project", "tenant_id", "project_id"),
+        UniqueConstraint("tenant_id", "project_id", name="uq_template_per_project"),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    dashboard_id: Mapped[str] = mapped_column(String(36), ForeignKey("dashboards.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+    board: Mapped[str] = mapped_column(String(80), default="ESP32", nullable=False)
+    description: Mapped[str] = mapped_column(Text, default="")
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+    datastreams: Mapped[list] = mapped_column(JSON, default=list)
+    notifications: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
 class Telemetry(Base):
     __tablename__ = "telemetry"
     __table_args__ = (Index("ix_telemetry_tenant_device_channel_time", "tenant_id", "device_id", "channel", "observed_at"),)
