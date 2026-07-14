@@ -115,6 +115,16 @@ See:
 
 Docker Compose is for local deployment and VPS evaluation. Production requires HTTPS, rotated secrets, off-server PostgreSQL backups, restore tests, monitoring, dependency updates, commercial-safe map tiles, and privacy/acceptable-use documents. Camera streaming in this MVP supports snapshot or direct-stream URLs only; relay, recording and transcoding need a separate bandwidth cost study.
 
+Browser Web Push is production-shaped but requires VAPID keys before real browser delivery is enabled:
+
+```env
+VAPID_PRIVATE_KEY=your-private-vapid-key
+VAPID_PUBLIC_KEY=your-public-vapid-key
+VAPID_SUBJECT=mailto:admin@yourdomain.com
+```
+
+Without VAPID keys, Spark IoT still creates in-app notifications and alert history, but skips browser push delivery safely.
+
 ## Development Workflow
 
 Use these commands for repeatable local work:

@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import desc, select
@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.security import verify_secret
 from app.models.domain import AlertRule, Device, Notification, Telemetry, User
 from app.schemas.api import TelemetryIngestRequest
+from app.services.push import deliver_notification_pushes
 
 
 def normalize_value(channel: str, value: Any) -> dict:
@@ -58,7 +59,15 @@ def evaluate_alerts(db: Session, tenant_id: str, device_id: str, channel: str, r
     if not user:
         return
     rules = db.scalars(select(AlertRule).where(AlertRule.tenant_id == tenant_id, AlertRule.device_id == device_id, AlertRule.channel == channel, AlertRule.is_active)).all()
+    now = datetime.now(UTC)
     for rule in rules:
         hit = {">": raw_value > rule.threshold, ">=": raw_value >= rule.threshold, "<": raw_value < rule.threshold, "<=": raw_value <= rule.threshold, "==": raw_value == rule.threshold}[rule.operator]
-        if hit:
-            db.add(Notification(tenant_id=tenant_id, user_id=user.id, title="Alert triggered", body=f"{channel} is {raw_value} {rule.operator} {rule.threshold}"))
+        if not hit:
+            continue
+        if rule.last_triggered_at and rule.last_triggered_at.replace(tzinfo=UTC) + timedelta(seconds=rule.cooldown_seconds) > now:
+            continue
+        notification = Notification(tenant_id=tenant_id, user_id=user.id, title="Alert triggered", body=f"{channel} is {raw_value} {rule.operator} {rule.threshold}")
+        db.add(notification)
+        db.flush()
+        deliver_notification_pushes(db, notification)
+        rule.last_triggered_at = now

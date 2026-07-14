@@ -1,8 +1,12 @@
 from app.services.mqtt import command_topic, parse_topic, telemetry_topic
 from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request, is_successful_connect, telemetry_event_payload
-from app.services.telemetry import normalize_value
+from app.services.telemetry import evaluate_alerts, normalize_value
 from app.services.demo_live import build_board_test_payload, build_demo_command_response
 from app.schemas.api import TemplateStudioUpdate
+from app.core.database import Base, make_engine
+from app.core.security import hash_secret
+from app.models.domain import AlertRule, Device, Notification, Project, Tenant, User
+from sqlalchemy.orm import sessionmaker
 
 
 def test_topic_helpers_create_spark_namespace():
@@ -203,3 +207,35 @@ def test_template_studio_rejects_more_than_ten_widgets():
         assert "Starter plan allows 10 widgets" in str(exc)
     else:
         raise AssertionError("expected starter widget limit to fail")
+
+
+def test_threshold_alert_creates_notification_once_per_cooldown(monkeypatch):
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    db = Session()
+    delivered = []
+
+    def fake_deliver(_db, notification):
+        delivered.append(notification.title)
+        return 1
+
+    monkeypatch.setattr("app.services.telemetry.deliver_notification_pushes", fake_deliver)
+
+    tenant = Tenant(id="tenant-alert", name="Alert Tenant")
+    user = User(id="user-alert", tenant_id=tenant.id, email="alert@example.com", full_name="Alert User", password_hash=hash_secret("SparkDemo123!"))
+    project = Project(id="project-alert", tenant_id=tenant.id, name="Alert Project")
+    device = Device(id="device-alert", tenant_id=tenant.id, project_id=project.id, name="Alert Device", board="ESP32", secret_hash=hash_secret("device-token"))
+    rule = AlertRule(id="rule-alert", tenant_id=tenant.id, project_id=project.id, device_id=device.id, channel="V0", operator=">", threshold=80, cooldown_seconds=300)
+    db.add_all([tenant, user, project, device, rule])
+    db.commit()
+
+    evaluate_alerts(db, tenant.id, device.id, "V0", 82)
+    evaluate_alerts(db, tenant.id, device.id, "V0", 83)
+    db.commit()
+
+    notifications = db.query(Notification).all()
+    assert len(notifications) == 1
+    assert notifications[0].body == "V0 is 82 > 80"
+    assert delivered == ["Alert triggered"]
+    assert db.get(AlertRule, rule.id).last_triggered_at is not None

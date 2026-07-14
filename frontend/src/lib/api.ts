@@ -56,7 +56,10 @@ export const api = {
   history: (deviceId: string, channel: string) => request<Telemetry[]>(`/telemetry/devices/${deviceId}/history?channel=${encodeURIComponent(channel)}`),
   command: (deviceId: string, channel: string, value: unknown) => request(`/devices/${deviceId}/commands`, { method: "POST", body: JSON.stringify({ channel, value }) }),
   notifications: () => request<NotificationItem[]>("/notifications"),
-  createNotification: (title: string, body: string) => request<NotificationItem>("/notifications", { method: "POST", body: JSON.stringify({ title, body }) })
+  createNotification: (title: string, body: string) => request<NotificationItem>("/notifications", { method: "POST", body: JSON.stringify({ title, body }) }),
+  pushPublicKey: () => request<{ public_key: string }>("/notifications/push-public-key"),
+  savePushSubscription: (subscription: PushSubscriptionJSON) => request<{ status: string }>("/notifications/push-subscriptions", { method: "POST", body: JSON.stringify(subscription) }),
+  removePushSubscription: (subscription: PushSubscriptionJSON) => request<void>("/notifications/push-subscriptions", { method: "DELETE", body: JSON.stringify(subscription) })
 };
 
 export function realtimeUrl(token: string) {
