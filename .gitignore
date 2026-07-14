@@ -2,10 +2,14 @@
 .superpowers/
 node_modules/
 dist/
+outputs/
 __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .venv/
 *.pyc
-
+*.log
+*.db
+*.egg-info/
+pnpm-debug.log*
