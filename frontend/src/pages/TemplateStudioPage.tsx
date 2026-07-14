@@ -178,8 +178,8 @@ export function TemplateStudioPage({
   }
 
   return (
-    <section className={fullBuilder ? "studio studio-fullscreen" : "studio"}>
-      <header className="wizard-header">
+    <section className={fullBuilder ? "studio spark-studio studio-fullscreen" : "studio spark-studio"} data-testid="template-studio">
+      <header className="wizard-header studio-system-header" data-testid="template-studio-header">
         <div className="wizard-title">
           <div className="studio-mark"><Cpu size={24} /></div>
           <div>
@@ -199,7 +199,7 @@ export function TemplateStudioPage({
       </header>
       {saveState === "error" && saveError && <div className="save-error-banner">{saveError}</div>}
 
-      <nav className="wizard-steps" aria-label="Template setup steps">
+      <nav className="wizard-steps studio-system-steps" aria-label="Template setup steps">
         {stepConfig.map((step, index) => {
           const Icon = step.icon;
           const activeIndex = stepConfig.findIndex((item) => item.id === activeStep);
@@ -336,7 +336,7 @@ export function TemplateStudioPage({
               <span><strong>{template.notifications.length ? Math.min(...template.notifications.map((rule) => rule.cooldownMinutes)) : 0}m</strong><small>Fastest cooldown</small></span>
             </div>
           </div>
-          <div className="notification-builder">
+          <div className="notification-builder studio-system-rules" data-testid="notification-builder">
             {template.notifications.map((rule) => <NotificationRule key={rule.id} rule={rule} streams={template.datastreams} onChange={updateNotification} />)}
           </div>
         </section>
@@ -412,7 +412,7 @@ function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, 
   onSave: () => void;
 }) {
   return (
-    <div className="studio-workbench">
+    <div className="studio-workbench studio-system-workbench" data-testid="dashboard-builder-workbench">
       <div className="studio-canvas">
         <div className="builder-hero">
           <div>
@@ -478,7 +478,7 @@ function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, 
 
 function DatastreamEditor({ streams, onChange }: { streams: Datastream[]; onChange: (id: string, patch: Partial<Datastream>) => void }) {
   return (
-    <div className="datastream-editor">
+    <div className="datastream-editor studio-system-datastreams" data-testid="datastream-editor">
       {streams.map((stream) => (
         <article className="datastream-card" key={stream.id} style={{ "--stream-color": stream.color } as React.CSSProperties}>
           <div className="stream-identity">

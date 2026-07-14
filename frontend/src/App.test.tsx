@@ -102,6 +102,9 @@ describe("App", () => {
     fireEvent.click(within(energyTemplateCard).getByRole("button", { name: /Open studio/i }));
 
     expect(screen.getByText("Spark IoT Template Studio")).toBeInTheDocument();
+    expect(screen.getByTestId("template-studio")).toHaveClass("spark-studio");
+    expect(screen.getByTestId("template-studio-header")).toHaveClass("wizard-header", "studio-system-header");
+    expect(screen.getByLabelText("Template setup steps")).toHaveClass("wizard-steps", "studio-system-steps");
     expect(screen.getAllByDisplayValue("Energy Monitor").length).toBeGreaterThan(0);
     expect(screen.getByText("Migrate")).toBeInTheDocument();
     expect(screen.getByText("Datastreams")).toBeInTheDocument();
@@ -116,15 +119,18 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Datastreams"));
     expect(screen.getByText("Virtual pin registry")).toBeInTheDocument();
     expect(screen.getByText("Firmware-safe channel map")).toBeInTheDocument();
+    expect(screen.getByTestId("datastream-editor")).toHaveClass("studio-system-datastreams");
     expect(screen.getByDisplayValue("V0")).toBeInTheDocument();
     expect(screen.getAllByDisplayValue("Voltage").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByText("Dashboard"));
     expect(screen.getByText("Dashboard layout lab")).toBeInTheDocument();
     expect(screen.getByText("Professional widget canvas")).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-builder-workbench")).toHaveClass("studio-system-workbench");
     expect(screen.getByText("Widget Library")).toBeInTheDocument();
     fireEvent.click(screen.getAllByText("Notifications")[1]);
     expect(screen.getByText("Alert operations center")).toBeInTheDocument();
     expect(screen.getByText("Push-safe rule engine")).toBeInTheDocument();
+    expect(screen.getByTestId("notification-builder")).toHaveClass("studio-system-rules");
     expect(screen.getAllByText("Notifications").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByText("Code"));
     expect(screen.getByText("Firmware command center")).toBeInTheDocument();
