@@ -2,8 +2,6 @@ name: deploy-vps
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 concurrency:
   group: spark-iot-vps

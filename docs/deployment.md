@@ -73,7 +73,9 @@ bash scripts/deploy_vps.sh
 
 ## GitHub Actions VPS deployment
 
-The workflow `.github/workflows/deploy-vps.yml` deploys on pushes to `main` when these GitHub repository secrets are configured:
+The workflow `.github/workflows/deploy-vps.yml` deploys when manually run from the GitHub Actions tab. This avoids failed deployments before VPS secrets are configured.
+
+Configure these GitHub repository secrets:
 
 ```text
 VPS_HOST=34.73.29.12
@@ -86,6 +88,15 @@ The workflow SSHes into the VPS and runs:
 
 ```bash
 bash scripts/deploy_vps.sh
+```
+
+After the secrets are confirmed working, you can make deployment automatic by adding this trigger back to `.github/workflows/deploy-vps.yml`:
+
+```yaml
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
 ```
 
 ## Release ZIP
