@@ -11,6 +11,7 @@ This repository supports three workflows:
 ```text
 backend/              FastAPI modular monolith
 frontend/             React/Vite web dashboard
+arduino/SparkIoT/     Installable Arduino IDE library for ESP32 and ESP8266
 infra/mosquitto/      MQTT broker config
 examples/arduino/     ESP32 and ESP8266 sketches
 docs/                 API, MQTT, board testing, operations and deployment guides

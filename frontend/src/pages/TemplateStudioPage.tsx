@@ -569,128 +569,60 @@ function colorForType(type: Datastream["dataType"]) {
 
 function buildArduinoSketch(template: DeviceTemplate, device?: Device) {
   const board = template.board;
-  const wifiInclude = board === "ESP8266" ? "#include <ESP8266WiFi.h>" : "#include <WiFi.h>";
   const deviceId = device?.id ?? "YOUR_DEVICE_ID";
   const token = device?.token ?? "YOUR_DEVICE_TOKEN";
   const tenantId = extractTenantId(device?.telemetry_topic) ?? "demo-tenant";
-  const commandRoot = `spark/v1/${tenantId}/${deviceId}/command/#`;
-  const topicConstants = template.datastreams.map((stream) => `const char* TOPIC_TELEMETRY_${stream.pin} = "spark/v1/${tenantId}/${deviceId}/telemetry/${stream.pin}";`).join("\n");
-  const ackConstants = template.datastreams.filter((stream) => stream.dataType === "boolean").map((stream) => `const char* TOPIC_ACK_${stream.pin} = "spark/v1/${tenantId}/${deviceId}/ack/${stream.pin}";`).join("\n");
-  const demoPublishes = template.datastreams.map((stream) => demoPublishLine(stream)).join("\n");
-  const commandCases = template.datastreams.filter((stream) => stream.dataType === "boolean").map((stream) => `  if (topicText.endsWith("/${stream.pin}")) {\n    bool state = payloadText == "1" || payloadText == "true" || payloadText.indexOf("\\\"value\\\":true") >= 0;\n    digitalWrite(LED_BUILTIN, state ? LOW : HIGH);\n    Serial.print("Command ${stream.pin} -> ");\n    Serial.println(state ? "ON" : "OFF");\n    publishJson(TOPIC_TELEMETRY_${stream.pin}, state ? "true" : "false", "");\n    publishAck(TOPIC_ACK_${stream.pin}, state, "${stream.pin} command applied");\n  }`).join("\n\n");
+  const telemetryLines = template.datastreams.map((stream) => libraryPublishLine(stream)).join("\n");
+  const commandHandlers = template.datastreams.filter((stream) => stream.dataType === "boolean").map((stream) => `void on${stream.pin}Command(const char* channel, bool state, const char* payload) {
+  Serial.print("Command ${stream.pin} -> ");
+  Serial.println(state ? "ON" : "OFF");
+  digitalWrite(LED_BUILTIN, state ? LOW : HIGH);
+  SparkIoT.virtualWrite("${stream.pin}", state);
+  SparkIoT.ack("${stream.pin}", state, "${stream.pin} command applied");
+}`).join("\n\n");
+  const commandBindings = template.datastreams.filter((stream) => stream.dataType === "boolean").map((stream) => `  SparkIoT.onCommand("${stream.pin}", on${stream.pin}Command);`).join("\n");
 
-  return `${wifiInclude}
-#include <PubSubClient.h>
+  return `#include <SparkIoT.h>
 
 // Spark IoT generated sketch for ${template.name} (${board})
-// Install Arduino library: PubSubClient by Nick O'Leary.
-// IMPORTANT: BROKER_HOST must be your PC/Laptop LAN IP, not 127.0.0.1.
+// Install Arduino IDE libraries:
+// - SparkIoT from arduino/SparkIoT in this repository
+// - PubSubClient by Nick O'Leary
+// IMPORTANT: For local Docker, BROKER_HOST must be your PC LAN IP, not 127.0.0.1.
+// For the current Google Cloud VPS test, use 34.73.29.12.
 
 const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* BROKER_HOST = "192.168.1.10";
+const char* BROKER_HOST = "34.73.29.12";
 const int BROKER_PORT = 1883;
 
 const char* SPARK_TENANT_ID = "${tenantId}";
 const char* SPARK_DEVICE_ID = "${deviceId}";
 const char* SPARK_DEVICE_TOKEN = "${token}";
-const char* commandTopic = "${commandRoot}";
 
-${topicConstants}
-${ackConstants ? `\n${ackConstants}` : ""}
-
-WiFiClient wifiClient;
-PubSubClient mqtt(wifiClient);
 unsigned long lastPublishMs = 0;
 
-void connectWiFi() {
-  Serial.print("WiFi connecting to ");
-  Serial.println(WIFI_SSID);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println();
-  Serial.print("WiFi connected. Board IP: ");
-  Serial.println(WiFi.localIP());
-}
+${commandHandlers || "// Add command callbacks here for writable boolean V pins."}
 
-void publishJson(const char* topic, const char* valueJson, const char* unit) {
-  char payload[220];
-  if (unit && strlen(unit) > 0) {
-    snprintf(payload, sizeof(payload), "{\\"token\\":\\"%s\\",\\"value\\":%s,\\"unit\\":\\"%s\\"}", SPARK_DEVICE_TOKEN, valueJson, unit);
-  } else {
-    snprintf(payload, sizeof(payload), "{\\"token\\":\\"%s\\",\\"value\\":%s}", SPARK_DEVICE_TOKEN, valueJson);
-  }
-  mqtt.publish(topic, payload);
-  Serial.print("Published ");
-  Serial.print(topic);
-  Serial.print(" -> ");
-  Serial.println(payload);
-}
-
-void publishAck(const char* topic, bool value, const char* message) {
-  char payload[180];
-  snprintf(payload, sizeof(payload), "{\\"status\\":\\"ok\\",\\"value\\":%s,\\"message\\":\\"%s\\"}", value ? "true" : "false", message);
-  mqtt.publish(topic, payload);
-  Serial.print("ACK ");
-  Serial.print(topic);
-  Serial.print(" -> ");
-  Serial.println(payload);
-}
-
-void onMqttMessage(char* topic, byte* payload, unsigned int length) {
-  String topicText = String(topic);
-  String payloadText;
-  for (unsigned int i = 0; i < length; i++) payloadText += (char)payload[i];
-
-  Serial.print("Command received ");
-  Serial.print(topicText);
-  Serial.print(" -> ");
-  Serial.println(payloadText);
-
-${commandCases || "  // Add command handling here for writable V pins."}
-}
-
-void connectMqtt() {
-  while (!mqtt.connected()) {
-    Serial.print("MQTT connecting to ");
-    Serial.println(BROKER_HOST);
-    if (mqtt.connect(SPARK_DEVICE_ID, SPARK_DEVICE_ID, SPARK_DEVICE_TOKEN)) {
-      Serial.println("MQTT connected");
-      mqtt.subscribe(commandTopic);
-      Serial.print("Subscribed: ");
-      Serial.println(commandTopic);
-    } else {
-      Serial.print("MQTT failed, rc=");
-      Serial.println(mqtt.state());
-      delay(2000);
-    }
-  }
-}
-
-void publishDemoTelemetry() {
-${demoPublishes}
+void publishTelemetry() {
+${telemetryLines}
 }
 
 void setup() {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  connectWiFi();
-  mqtt.setServer(BROKER_HOST, BROKER_PORT);
-  mqtt.setCallback(onMqttMessage);
+
+  SparkIoT.begin(WIFI_SSID, WIFI_PASSWORD, BROKER_HOST, BROKER_PORT, SPARK_TENANT_ID, SPARK_DEVICE_ID, SPARK_DEVICE_TOKEN);
+${commandBindings || "  // No writable boolean V pins detected for command binding."}
 }
 
 void loop() {
-  if (!mqtt.connected()) connectMqtt();
-  mqtt.loop();
+  SparkIoT.run();
 
   if (millis() - lastPublishMs > 5000) {
     lastPublishMs = millis();
-    publishDemoTelemetry();
+    publishTelemetry();
   }
 }
 `;
@@ -701,13 +633,13 @@ function extractTenantId(topic?: string) {
   return parts.length >= 4 && parts[0] === "spark" && parts[1] === "v1" ? parts[2] : undefined;
 }
 
-function demoPublishLine(stream: Datastream) {
-  if (stream.dataType === "boolean") return `  publishJson(TOPIC_TELEMETRY_${stream.pin}, "false", "");`;
-  if (stream.dataType === "gps") return `  publishJson(TOPIC_TELEMETRY_${stream.pin}, "{\\"lat\\":3.139,\\"lng\\":101.6869,\\"speed\\":14,\\"accuracy\\":8}", "");`;
-  if (stream.dataType === "image") return `  publishJson(TOPIC_TELEMETRY_${stream.pin}, "\\"http://device.local/snapshot.jpg\\"", "");`;
-  if (stream.dataType === "string") return `  publishJson(TOPIC_TELEMETRY_${stream.pin}, "\\"Boot OK\\"", "");`;
+function libraryPublishLine(stream: Datastream) {
+  if (stream.dataType === "boolean") return `  SparkIoT.virtualWrite("${stream.pin}", false);`;
+  if (stream.dataType === "gps") return `  SparkIoT.setLocation("${stream.pin}", 3.139, 101.6869, 14, 8);`;
+  if (stream.dataType === "image") return `  SparkIoT.setCameraUrl("${stream.pin}", "http://device.local/snapshot.jpg");`;
+  if (stream.dataType === "string") return `  SparkIoT.virtualWrite("${stream.pin}", "Boot OK");`;
   const value = Math.round(((stream.min ?? 0) + (stream.max ?? 100)) / 2);
-  return `  publishJson(TOPIC_TELEMETRY_${stream.pin}, "${value}", "${stream.unit ?? ""}");`;
+  return `  SparkIoT.virtualWrite("${stream.pin}", ${value}, "${stream.unit ?? ""}");`;
 }
 
 function sampleValue(stream: Datastream) {

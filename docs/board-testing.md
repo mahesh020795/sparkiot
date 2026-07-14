@@ -69,6 +69,9 @@ Install:
 - ESP32 board package for ESP32 tests.
 - ESP8266 board package for NodeMCU tests.
 - `PubSubClient` by Nick O'Leary.
+- SparkIoT from this repository:
+  - Copy `arduino/SparkIoT` to `Documents/Arduino/libraries/SparkIoT`.
+  - Restart Arduino IDE.
 
 ## 4. Use the generated Code tab
 
@@ -77,7 +80,7 @@ In Spark IoT:
 1. Open `Templates`.
 2. Open a template.
 3. Open the `Code` tab.
-4. Copy the generated sketch.
+4. Copy the generated sketch. It uses the clean `SparkIoT.h` library API instead of long raw MQTT code.
 5. Replace:
    - `YOUR_WIFI_NAME`
    - `YOUR_WIFI_PASSWORD`
@@ -86,6 +89,8 @@ In Spark IoT:
 
 The generated sketch includes command acknowledgement support for boolean virtual pins. When a dashboard switch sends a command, the board echoes the updated telemetry value and publishes an ACK packet back to Spark IoT so the `Live Test` command monitor can prove the full loop.
 
+For complete library install and API details, see `docs/arduino-library.md`.
+
 ## 5. Seeded demo devices
 
 ### ESP32 Smart Irrigation
@@ -93,6 +98,7 @@ The generated sketch includes command acknowledgement support for boolean virtua
 Example file:
 
 ```text
+arduino/SparkIoT/examples/ESP32_Smart_Irrigation/ESP32_Smart_Irrigation.ino
 examples/arduino/SparkIoT_ESP32/SparkIoT_ESP32.ino
 ```
 
@@ -135,6 +141,7 @@ spark/v1/demo-tenant/device-irrigation/ack/V3
 Example file:
 
 ```text
+arduino/SparkIoT/examples/ESP8266_Home_Relay/ESP8266_Home_Relay.ino
 examples/arduino/SparkIoT_ESP8266/SparkIoT_ESP8266.ino
 ```
 

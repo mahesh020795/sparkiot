@@ -39,18 +39,21 @@ Camera value:
 }
 ```
 
-## SDK Direction
+## Arduino SDK
 
-The future Arduino IDE library should expose:
+The repository includes SparkIoT Arduino Library v1 at `arduino/SparkIoT`. It exposes:
 
 ```cpp
-begin(ssid, password, server, tenantId, deviceId, token)
-run()
-virtualWrite(channel, value)
-setLocation(lat, lng)
-setCameraUrl(url)
-onCommand(channel, callback)
+SparkIoT.begin(ssid, password, server, port, tenantId, deviceId, token);
+SparkIoT.run();
+SparkIoT.virtualWrite("V0", value, "unit");
+SparkIoT.setLocation("V5", lat, lng, speed, accuracy);
+SparkIoT.setCameraUrl("V6", url);
+SparkIoT.onCommand("V3", callback);
+SparkIoT.ack("V3", true, "Command applied");
 ```
+
+Version 1 supports ESP32 and ESP8266 through PubSubClient. Other Arduino boards need future networking adapters.
 ## MQTT ingestion bridge
 
 The local MVP API starts an MQTT ingestion bridge when `MQTT_CONSUMER_ENABLED=true`.

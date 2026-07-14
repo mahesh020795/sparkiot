@@ -128,7 +128,7 @@ describe("App", () => {
     expect(screen.getByText("Shows dashboard commands and board acknowledgements. This is how you prove the switch reached the ESP32/NodeMCU.")).toBeInTheDocument();
   });
 
-  it("generates board-specific Arduino MQTT sketches from selected templates and devices", async () => {
+  it("generates board-specific SparkIoT Arduino library sketches from selected templates and devices", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Templates"));
 
@@ -136,25 +136,25 @@ describe("App", () => {
     fireEvent.click(within(irrigationTemplateCard).getByRole("button", { name: /Open studio/i }));
     fireEvent.click(screen.getByText("Code"));
 
-    expect(screen.getByText(/#include <WiFi\.h>/)).toBeInTheDocument();
-    expect(screen.getByText(/#include <PubSubClient\.h>/)).toBeInTheDocument();
+    expect(screen.getByText(/#include <SparkIoT\.h>/)).toBeInTheDocument();
     expect(screen.getByText(/SPARK_DEVICE_TOKEN = "spk_dev_irrigation_demo_9f3a"/)).toBeInTheDocument();
     expect(screen.getByText(/SPARK_DEVICE_ID = "device-irrigation"/)).toBeInTheDocument();
-    expect(screen.getByText(/spark\/v1\/demo-tenant\/device-irrigation\/telemetry\/V0/)).toBeInTheDocument();
-    expect(screen.getByText(/spark\/v1\/demo-tenant\/device-irrigation\/ack\/V3/)).toBeInTheDocument();
-    expect(screen.getByText(/void publishAck\(const char\* topic, bool value, const char\* message\)/)).toBeInTheDocument();
-    expect(screen.getByText(/publishAck\(TOPIC_ACK_V3, state, "V3 command applied"\)/)).toBeInTheDocument();
-    expect(screen.getByText(/subscribe\(commandTopic\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.begin\(WIFI_SSID, WIFI_PASSWORD, BROKER_HOST, BROKER_PORT, SPARK_TENANT_ID, SPARK_DEVICE_ID, SPARK_DEVICE_TOKEN\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.virtualWrite\("V0", 50, "C"\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.setLocation\("V5", 3\.139, 101\.6869, 14, 8\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.onCommand\("V3", onV3Command\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.ack\("V3", state, "V3 command applied"\)/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Templates"));
     const homeTemplateCard = screen.getByRole("article", { name: /Smart Home template/i });
     fireEvent.click(within(homeTemplateCard).getByRole("button", { name: /Open studio/i }));
     fireEvent.click(screen.getByText("Code"));
 
-    expect(screen.getByText(/#include <ESP8266WiFi\.h>/)).toBeInTheDocument();
+    expect(screen.getByText(/#include <SparkIoT\.h>/)).toBeInTheDocument();
     expect(screen.getByText(/SPARK_DEVICE_TOKEN = "spk_dev_home_demo_2c8b"/)).toBeInTheDocument();
     expect(screen.getByText(/SPARK_DEVICE_ID = "device-home"/)).toBeInTheDocument();
-    expect(screen.getByText(/spark\/v1\/demo-tenant\/device-home\/telemetry\/V0/)).toBeInTheDocument();
-    expect(screen.getByText(/spark\/v1\/demo-tenant\/device-home\/ack\/V0/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.virtualWrite\("V1", 50, "%"\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.onCommand\("V0", onV0Command\)/)).toBeInTheDocument();
+    expect(screen.getByText(/SparkIoT\.ack\("V0", state, "V0 command applied"\)/)).toBeInTheDocument();
   });
 });

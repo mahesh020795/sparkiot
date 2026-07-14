@@ -2,7 +2,7 @@
 
 Spark IoT is a Rectronx IoT SaaS starter for a lower-cost Blynk-style product. The current web-first build opens directly to the dashboard with local demo data, so customers can see the core control experience before login, project creation, templates and billing are added.
 
-The repository also includes the FastAPI modular monolith, PostgreSQL, Valkey, Mosquitto MQTT, WebSocket realtime foundation, seed data, MQTT ingestion bridge, persisted Template Studio data, and Arduino examples for real ESP32/ESP8266 testing.
+The repository also includes the FastAPI modular monolith, PostgreSQL, Valkey, Mosquitto MQTT, WebSocket realtime foundation, seed data, MQTT ingestion bridge, persisted Template Studio data, and an installable SparkIoT Arduino IDE library for real ESP32/ESP8266 testing.
 
 ## Starter Plan
 
@@ -75,17 +75,37 @@ Saved data includes template name, board, description, virtual pins/datastreams,
 
 ## Test With ESP32 / NodeMCU ESP8266
 
-Open `Templates -> Code` in the web app to generate a board-specific Arduino IDE sketch for the selected template and device.
+Open `Templates -> Code` in the web app to generate a board-specific Arduino IDE sketch for the selected template and device. The generated sketch now uses the reusable `SparkIoT` Arduino library:
+
+```cpp
+#include <SparkIoT.h>
+
+SparkIoT.begin(WIFI_SSID, WIFI_PASSWORD, BROKER_HOST, BROKER_PORT, SPARK_TENANT_ID, SPARK_DEVICE_ID, SPARK_DEVICE_TOKEN);
+SparkIoT.virtualWrite("V0", 29.4, "C");
+SparkIoT.onCommand("V3", onPumpCommand);
+SparkIoT.ack("V3", true, "Pump command applied");
+```
+
+Installable Arduino library:
+
+- `arduino/SparkIoT/library.properties`
+- `arduino/SparkIoT/src/SparkIoT.h`
+- `arduino/SparkIoT/src/SparkIoT.cpp`
 
 Included examples:
 
+- `arduino/SparkIoT/examples/ESP32_Smart_Irrigation/ESP32_Smart_Irrigation.ino`
+- `arduino/SparkIoT/examples/ESP8266_Home_Relay/ESP8266_Home_Relay.ino`
+- `arduino/SparkIoT/examples/GPS_Tracker/GPS_Tracker.ino`
+- `arduino/SparkIoT/examples/Camera_URL/Camera_URL.ino`
 - `examples/arduino/SparkIoT_ESP32/SparkIoT_ESP32.ino`
 - `examples/arduino/SparkIoT_ESP8266/SparkIoT_ESP8266.ino`
 
-Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`.
+Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Google Cloud VPS test, use `34.73.29.12`.
 
 See:
 
+- `docs/arduino-library.md`
 - `docs/board-testing.md`
 - `docs/deployment.md`
 - `docs/mqtt-protocol.md`
