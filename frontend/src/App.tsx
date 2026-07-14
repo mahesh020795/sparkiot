@@ -216,6 +216,9 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
 
   const device = payload.devices[0] ?? fallback.devices[0];
   const latestRows = Object.values(payload.latest).filter((reading) => reading.device_id === device?.id);
+  const hasTelemetry = latestRows.length > 0;
+  const hasCommand = commandLogs.some((log) => log.status !== "ack");
+  const hasAck = commandLogs.some((log) => log.status === "ack");
 
   useEffect(() => {
     if (!device?.id) return;
@@ -250,6 +253,31 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
           <span><strong>{status}</strong><small>API state</small></span>
         </div>
       </div>
+
+      <section className="connection-proof-timeline" data-testid="connection-proof-timeline">
+        <div>
+          <span className="section-kicker">Connection proof timeline</span>
+          <h2>Prove the full ESP32 / NodeMCU loop</h2>
+          <p>Use this as your board test checklist: first telemetry arrives, then Spark IoT sends a dashboard command, then the board publishes an ACK.</p>
+        </div>
+        <div className="proof-steps">
+          <ProofStep
+            state={hasTelemetry ? "complete" : "waiting"}
+            title="1. Telemetry received"
+            body={hasTelemetry ? "Latest V-pin readings are landing from the selected board." : "Waiting for MQTT or HTTP telemetry from the selected board."}
+          />
+          <ProofStep
+            state={hasCommand ? "complete" : "waiting"}
+            title="2. Command published"
+            body={hasCommand ? "A dashboard switch/button command was published to the device topic." : "Waiting for switch/button command activity."}
+          />
+          <ProofStep
+            state={hasAck ? "complete" : "waiting"}
+            title="3. Board ACK"
+            body={hasAck ? "The board confirmed it received and applied the command." : "Waiting for the board to publish an ACK packet."}
+          />
+        </div>
+      </section>
 
       <section className="live-test-grid live-system-grid" data-testid="live-test-grid">
         <article className="panel live-connection-card">
@@ -307,6 +335,18 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
         </div>
       </section>
     </section>
+  );
+}
+
+function ProofStep({ state, title, body }: { state: "complete" | "waiting"; title: string; body: string }) {
+  return (
+    <article className={`proof-step ${state}`}>
+      <span>{state === "complete" ? <CheckCircle2 size={16} /> : <RadioTower size={16} />}</span>
+      <div>
+        <strong>{title}</strong>
+        <p>{body}</p>
+      </div>
+    </article>
   );
 }
 

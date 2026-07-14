@@ -1041,6 +1041,92 @@ body {
   gap: var(--spark-space-5);
 }
 
+.spark-ui .connection-proof-timeline {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+  gap: var(--spark-space-5);
+  align-items: stretch;
+  padding: var(--spark-space-5);
+  border: 1px solid var(--spark-border-strong);
+  border-radius: var(--spark-radius-xl);
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(255, 255, 255, 0) 45%),
+    var(--spark-surface);
+  box-shadow: var(--spark-shadow-soft);
+}
+
+.spark-ui .connection-proof-timeline h2 {
+  margin: var(--spark-space-1) 0 var(--spark-space-2);
+  color: var(--spark-text);
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+  letter-spacing: -0.045em;
+}
+
+.spark-ui .connection-proof-timeline p {
+  margin: 0;
+  color: var(--spark-muted);
+  line-height: 1.55;
+}
+
+.spark-ui .proof-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .proof-step {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--spark-space-3);
+  align-items: start;
+  padding: var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-lg);
+  background: var(--spark-surface-muted);
+}
+
+.spark-ui .proof-step > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--spark-border);
+  border-radius: 14px;
+  background: var(--spark-surface);
+  color: var(--spark-muted);
+}
+
+.spark-ui .proof-step.complete {
+  border-color: #bbf7d0;
+  background: var(--spark-success-soft);
+}
+
+.spark-ui .proof-step.complete > span {
+  border-color: #bbf7d0;
+  background: #ffffff;
+  color: #059669;
+}
+
+.spark-ui .proof-step.waiting > span {
+  color: var(--spark-primary);
+}
+
+.spark-ui .proof-step strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--spark-text);
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.spark-ui .proof-step p {
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  line-height: 1.45;
+}
+
 .spark-ui .live-connection-card,
 .spark-ui .live-topic-card,
 .spark-ui .live-values-panel,
@@ -1202,7 +1288,9 @@ body {
 
 @media (max-width: 980px) {
   .spark-ui .device-system-grid,
-  .spark-ui .live-system-grid {
+  .spark-ui .live-system-grid,
+  .spark-ui .connection-proof-timeline,
+  .spark-ui .proof-steps {
     grid-template-columns: 1fr;
   }
 

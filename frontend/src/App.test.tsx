@@ -172,8 +172,15 @@ describe("App", () => {
     expect(screen.getByTestId("live-test-page")).toHaveClass("live-system-page");
     expect(screen.getByTestId("live-test-hero")).toHaveClass("live-system-hero");
     expect(screen.getByTestId("live-test-grid")).toHaveClass("live-system-grid");
+    expect(screen.getByTestId("connection-proof-timeline")).toHaveClass("connection-proof-timeline");
     expect(screen.getByTestId("live-command-monitor")).toHaveClass("live-system-command-monitor");
     expect(screen.getByText("Live board test")).toBeInTheDocument();
+    expect(screen.getByText("Connection proof timeline")).toBeInTheDocument();
+    expect(screen.getByText("1. Telemetry received")).toBeInTheDocument();
+    expect(screen.getByText("2. Command published")).toBeInTheDocument();
+    expect(screen.getByText("3. Board ACK")).toBeInTheDocument();
+    expect(screen.getByText("Latest V-pin readings are landing from the selected board.")).toBeInTheDocument();
+    expect(screen.getByText("Waiting for switch/button command activity.")).toBeInTheDocument();
     expect(screen.getByText("MQTT broker")).toBeInTheDocument();
     expect(screen.getByText("device-irrigation")).toBeInTheDocument();
     expect(screen.getByText("spark/v1/demo-tenant/device-irrigation/telemetry/{channel}")).toBeInTheDocument();
