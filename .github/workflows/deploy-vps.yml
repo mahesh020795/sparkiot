@@ -43,9 +43,25 @@ jobs:
         run: |
           ssh "$VPS_USER@$VPS_HOST" "APP_DIR='${VPS_APP_DIR:-/home/$VPS_USER/spark-iot}' bash -s" <<'REMOTE'
           set -euo pipefail
+          REPO_URL="https://github.com/mahesh020795/sparkiot.git"
+          BACKUP_DIR="$HOME/spark-iot-backups"
+          mkdir -p "$BACKUP_DIR"
+
           if [ ! -d "$APP_DIR/.git" ]; then
-            git clone https://github.com/mahesh020795/sparkiot.git "$APP_DIR"
+            PRESERVED_ENV="$BACKUP_DIR/.env.github-actions-bootstrap"
+            rm -f "$PRESERVED_ENV"
+            if [ -f "$APP_DIR/.env" ]; then
+              cp "$APP_DIR/.env" "$PRESERVED_ENV"
+            fi
+            if [ -d "$APP_DIR" ]; then
+              mv "$APP_DIR" "$BACKUP_DIR/spark-iot-pre-git-$(date +%Y%m%d-%H%M%S)"
+            fi
+            git clone --branch main "$REPO_URL" "$APP_DIR"
+            if [ -f "$PRESERVED_ENV" ]; then
+              cp "$PRESERVED_ENV" "$APP_DIR/.env"
+            fi
           fi
+
           cd "$APP_DIR"
           git fetch origin main
           git checkout main
