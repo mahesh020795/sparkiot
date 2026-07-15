@@ -62,6 +62,9 @@ CSV columns are `observed_at`, `server_at`, `device_id`, `channel`, `value`, and
 
 Spark IoT stores browser Web Push subscriptions and dispatches push payloads when notifications are created or threshold alerts fire.
 
+- `GET /api/v1/notifications` lists in-app notification history for the authenticated tenant user.
+- `POST /api/v1/notifications` creates an in-app notification and attempts browser push delivery when VAPID is configured.
+- `PATCH /api/v1/notifications/{notification_id}/read` marks one authenticated user's notification as read.
 - `GET /api/v1/notifications/push-public-key` returns `{ "public_key": "..." }` from `VAPID_PUBLIC_KEY`.
 - `POST /api/v1/notifications/push-subscriptions` upserts the authenticated user's subscription endpoint and keys.
 - `DELETE /api/v1/notifications/push-subscriptions` removes the authenticated user's subscription endpoint.

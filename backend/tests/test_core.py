@@ -9,6 +9,7 @@ from app.core.security import hash_secret
 from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, Schedule, Telemetry, Tenant, User
 from app.api.routes.templates import create_template, list_templates, update_template
 from app.api.routes.devices import command_logs
+from app.api.routes.notifications import mark_notification_read
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
 from datetime import UTC, datetime
@@ -431,6 +432,34 @@ def test_threshold_alert_creates_notification_once_per_cooldown(monkeypatch):
     assert notifications[0].body == "V0 is 82 > 80"
     assert delivered == ["Alert triggered"]
     assert db.get(AlertRule, rule.id).last_triggered_at is not None
+
+
+def test_notification_read_state_is_tenant_scoped():
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    db = Session()
+
+    tenant = Tenant(id="tenant-notify", name="Notify Tenant")
+    other_tenant = Tenant(id="tenant-notify-other", name="Other Notify Tenant")
+    user = User(id="user-notify", tenant_id=tenant.id, email="notify@example.com", full_name="Notify User", password_hash=hash_secret("SparkDemo123!"))
+    other_user = User(id="user-notify-other", tenant_id=other_tenant.id, email="other-notify@example.com", full_name="Other Notify User", password_hash=hash_secret("SparkDemo123!"))
+    notification = Notification(id="notification-1", tenant_id=tenant.id, user_id=user.id, title="Pump Alert", body="Pump started", read=False)
+    db.add_all([tenant, other_tenant, user, other_user, notification])
+    db.commit()
+
+    updated = mark_notification_read(notification.id, user=user, db=db)
+
+    assert updated.id == notification.id
+    assert updated.read is True
+    assert db.get(Notification, notification.id).read is True
+
+    try:
+        mark_notification_read(notification.id, user=other_user, db=db)
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 404
+    else:
+        raise AssertionError("expected cross-tenant notification read update to fail")
 
 
 def test_schedule_create_accepts_day_time_command_shape():

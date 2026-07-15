@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
@@ -24,6 +24,23 @@ def create_notification(payload: NotificationCreate, user: User = Depends(curren
     db.commit()
     db.refresh(notification)
     deliver_notification_pushes(db, notification)
+    return notification
+
+
+@router.patch("/{notification_id}/read", response_model=NotificationResponse)
+def mark_notification_read(notification_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    notification = db.scalar(
+        select(Notification).where(
+            Notification.id == notification_id,
+            Notification.tenant_id == user.tenant_id,
+            Notification.user_id == user.id,
+        )
+    )
+    if not notification:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    notification.read = True
+    db.commit()
+    db.refresh(notification)
     return notification
 
 

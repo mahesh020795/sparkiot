@@ -345,7 +345,7 @@ export function App() {
           />
         )}
         {view === "history" && <HistoryPage devices={activeDevices} initialLatest={activeLatest} />}
-        {view === "notifications" && <NotificationsPage initialItems={isAccountMode ? accountNotifications : demoNotifications} />}
+        {view === "notifications" && <NotificationsPage initialItems={isAccountMode ? accountNotifications : demoNotifications} accountMode={isAccountMode} />}
         {view === "settings" && <SettingsPage />}
       </main>
     </div>

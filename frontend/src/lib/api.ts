@@ -68,6 +68,7 @@ export const api = {
   regenerateDeviceToken: (deviceId: string) => request<Device>(`/devices/${deviceId}/regenerate-token`, { method: "POST" }),
   notifications: () => request<NotificationItem[]>("/notifications"),
   createNotification: (title: string, body: string) => request<NotificationItem>("/notifications", { method: "POST", body: JSON.stringify({ title, body }) }),
+  markNotificationRead: (notificationId: string) => request<NotificationItem>(`/notifications/${notificationId}/read`, { method: "PATCH" }),
   schedules: () => request<ScheduleItem[]>("/schedules"),
   createSchedule: (schedule: ScheduleCreate) => request<ScheduleItem>("/schedules", { method: "POST", body: JSON.stringify(schedule) }),
   pushPublicKey: () => request<{ public_key: string }>("/notifications/push-public-key"),

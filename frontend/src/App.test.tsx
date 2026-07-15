@@ -891,6 +891,11 @@ describe("App", () => {
         expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
         return new Response(JSON.stringify([accountDevice]), { status: 200, headers: { "Content-Type": "application/json" } });
       }
+      if (url.includes("/notifications/account-notification/read")) {
+        expect(init?.method).toBe("PATCH");
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        return new Response(JSON.stringify({ ...accountNotifications[0], read: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
       if (url.includes("/notifications")) {
         return new Response(JSON.stringify(accountNotifications), { status: 200, headers: { "Content-Type": "application/json" } });
       }
@@ -921,6 +926,10 @@ describe("App", () => {
 
     fireEvent.click(screen.getByText("Notifications"));
     expect(await screen.findByText("Account alert")).toBeInTheDocument();
+    expect(screen.getByText("Unread")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Mark Account alert as read/i }));
+    expect(await screen.findByText("Read")).toBeInTheDocument();
+    expect(screen.queryByText("Unread")).not.toBeInTheDocument();
   });
 
   it("uses account device APIs on Live Test after sign in instead of demo board-test endpoints", async () => {
