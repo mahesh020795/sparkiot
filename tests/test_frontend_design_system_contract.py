@@ -32,3 +32,18 @@ def test_app_css_does_not_reintroduce_final_dashboard_header_override_layer():
     ]
     for marker in forbidden_late_layer_markers:
         assert marker not in app_css
+
+
+def test_dashboard_and_project_summary_cards_are_overflow_safe():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+
+    for expected in [
+        '"primary selector"',
+        '"metrics metrics"',
+        "repeat(auto-fit, minmax(132px, 1fr))",
+        ".spark-ui .project-stat-row strong,",
+        ".spark-ui .project-stat-row small",
+        "text-overflow: ellipsis;",
+        "white-space: nowrap;",
+    ]:
+        assert expected in design_system
