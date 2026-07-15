@@ -78,13 +78,17 @@ describe("App", () => {
 
     expect(css).toContain("--spark-metric-min");
     expect(css).toContain("--spark-compact-metric-min");
-    expect(css).toContain("--spark-metric-min: 7.25rem");
-    expect(css).toContain("--spark-compact-metric-min: 5.75rem");
+    expect(css).toContain(".spark-ui .spark-page-header-grid > .top-actions");
+    expect(css).toContain("display: contents");
+    expect(css).toContain("--spark-metric-min: 6.75rem");
+    expect(css).toContain("--spark-compact-metric-min: 5.15rem");
     expect(css).toContain("box-sizing: border-box");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.25rem), 1fr))");
-    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.25rem), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.75rem), 1fr))");
+    expect(css).toContain(".spark-ui .project-grid");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr))");
     expect(css).toContain("overflow: clip");
     expect(css).toContain(".spark-ui .project-stat-row span > *");
     expect(css).toContain("overflow-wrap: anywhere");
@@ -331,6 +335,42 @@ describe("App", () => {
     expect(within(newDeviceCard).getByText("spk_dev_new_node_once_5678")).toBeInTheDocument();
     expect(within(newDeviceCard).getByText(/#define SPARK_TOKEN "spk_dev_new_node_once_5678"/)).toBeInTheDocument();
     expect(screen.getByText("New device token shown once. Copy it before leaving this page.")).toBeInTheDocument();
+  });
+
+  it("creates account projects within the Starter three-project limit", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Live protected tenant workspace", is_active: true };
+    const createdProject = { id: "project-aquaponics", name: "Aquaponics Lab", description: "Fish tank and plant bed monitoring", is_active: true };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/projects") && init?.method === "POST") {
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        expect(JSON.parse(String(init.body))).toEqual({ name: "Aquaponics Lab", description: "Fish tank and plant bed monitoring" });
+        return new Response(JSON.stringify(createdProject), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.endsWith("/projects")) return new Response(JSON.stringify([accountProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/devices")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/notifications") || url.includes("/schedules")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/tenant/usage")) return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 0, max_devices: 3, projects: 1, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/dashboards/project/account-project")) return new Response(JSON.stringify({ id: "account-dashboard", project_id: "account-project", name: "Customer Greenhouse Dashboard", revision: 1, widgets: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/telemetry/projects/account-project/latest")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Projects"));
+
+    expect(await screen.findByText("1/3 projects used")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Create project/i }));
+    fireEvent.change(screen.getByLabelText("Project name"), { target: { value: "Aquaponics Lab" } });
+    fireEvent.change(screen.getByLabelText("Project description"), { target: { value: "Fish tank and plant bed monitoring" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save project/i }));
+
+    expect((await screen.findAllByText("Aquaponics Lab")).length).toBeGreaterThan(0);
+    expect(screen.getByText("Fish tank and plant bed monitoring")).toBeInTheDocument();
+    expect(screen.getByText("Project created. Next: add a template and provision a board.")).toBeInTheDocument();
   });
 
   it("shows a live board test panel with MQTT connection details", async () => {

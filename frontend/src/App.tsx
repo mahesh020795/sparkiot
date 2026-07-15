@@ -10,7 +10,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api, clearSession, getSession, type Session } from "./lib/api";
-import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ScheduleCreate, ScheduleItem, Telemetry } from "./lib/types";
+import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ProjectCreate, ScheduleCreate, ScheduleItem, Telemetry } from "./lib/types";
 
 type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
 type SaveState = "saved" | "unsaved" | "saving" | "error";
@@ -190,6 +190,13 @@ export function App() {
     return created;
   }
 
+  async function createAccountProject(project: ProjectCreate) {
+    const created = await api.createProject(project);
+    setAccountProjects((current) => [created, ...current]);
+    setSelectedProjectId(created.id);
+    return created;
+  }
+
   if (authScreenOpen) {
     return <LoginPage onLogin={handleLogin} onCancel={() => setAuthScreenOpen(false)} />;
   }
@@ -260,7 +267,7 @@ export function App() {
           </div>
         </header>
         {view === "dashboard" && (isAccountMode ? <DashboardPage key={selectedProjectId} projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} /> : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />)}
-        {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} />}
+        {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : undefined} />}
         {view === "templates" && (
           templateStudioId ? (
             <TemplateStudioPage
@@ -638,7 +645,37 @@ function TemplateLibrary({ templates, onOpen }: { templates: DeviceTemplate[]; o
   );
 }
 
-function ProjectsView({ projects, templates }: { projects: Project[]; templates: DeviceTemplate[] }) {
+function ProjectsView({ projects, templates, accountMode = false, onCreateProject }: { projects: Project[]; templates: DeviceTemplate[]; accountMode?: boolean; onCreateProject?: (project: ProjectCreate) => Promise<Project> }) {
+  const projectLimit = 3;
+  const isAtLimit = projects.length >= projectLimit;
+  const [createOpen, setCreateOpen] = useState(false);
+  const [projectDraft, setProjectDraft] = useState<ProjectCreate>({ name: "", description: "" });
+  const [createState, setCreateState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [createMessage, setCreateMessage] = useState("");
+
+  async function createProject() {
+    if (!onCreateProject || isAtLimit) return;
+    const name = projectDraft.name.trim();
+    const description = projectDraft.description.trim();
+    if (name.length < 2) {
+      setCreateState("error");
+      setCreateMessage("Enter a project name with at least 2 characters.");
+      return;
+    }
+    setCreateState("saving");
+    setCreateMessage("");
+    try {
+      await onCreateProject({ name, description });
+      setProjectDraft({ name: "", description: "" });
+      setCreateOpen(false);
+      setCreateState("saved");
+      setCreateMessage("Project created. Next: add a template and provision a board.");
+    } catch {
+      setCreateState("error");
+      setCreateMessage("Project creation failed. Check Starter limits and API session.");
+    }
+  }
+
   return (
     <section className="support-page">
       <div className="support-hero">
@@ -653,6 +690,52 @@ function ProjectsView({ projects, templates }: { projects: Project[]; templates:
           <span><strong>{templates.reduce((total, template) => total + template.dashboard.widgets.length, 0)}</strong><small>Widgets</small></span>
         </div>
       </div>
+
+      <div className="library-toolbar project-create-toolbar">
+        <div>
+          <strong>{projects.length}/3 projects used</strong>
+          <span>Starter plan supports three separate dashboards/projects.</span>
+        </div>
+        <button
+          className="primary"
+          disabled={isAtLimit || !onCreateProject}
+          aria-disabled={isAtLimit || !onCreateProject}
+          title={isAtLimit ? "Starter plan project limit reached" : accountMode ? "Create project" : "Sign in to create real projects"}
+          onClick={() => setCreateOpen((current) => !current)}
+        >
+          {isAtLimit ? <Lock size={16} /> : <Plus size={16} />}
+          Create project
+        </button>
+      </div>
+
+      {createOpen && (
+        <article className="panel project-create-card" data-testid="project-create-form">
+          <div>
+            <span className="section-kicker">New customer workspace</span>
+            <h2>Create a project</h2>
+            <p>Each project gets one dashboard and can later bind a template, device and datastream set.</p>
+          </div>
+          <div className="project-create-grid">
+            <label>
+              Project name
+              <input aria-label="Project name" value={projectDraft.name} placeholder="Aquaponics Lab" onChange={(event) => setProjectDraft((current) => ({ ...current, name: event.target.value }))} />
+            </label>
+            <label>
+              Project description
+              <input aria-label="Project description" value={projectDraft.description} placeholder="Fish tank and plant bed monitoring" onChange={(event) => setProjectDraft((current) => ({ ...current, description: event.target.value }))} />
+            </label>
+          </div>
+          <div className="provisioning-actions">
+            <button className="primary" type="button" onClick={() => void createProject()} disabled={createState === "saving"}>
+              <Plus size={16} />{createState === "saving" ? "Saving..." : "Save project"}
+            </button>
+            <button type="button" onClick={() => setCreateOpen(false)}>Cancel</button>
+          </div>
+        </article>
+      )}
+
+      {createMessage && <span className={`project-create-state ${createState}`}>{createMessage}</span>}
+
       <section className="content-grid project-grid">{projects.map((project) => {
         const template = templates.find((item) => item.dashboard.project_id === project.id);
         return (

@@ -1,4 +1,4 @@
-import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ScheduleCreate, ScheduleItem, Telemetry } from "./types";
+import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ProjectCreate, ScheduleCreate, ScheduleItem, Telemetry } from "./types";
 
 function defaultApiBase() {
   return "/api/v1";
@@ -44,6 +44,7 @@ export const api = {
   me: () => request<{ full_name: string; email: string; tenant_id: string; plan_code: string }>("/auth/me"),
   usage: () => request<{ users: number; max_users: number; devices: number; max_devices: number; projects: number; max_projects: number; retention_days: number }>("/tenant/usage"),
   projects: () => request<Project[]>("/projects"),
+  createProject: (project: ProjectCreate) => request<Project>("/projects", { method: "POST", body: JSON.stringify(project) }),
   devices: () => request<Device[]>("/devices"),
   createDevice: (device: DeviceCreate) => request<Device>("/devices", { method: "POST", body: JSON.stringify(device) }),
   dashboard: (projectId: string) => request<Dashboard>(`/dashboards/project/${projectId}`),

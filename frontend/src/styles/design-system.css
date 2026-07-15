@@ -1028,6 +1028,37 @@ body {
   gap: var(--spark-space-4);
 }
 
+.spark-ui .project-create-card {
+  display: grid;
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .project-create-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr);
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .project-create-grid label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  font-weight: 900;
+}
+
+.spark-ui .project-create-grid input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface);
+  color: var(--spark-text);
+  font: inherit;
+  padding: 0 0.8rem;
+}
+
 .spark-ui .device-create-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(180px, 0.75fr) minmax(150px, 0.55fr);
@@ -1055,6 +1086,7 @@ body {
   padding: 0 0.8rem;
 }
 
+.spark-ui .project-create-state,
 .spark-ui .device-create-state {
   display: inline-flex;
   width: fit-content;
@@ -1068,12 +1100,14 @@ body {
   font-weight: 850;
 }
 
+.spark-ui .project-create-state.saved,
 .spark-ui .device-create-state.saved {
   border-color: #bbf7d0;
   background: var(--spark-success-soft);
   color: var(--spark-success);
 }
 
+.spark-ui .project-create-state.error,
 .spark-ui .device-create-state.error {
   border-color: #fecdd3;
   background: var(--spark-danger-soft);
@@ -1454,6 +1488,7 @@ body {
 @media (max-width: 980px) {
   .spark-ui .device-system-grid,
   .spark-ui .device-create-grid,
+  .spark-ui .project-create-grid,
   .spark-ui .live-system-grid,
   .spark-ui .connection-proof-timeline,
   .spark-ui .proof-steps,
@@ -2449,8 +2484,8 @@ body {
   --spark-card-radius: 20px;
   --spark-card-border: #e5edf6;
   --spark-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 16px 34px rgba(15, 23, 42, 0.04);
-  --spark-metric-min: 7.25rem;
-  --spark-compact-metric-min: 5.75rem;
+  --spark-metric-min: 6.75rem;
+  --spark-compact-metric-min: 5.15rem;
 }
 
 .spark-ui {
@@ -2487,7 +2522,7 @@ body {
 .spark-ui .spark-page-header-primary {
   grid-area: primary;
   min-width: 0;
-  max-width: 780px;
+  max-width: min(100%, 700px);
 }
 
 .spark-ui .spark-page-header-selector {
@@ -2559,6 +2594,10 @@ body {
   display: contents;
 }
 
+.spark-ui .spark-page-header-grid > .top-actions {
+  display: contents;
+}
+
 .spark-ui.dashboard-shell .project-switcher {
   width: 100%;
   min-width: 0;
@@ -2582,12 +2621,12 @@ body {
 .spark-ui.dashboard-shell .cockpit-metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr));
-  gap: 0.75rem;
+  gap: 0.65rem;
   min-width: 0;
   width: 100%;
   max-width: 100%;
   contain: inline-size;
-  overflow: clip;
+  overflow: visible;
 }
 
 .spark-ui.dashboard-shell .cockpit-metrics span,
@@ -2595,12 +2634,12 @@ body {
 .spark-ui .support-metrics span,
 .spark-ui .project-stat-row span {
   display: grid;
-  grid-template-columns: 2.25rem minmax(0, 1fr);
+  grid-template-columns: 2rem minmax(0, 1fr);
   align-items: center;
-  gap: 0.55rem 0.72rem;
+  gap: 0.45rem 0.6rem;
   min-width: 0;
-  min-height: 64px;
-  padding: 0.65rem;
+  min-height: 58px;
+  padding: 0.58rem;
   border: 1px solid var(--spark-card-border);
   border-radius: 16px;
   background: var(--spark-surface);
@@ -2629,11 +2668,12 @@ body {
 .spark-ui .project-stat-row strong {
   min-width: 0;
   max-width: 100%;
-  font-size: 1rem;
+  font-size: 0.96rem;
   line-height: 1.05;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .spark-ui.dashboard-shell .cockpit-metrics small,
@@ -2642,29 +2682,37 @@ body {
 .spark-ui .project-stat-row small {
   min-width: 0;
   max-width: 100%;
-  font-size: 0.66rem;
+  font-size: 0.61rem;
   line-height: 1.25;
   overflow-wrap: anywhere;
   word-break: normal;
 }
 
+.spark-ui .project-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  align-items: stretch;
+  overflow: clip;
+}
+
 .spark-ui .project-stat-row {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr));
   display: grid;
-  gap: 0.65rem;
+  gap: 0.55rem;
   min-width: 0;
   max-width: 100%;
   contain: inline-size;
   container: spark-metric-row / inline-size;
-  overflow: clip;
+  overflow: visible;
 }
 
 .spark-ui .project-stat-row span {
   grid-template-columns: minmax(0, 1fr);
-  min-height: 4.8rem;
+  min-height: 4.2rem;
   align-content: center;
   justify-items: start;
-  padding: 0.65rem;
+  gap: 0.16rem;
+  padding: 0.55rem 0.6rem;
+  overflow: hidden;
 }
 
 .spark-ui .project-stat-row span > * {
@@ -2684,14 +2732,14 @@ body {
 }
 
 .spark-ui .project-stat-row strong {
-  font-size: clamp(0.86rem, 1.5vw, 1rem);
+  font-size: clamp(0.78rem, 1.15vw, 0.92rem);
   line-height: 1.12;
   word-break: break-word;
 }
 
 .spark-ui .project-stat-row small {
-  font-size: 0.65rem;
-  letter-spacing: 0.045em;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
   hyphens: auto;
 }
 
@@ -2712,6 +2760,7 @@ body {
 .spark-ui .project-card,
 .spark-ui .template-library-card {
   container: spark-project-card / inline-size;
+  overflow: hidden;
 }
 
 .spark-ui .project-card::after {
@@ -2730,13 +2779,13 @@ body {
 
 @container spark-metric-row (max-width: 25rem) {
   .spark-ui .project-stat-row {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.25rem), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.75rem), 1fr));
   }
 }
 
 @container spark-project-card (max-width: 23rem) {
   .spark-ui .project-stat-row {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.25rem), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.75rem), 1fr));
   }
 }
 
