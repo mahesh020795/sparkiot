@@ -15,6 +15,7 @@ import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, L
 type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
 type SaveState = "saved" | "unsaved" | "saving" | "error";
 type TemplatePreset = "Smart Irrigation" | "Smart Home" | "Energy Monitor" | "Blank";
+type StudioLaunchStep = "Setup" | "Migrate" | "Datastreams" | "Dashboard" | "Notifications" | "Code" | "Simulator";
 
 export function App() {
   const [view, setView] = useState<View>("dashboard");
@@ -32,6 +33,7 @@ export function App() {
   const [accountUsage, setAccountUsage] = useState<{ devices: number; max_devices: number; projects: number; max_projects: number; retention_days: number } | null>(null);
   const [accountLoadState, setAccountLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [templateStudioId, setTemplateStudioId] = useState<string | null>(null);
+  const [templateStudioInitialStep, setTemplateStudioInitialStep] = useState<StudioLaunchStep>("Setup");
   const [templateSaveStates, setTemplateSaveStates] = useState<Record<string, SaveState>>(() => Object.fromEntries(demoTemplates.map((template) => [template.id, "saved"])));
   const [templateSaveError, setTemplateSaveError] = useState<string>("");
 
@@ -227,6 +229,19 @@ export function App() {
     return created;
   }
 
+  function openSelectedTemplateStudio(initialStep: StudioLaunchStep = "Setup") {
+    const template = selectedTemplate ?? activeTemplates[0] ?? templates[0];
+    if (!template) {
+      setView("templates");
+      setTemplateStudioId(null);
+      return;
+    }
+    setSelectedProjectId(template.dashboard.project_id);
+    setTemplateStudioInitialStep(initialStep);
+    setTemplateStudioId(template.id);
+    setView("templates");
+  }
+
   if (authScreenOpen) {
     return <LoginPage onLogin={handleLogin} onCancel={() => setAuthScreenOpen(false)} />;
   }
@@ -307,13 +322,31 @@ export function App() {
           </div>
           </div>
         </header>
+        {view === "dashboard" && (
+          <LaunchWizardPanel
+            projectCount={activeProjects.length}
+            templateCount={activeTemplates.length}
+            deviceCount={activeDevices.length}
+            datastreamCount={selectedTemplate?.datastreams.length ?? 0}
+            selectedProjectName={selectedProject?.name ?? "Spark IoT project"}
+            selectedDeviceName={selectedDevice?.name ?? activeDevices[0]?.name ?? "ESP board"}
+            onOpenProjects={() => setView("projects")}
+            onOpenTemplate={() => openSelectedTemplateStudio("Setup")}
+            onOpenDatastreams={() => openSelectedTemplateStudio("Datastreams")}
+            onOpenDevices={() => setView("devices")}
+            onOpenCode={() => openSelectedTemplateStudio("Code")}
+            onOpenLiveTest={() => setView("live")}
+          />
+        )}
         {view === "dashboard" && (isAccountMode ? <DashboardPage key={selectedProjectId} projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} /> : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />)}
         {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : undefined} />}
         {view === "templates" && (
           templateStudioId ? (
             <TemplateStudioPage
+              key={`${templateStudioId}-${templateStudioInitialStep}`}
               templates={activeTemplates}
               selectedTemplateId={templateStudioId}
+              initialStep={templateStudioInitialStep}
               device={selectedDevice}
               latest={activeLatest}
               saveState={templateSaveStates[templateStudioId] ?? "saved"}
@@ -329,6 +362,7 @@ export function App() {
               onCreateTemplate={isAccountMode ? createAccountTemplate : undefined}
               onOpen={(template) => {
                 setSelectedProjectId(template.dashboard.project_id);
+                setTemplateStudioInitialStep("Setup");
                 setTemplateStudioId(template.id);
               }}
             />
@@ -360,6 +394,73 @@ export function App() {
         {view === "settings" && <SettingsPage />}
       </main>
     </div>
+  );
+}
+
+function LaunchWizardPanel({
+  projectCount,
+  templateCount,
+  deviceCount,
+  datastreamCount,
+  selectedProjectName,
+  selectedDeviceName,
+  onOpenProjects,
+  onOpenTemplate,
+  onOpenDatastreams,
+  onOpenDevices,
+  onOpenCode,
+  onOpenLiveTest
+}: {
+  projectCount: number;
+  templateCount: number;
+  deviceCount: number;
+  datastreamCount: number;
+  selectedProjectName: string;
+  selectedDeviceName: string;
+  onOpenProjects: () => void;
+  onOpenTemplate: () => void;
+  onOpenDatastreams: () => void;
+  onOpenDevices: () => void;
+  onOpenCode: () => void;
+  onOpenLiveTest: () => void;
+}) {
+  const steps = [
+    { title: "Create project", detail: `${projectCount}/3 projects ready`, action: "Open project setup", onClick: onOpenProjects, icon: MapPinned },
+    { title: "Choose template", detail: `${templateCount}/3 templates ready`, action: "Open template studio", onClick: onOpenTemplate, icon: Workflow },
+    { title: "Add datastreams", detail: `${datastreamCount} virtual pins mapped`, action: "Edit datastreams", onClick: onOpenDatastreams, icon: Database },
+    { title: "Add device", detail: `${deviceCount}/3 devices provisioned`, action: "Open devices", onClick: onOpenDevices, icon: Cpu },
+    { title: "Generate Arduino code", detail: `Sketch targets ${selectedDeviceName}`, action: "Open code generator", onClick: onOpenCode, icon: TerminalSquare },
+    { title: "Live board test", detail: "MQTT telemetry and command ACK", action: "Open live test", onClick: onOpenLiveTest, icon: PlugZap }
+  ] as const;
+
+  return (
+    <section className="launch-wizard-panel" data-testid="launch-wizard-panel" aria-label="Spark IoT first-use launch wizard">
+      <div className="launch-wizard-copy">
+        <span className="section-kicker">Customer setup flow</span>
+        <h2>Spark IoT Launch Wizard</h2>
+        <p>Follow the same professional flow customers expect from Blynk, but faster for Rectronx boards: project, template, V-pins, device token, Arduino code and live proof.</p>
+        <div className="launch-wizard-status">
+          <span><CheckCircle2 size={16} /><strong>6/6 ready</strong></span>
+          <small>{selectedProjectName} is ready for ESP32 / NodeMCU testing.</small>
+        </div>
+      </div>
+      <div className="launch-wizard-steps">
+        {steps.map((step, index) => {
+          const Icon = step.icon;
+          return (
+            <article key={step.title} className="launch-wizard-step">
+              <span className="launch-wizard-step-number">{index + 1}</span>
+              <Icon size={18} />
+              <div>
+                <strong>{step.title}</strong>
+                <small>{step.detail}</small>
+              </div>
+              <button type="button" onClick={step.onClick}>{step.action}<ArrowRight size={14} /></button>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

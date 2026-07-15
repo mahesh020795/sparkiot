@@ -47,6 +47,35 @@ describe("App", () => {
     expect(screen.getByText("Use this flow when connecting ESP32 or NodeMCU boards.")).toBeInTheDocument();
   });
 
+  it("guides first-time users from project setup to live board testing", async () => {
+    render(<App />);
+
+    expect(await screen.findByText("Spark IoT Launch Wizard")).toBeInTheDocument();
+    expect(screen.getByText("Create project")).toBeInTheDocument();
+    expect(screen.getByText("Choose template")).toBeInTheDocument();
+    expect(screen.getByText("Add datastreams")).toBeInTheDocument();
+    expect(screen.getByText("Add device")).toBeInTheDocument();
+    expect(screen.getByText("Generate Arduino code")).toBeInTheDocument();
+    expect(screen.getByText("Live board test")).toBeInTheDocument();
+    expect(screen.getByText("6/6 ready")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Open project setup/i }));
+    expect(screen.getByText("Project command center")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Overview"));
+    fireEvent.click(screen.getByRole("button", { name: /Open template studio/i }));
+    expect(screen.getByText("Spark IoT Template Studio")).toBeInTheDocument();
+    expect(screen.getAllByText("Smart Irrigation").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByText("Overview"));
+    fireEvent.click(screen.getByRole("button", { name: /Open devices/i }));
+    expect(screen.getByText("Bind boards to templates and ship firmware-ready credentials")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Overview"));
+    fireEvent.click(screen.getByRole("button", { name: /Open live test/i }));
+    expect(await screen.findByText("Connect ESP32 or NodeMCU and watch real telemetry land here")).toBeInTheDocument();
+  });
+
   it("uses the standardized design-system shell and non-overlapping dashboard header", async () => {
     render(<App />);
 

@@ -3628,6 +3628,157 @@ body {
   color: #16a34a;
 }
 
+.spark-ui .launch-wizard-panel {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.82fr) minmax(0, 1.6fr);
+  gap: 1rem;
+  align-items: stretch;
+  margin: 0 0 1.25rem;
+  padding: clamp(1rem, 1.2vw, 1.35rem);
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid #dbe8f7;
+  box-shadow: var(--spark-product-card-shadow);
+  overflow: clip;
+}
+
+.spark-ui .launch-wizard-copy {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 0.72rem;
+}
+
+.spark-ui .launch-wizard-copy h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.35rem, 1vw + 1rem, 2rem);
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+.spark-ui .launch-wizard-copy p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.spark-ui .launch-wizard-status {
+  width: fit-content;
+  max-width: 100%;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.68rem 0.82rem;
+  border-radius: 18px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.spark-ui .launch-wizard-status span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #047857;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.spark-ui .launch-wizard-status small {
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.spark-ui .launch-wizard-steps {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.spark-ui .launch-wizard-step {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.58rem 0.68rem;
+  align-items: start;
+  padding: 0.85rem;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.spark-ui .launch-wizard-step > svg {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0.5rem;
+  border-radius: 0.9rem;
+  color: #2563eb;
+  background: #eff6ff;
+  box-shadow: inset 0 0 0 1px #dbeafe;
+}
+
+.spark-ui .launch-wizard-step-number {
+  position: absolute;
+  top: 0.62rem;
+  right: 0.72rem;
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.spark-ui .launch-wizard-step div {
+  min-width: 0;
+  padding-right: 1.2rem;
+}
+
+.spark-ui .launch-wizard-step strong,
+.spark-ui .launch-wizard-step small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .launch-wizard-step strong {
+  color: #0f172a;
+  font-size: 0.88rem;
+  line-height: 1.18;
+}
+
+.spark-ui .launch-wizard-step small {
+  margin-top: 0.16rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.spark-ui .launch-wizard-step button {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  border: 1px solid #dbe8f7;
+  border-radius: 13px;
+  background: #ffffff;
+  color: #1d4ed8;
+  font-size: 0.76rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.spark-ui .launch-wizard-step button:hover {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
 .spark-ui .board-readiness-checklist {
   display: grid;
   grid-template-columns: minmax(0, 0.86fr) minmax(18rem, 1.5fr);
@@ -3694,7 +3845,21 @@ body {
 }
 
 @media (max-width: 980px) {
+  .spark-ui .launch-wizard-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .spark-ui .launch-wizard-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .spark-ui .board-readiness-checklist {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .spark-ui .launch-wizard-steps {
     grid-template-columns: minmax(0, 1fr);
   }
 }

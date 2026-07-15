@@ -46,6 +46,7 @@ type StudioStep = (typeof stepConfig)[number]["id"];
 export function TemplateStudioPage({
   templates,
   selectedTemplateId,
+  initialStep = "Setup",
   device,
   latest,
   saveState,
@@ -55,6 +56,7 @@ export function TemplateStudioPage({
 }: {
   templates: DeviceTemplate[];
   selectedTemplateId: string;
+  initialStep?: StudioStep;
   device?: Device;
   latest: Record<string, Telemetry>;
   saveState: "saved" | "unsaved" | "saving" | "error";
@@ -63,7 +65,7 @@ export function TemplateStudioPage({
   onChange: (template: DeviceTemplate) => void;
 }) {
   const template = templates.find((item) => item.id === selectedTemplateId) ?? templates[0];
-  const [activeStep, setActiveStep] = useState<StudioStep>("Setup");
+  const [activeStep, setActiveStep] = useState<StudioStep>(initialStep);
   const [selectedWidgetId, setSelectedWidgetId] = useState(template.dashboard.widgets[0]?.id ?? "");
   const [fullBuilder, setFullBuilder] = useState(false);
   const [migrationText, setMigrationText] = useState("V0 Temperature float C 0 100\nV1 Humidity integer % 0 100\nV2 Pump boolean\nV3 GPS gps\nV4 Camera image");
