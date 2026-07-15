@@ -333,7 +333,7 @@ export function App() {
             onRegenerateToken={isAccountMode ? regenerateAccountDeviceToken : undefined}
           />
         )}
-        {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} latest={activeLatest} />}
+        {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} latest={activeLatest} accountMode={isAccountMode} />}
         {view === "schedules" && (
           <SchedulesPage
             accountMode={isAccountMode}
@@ -352,9 +352,9 @@ export function App() {
   );
 }
 
-function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; devices: Device[]; latest: Record<string, Telemetry> }) {
+function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: { projectId: string; devices: Device[]; latest: Record<string, Telemetry>; accountMode?: boolean }) {
   const fallback: LiveBoardTestPayload = {
-    tenant_id: "demo-tenant",
+    tenant_id: tenantFromDeviceTopic(devices[0]?.telemetry_topic) ?? "demo-tenant",
     project_id: projectId,
     mqtt: {
       host: typeof window === "undefined" ? "localhost" : window.location.hostname,
@@ -380,6 +380,11 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
   useEffect(() => {
     let mounted = true;
     async function load() {
+      if (accountMode) {
+        setPayload(fallback);
+        setStatus(devices.length ? "live" : "offline");
+        return;
+      }
       try {
         const next = await api.demoBoardTest(projectId);
         if (!mounted) return;
@@ -397,7 +402,7 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
       mounted = false;
       window.clearInterval(id);
     };
-  }, [projectId]);
+  }, [accountMode, devices, projectId, latest]);
 
   const device = payload.devices[0] ?? fallback.devices[0];
   const latestRows = Object.values(payload.latest).filter((reading) => reading.device_id === device?.id);
@@ -413,10 +418,23 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
     if (!device?.id) return;
     setQuickTestStatus("publishing");
     try {
-      const response = await api.demoCommand(device.id, quickTestChannel, true);
-      setQuickTestStatus(response.status === "published" ? "published" : "error");
-      const next = await api.demoCommandLogs(device.id);
-      setCommandLogs(next);
+      if (accountMode) {
+        await api.command(device.id, quickTestChannel, true);
+        setQuickTestStatus("published");
+        setCommandLogs((current) => [{
+          id: `local-command-${Date.now()}`,
+          device_id: device.id,
+          channel: quickTestChannel,
+          value: true,
+          status: "Command queued",
+          created_at: new Date().toISOString()
+        }, ...current]);
+      } else {
+        const response = await api.demoCommand(device.id, quickTestChannel, true);
+        setQuickTestStatus(response.status === "published" ? "published" : "error");
+        const next = await api.demoCommandLogs(device.id);
+        setCommandLogs(next);
+      }
     } catch {
       setQuickTestStatus("error");
     }
@@ -424,6 +442,7 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
 
   useEffect(() => {
     if (!device?.id) return;
+    if (accountMode) return;
     let mounted = true;
     async function loadLogs() {
       try {
@@ -439,7 +458,7 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
       mounted = false;
       window.clearInterval(id);
     };
-  }, [device?.id]);
+  }, [accountMode, device?.id]);
 
   return (
     <section className="support-page live-test-page live-system-page" data-testid="live-test-page">
@@ -509,7 +528,7 @@ function LiveBoardTestView({ projectId, devices, latest }: { projectId: string; 
         <div>
           <span className="section-kicker">Board Quick Test</span>
           <h2>Publish one command and confirm the board ACK</h2>
-          <p>This sends a real demo command to the selected device. Your sketch should receive it in `SparkIoT.onCommand`, apply the output, then call `SparkIoT.ack`.</p>
+          <p>This sends a real command to the selected device. Your sketch should receive it in `SparkIoT.onCommand`, apply the output, then call `SparkIoT.ack`.</p>
         </div>
         <div className="quick-test-command-grid">
           <span><small>Test command topic</small><code>{quickTestTopic}</code></span>
@@ -583,6 +602,11 @@ function formatLiveValue(value: unknown) {
 function formatCommandValue(value: unknown) {
   if (typeof value === "object" && value !== null) return JSON.stringify(value);
   return String(value);
+}
+
+function tenantFromDeviceTopic(topic?: string) {
+  const parts = topic?.split("/") ?? [];
+  return parts.length >= 4 && parts[0] === "spark" && parts[1] === "v1" ? parts[2] : undefined;
 }
 
 function buildStarterTemplateDraft(project: Project, dashboard: Dashboard, device: Device | undefined, board: DeviceTemplate["board"], preset: TemplatePreset): DeviceTemplate {

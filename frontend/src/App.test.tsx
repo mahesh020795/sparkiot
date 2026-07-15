@@ -917,6 +917,73 @@ describe("App", () => {
     expect(await screen.findByText("Account alert")).toBeInTheDocument();
   });
 
+  it("uses account device APIs on Live Test after sign in instead of demo board-test endpoints", async () => {
+    const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Real tenant project", is_active: true };
+    const accountDevice = {
+      id: "account-device",
+      project_id: "account-project",
+      name: "ESP32 Greenhouse Node",
+      board: "ESP32",
+      is_online: true,
+      token: "spk_once_visible",
+      telemetry_topic: "spark/v1/account-tenant/account-device/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/account-device/command/{channel}"
+    };
+    const accountDashboard = {
+      id: "account-dashboard",
+      project_id: "account-project",
+      name: "Customer Greenhouse Dashboard",
+      revision: 4,
+      widgets: [
+        { id: "account-widget-temp", type: "value", title: "Greenhouse Temperature", x: 0, y: 0, w: 3, h: 3, deviceId: "account-device", channel: "V0", unit: "C", min: 0, max: 60 }
+      ]
+    };
+    const accountLatest = [
+      { id: "account-reading-v0", device_id: "account-device", channel: "V0", value: 28.6, unit: "C", observed_at: "2026-07-15T05:00:00Z", server_at: "2026-07-15T05:00:01Z" }
+    ];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/auth/login")) return new Response(JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token", token_type: "bearer" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/dashboards/project/account-project")) return new Response(JSON.stringify(accountDashboard), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/telemetry/projects/account-project/latest")) return new Response(JSON.stringify(accountLatest), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/projects")) return new Response(JSON.stringify([accountProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/devices")) return new Response(JSON.stringify([accountDevice]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/notifications") || url.includes("/schedules")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/tenant/usage")) return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 1, max_devices: 3, projects: 1, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/devices/account-device/commands")) {
+        expect(init?.method).toBe("POST");
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        expect(init?.body).toContain('"channel":"V3"');
+        return new Response(JSON.stringify({ status: "published" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/demo/projects/account-project/board-test") || url.includes("/demo/devices/account-device")) {
+        throw new Error(`Account Live Test must not call demo endpoint ${url}`);
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: /Sign in to account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
+
+    expect(await screen.findByText("Customer Greenhouse Dashboard")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Live Test"));
+
+    expect(await screen.findByText("account-tenant")).toBeInTheDocument();
+    expect(screen.getByText("account-device")).toBeInTheDocument();
+    expect(screen.getByText("spk_once_visible")).toBeInTheDocument();
+    expect(screen.getByText(/28\.6C/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Publish test command/i }));
+
+    expect(await screen.findByText("published")).toBeInTheDocument();
+    expect(await screen.findByText("Command queued")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/demo/projects/account-project/board-test"), expect.anything());
+  });
+
   it("shows a production-ready firmware export workflow in the Code tab", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Templates"));
