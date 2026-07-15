@@ -3,11 +3,11 @@ from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request
 from app.services.telemetry import evaluate_alerts, ingest, normalize_value
 from app.services.schedules import due_occurrence_key, run_due_schedules_once
 from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
-from app.schemas.api import RegisterRequest, ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
+from app.schemas.api import PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
 from app.core.database import Base, ensure_runtime_indexes, make_engine
-from app.core.security import create_access_token, hash_secret
-from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, RefreshToken, Schedule, Telemetry, Tenant, User
-from app.api.routes.auth import register
+from app.core.security import create_access_token, hash_secret, verify_secret
+from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, PasswordResetToken, Project, RefreshToken, Schedule, Telemetry, Tenant, User
+from app.api.routes.auth import confirm_password_reset, register, request_password_reset
 from app.api.routes.templates import create_template, list_templates, update_template
 from app.api.routes.devices import command_logs
 from app.api.routes.notifications import mark_notification_read
@@ -91,6 +91,68 @@ def test_register_rejects_duplicate_email_without_creating_extra_tenant():
 
     assert db.query(Tenant).count() == 1
     assert db.query(User).count() == 1
+
+
+def test_password_reset_request_creates_hashed_one_time_token_and_notification():
+    db = memory_session()
+    register(
+        RegisterRequest(
+            tenant_name="Reset Lab",
+            full_name="Reset User",
+            email="reset@example.com",
+            password="SparkDemo123!",
+        ),
+        db,
+    )
+
+    response = request_password_reset(PasswordResetRequest(email="RESET@example.com"), db)
+
+    user = db.scalar(select(User).where(User.email == "reset@example.com"))
+    token_record = db.scalar(select(PasswordResetToken).where(PasswordResetToken.user_id == user.id))
+    assert response.status == "ok"
+    assert response.reset_token is not None
+    assert token_record is not None
+    assert token_record.token_hash != response.reset_token
+    assert token_record.used_at is None
+    notification = db.scalar(select(Notification).where(Notification.user_id == user.id, Notification.title == "Password reset requested"))
+    assert notification is not None
+    assert "reset link" in notification.body
+
+
+def test_password_reset_confirm_updates_password_revokes_sessions_and_prevents_reuse():
+    db = memory_session()
+    token_pair = register(
+        RegisterRequest(
+            tenant_name="Confirm Reset Lab",
+            full_name="Confirm User",
+            email="confirm-reset@example.com",
+            password="SparkDemo123!",
+        ),
+        db,
+    )
+    reset = request_password_reset(PasswordResetRequest(email="confirm-reset@example.com"), db)
+
+    response = confirm_password_reset(
+        PasswordResetConfirmRequest(token=reset.reset_token, password="NewSpark123!"),
+        db,
+    )
+
+    user = db.scalar(select(User).where(User.email == "confirm-reset@example.com"))
+    assert response.status == "ok"
+    assert verify_secret("NewSpark123!", user.password_hash)
+    assert not verify_secret("SparkDemo123!", user.password_hash)
+    assert db.scalar(select(RefreshToken).where(RefreshToken.token_hash != "", RefreshToken.revoked == False)) is None  # noqa: E712
+    token_record = db.scalar(select(PasswordResetToken).where(PasswordResetToken.user_id == user.id))
+    assert token_record.used_at is not None
+    assert token_pair.refresh_token
+
+    try:
+        confirm_password_reset(PasswordResetConfirmRequest(token=reset.reset_token, password="AnotherSpark123!"), db)
+    except Exception as exc:
+        assert getattr(exc, "status_code") == 400
+        assert exc.detail["code"] == "invalid_reset_token"
+    else:
+        raise AssertionError("expected reset token reuse to fail")
 
 
 def test_parse_topic_accepts_valid_telemetry_topic():

@@ -16,6 +16,21 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    token: str = Field(min_length=24, max_length=256)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class StatusResponse(BaseModel):
+    status: str = "ok"
+    message: str
+    reset_token: str | None = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str

@@ -41,6 +41,19 @@ ESP32 irrigation device: device-irrigation
 ESP32 irrigation token: spk_dev_irrigation_demo_9f3a
 ```
 
+## SaaS Authentication
+
+Spark IoT includes production-shaped SaaS auth surfaces:
+
+- Existing account login
+- Starter workspace signup
+- Password reset request
+- Password reset confirmation
+
+Password reset tokens are stored only as SHA-256 hashes and expire after 30 minutes. Confirming a reset updates the Argon2 password hash and revokes the user's existing refresh tokens so old sessions are signed out.
+
+For MVP/VPS testing, `/api/v1/auth/password-reset/request` returns the one-time reset token directly so the flow can be tested before email is configured. Before selling to public customers, connect SMTP or a transactional email provider and stop exposing raw reset tokens in API responses.
+
 ## Publish Demo Telemetry
 
 HTTP:

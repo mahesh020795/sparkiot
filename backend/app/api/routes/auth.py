@@ -9,8 +9,8 @@ from app.api.deps import current_user
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.security import create_access_token, hash_secret, issue_refresh_token, refresh_token_digest, verify_secret
-from app.models.domain import Notification, RefreshToken, Tenant, User
-from app.schemas.api import LoginRequest, RegisterRequest, TokenResponse, UserResponse
+from app.models.domain import Notification, PasswordResetToken, RefreshToken, Tenant, User
+from app.schemas.api import LoginRequest, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, StatusResponse, TokenResponse, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -52,6 +52,54 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_secret(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     return _token_pair(db, user)
+
+
+@router.post("/password-reset/request", response_model=StatusResponse)
+def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(get_db)):
+    user = db.scalar(select(User).where(User.email == payload.email.lower()))
+    message = "If the account exists, reset instructions are ready."
+    if not user or not user.is_active:
+        return StatusResponse(message=message)
+
+    raw_token = issue_refresh_token()
+    reset = PasswordResetToken(
+        user_id=user.id,
+        token_hash=refresh_token_digest(raw_token),
+        expires_at=datetime.now(UTC) + timedelta(minutes=30),
+    )
+    db.add(reset)
+    db.add(Notification(
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        title="Password reset requested",
+        body="A password reset link was requested. Use the latest reset token within 30 minutes. If this was not you, rotate your account password.",
+    ))
+    db.commit()
+    return StatusResponse(message=message, reset_token=raw_token)
+
+
+@router.post("/password-reset/confirm", response_model=StatusResponse)
+def confirm_password_reset(payload: PasswordResetConfirmRequest, db: Session = Depends(get_db)):
+    record = db.scalar(select(PasswordResetToken).where(PasswordResetToken.token_hash == refresh_token_digest(payload.token)))
+    now = datetime.now(UTC)
+    if not record or record.used_at is not None or record.expires_at.replace(tzinfo=UTC) < now:
+        raise HTTPException(status_code=400, detail={"code": "invalid_reset_token", "message": "Reset token is invalid or expired"})
+
+    user = db.get(User, record.user_id)
+    if not user or not user.is_active:
+        raise HTTPException(status_code=400, detail={"code": "invalid_reset_token", "message": "Reset token is invalid or expired"})
+
+    user.password_hash = hash_secret(payload.password)
+    record.used_at = now
+    db.query(RefreshToken).filter(RefreshToken.user_id == user.id).update({"revoked": True})
+    db.add(Notification(
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        title="Password updated",
+        body="Your Spark IoT password was changed. Existing sessions were signed out for safety.",
+    ))
+    db.commit()
+    return StatusResponse(message="Password updated. Sign in with your new password.")
 
 
 @router.post("/refresh", response_model=TokenResponse)

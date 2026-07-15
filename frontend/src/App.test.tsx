@@ -1021,6 +1021,50 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/auth/register"), expect.objectContaining({ method: "POST" }));
   });
 
+  it("lets customers request and confirm a password reset from the auth screen", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/password-reset/request")) {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toEqual({ email: "mahesh@example.com" });
+        return new Response(JSON.stringify({ status: "ok", message: "If the account exists, reset instructions are ready.", reset_token: "dev-reset-token-123" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/password-reset/confirm")) {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toEqual({ token: "dev-reset-token-123", password: "NewSpark123!" });
+        return new Response(JSON.stringify({ status: "ok", message: "Password updated. Sign in with your new password." }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/login")) {
+        expect(JSON.parse(String(init?.body))).toEqual({ email: "mahesh@example.com", password: "NewSpark123!" });
+        return new Response(JSON.stringify({ access_token: "reset-login-token", refresh_token: "reset-refresh-token", token_type: "bearer" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Sign in to account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Forgot password/i }));
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "mahesh@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /Send reset link/i }));
+
+    expect(await screen.findByText("Reset token ready for testing")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("dev-reset-token-123")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("New password"), { target: { value: "NewSpark123!" } });
+    fireEvent.click(screen.getByRole("button", { name: /Update password/i }));
+
+    expect(await screen.findByText("Password updated. Sign in with your new password.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "NewSpark123!" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
+
+    expect(await screen.findByText("Account mode active")).toBeInTheDocument();
+    expect(localStorage.getItem("spark_iot_session")).toContain("reset-login-token");
+  });
+
   it("loads protected workspace data after account sign in while preserving demo mode before login", async () => {
     const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Real tenant project", is_active: true };
     const accountDevice = {
