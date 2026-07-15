@@ -1762,6 +1762,68 @@ body {
   font-weight: 800;
 }
 
+.spark-ui .device-binding-panel {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--spark-space-3);
+  align-items: center;
+  padding: var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-lg);
+  background: var(--spark-surface);
+  box-shadow: var(--spark-shadow-soft);
+}
+
+.spark-ui .device-binding-panel > svg {
+  width: 42px;
+  height: 42px;
+  padding: 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary);
+}
+
+.spark-ui .device-binding-panel strong,
+.spark-ui .device-binding-panel p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .device-binding-panel strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--spark-text);
+  font-size: 0.98rem;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.spark-ui .device-binding-panel p {
+  margin: 0.25rem 0 0;
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.spark-ui .device-binding-panel.bound {
+  border-color: #bbf7d0;
+  background: var(--spark-success-soft);
+}
+
+.spark-ui .device-binding-panel.bound > svg {
+  border-color: #bbf7d0;
+  background: #ffffff;
+  color: var(--spark-success);
+}
+
+.spark-ui .device-binding-panel.needs-binding {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+
 .spark-ui .setup-hero,
 .spark-ui .migration-hero,
 .spark-ui .datastream-registry-hero,
@@ -2423,6 +2485,16 @@ body {
 
   .spark-ui .studio-system-steps {
     grid-template-columns: repeat(7, minmax(148px, 1fr));
+  }
+
+  .spark-ui .device-binding-panel {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .spark-ui .device-binding-panel button {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
   }
 
   .spark-ui .template-fields,

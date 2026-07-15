@@ -75,9 +75,17 @@ export function TemplateStudioPage({
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const saveLabel = saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : saveState === "error" ? "Save failed" : "Unsaved changes";
   const tokenLabel = device ? (device.token ?? "Token hidden after first issue") : "YOUR_DEVICE_TOKEN";
+  const unboundWidgetCount = device ? template.dashboard.widgets.filter((widget) => widget.deviceId !== device.id).length : template.dashboard.widgets.length;
+  const isDeviceBound = Boolean(device && unboundWidgetCount === 0);
 
   function patchTemplate(patch: Partial<DeviceTemplate>) {
     onChange({ ...template, ...patch });
+  }
+
+  function bindDashboardToDevice() {
+    if (!device) return;
+    const widgets = template.dashboard.widgets.map((widget) => ({ ...widget, deviceId: device.id }));
+    onChange({ ...template, dashboard: { ...template.dashboard, widgets } });
   }
 
   function updateDatastream(id: string, patch: Partial<Datastream>) {
@@ -221,6 +229,26 @@ export function TemplateStudioPage({
         </div>
       </header>
       {saveState === "error" && saveError && <div className="save-error-banner">{saveError}</div>}
+
+      <section className={`device-binding-panel ${isDeviceBound ? "bound" : "needs-binding"}`} data-testid="template-device-binding">
+        <Cpu size={18} />
+        <div>
+          <span className="section-kicker">Device binding</span>
+          <strong>{device ? (isDeviceBound ? `Dashboard bound to ${device.name}` : "Dashboard needs device binding") : "No device provisioned for this project"}</strong>
+          <p>
+            {device
+              ? isDeviceBound
+                ? `${template.dashboard.widgets.length} widgets are mapped to ${device.id}. Code, telemetry and dashboard channels now point to the same board.`
+                : `${unboundWidgetCount} widget${unboundWidgetCount === 1 ? "" : "s"} still need to be mapped to ${device.name} before testing with hardware.`
+              : "Create a device first so Spark IoT can generate exact MQTT topics, widget bindings and Arduino credentials."}
+          </p>
+        </div>
+        {device && !isDeviceBound && (
+          <button className="primary small" type="button" onClick={bindDashboardToDevice}>
+            Bind dashboard to {device.name}
+          </button>
+        )}
+      </section>
 
       <nav className="wizard-steps studio-system-steps" aria-label="Template setup steps">
         {stepConfig.map((step, index) => {

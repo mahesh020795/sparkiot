@@ -650,6 +650,70 @@ describe("App", () => {
     expect(screen.queryByText(/SPARK_DEVICE_TOKEN = "YOUR_DEVICE_TOKEN"/)).not.toBeInTheDocument();
   });
 
+  it("binds account template dashboard widgets to the selected project device before saving", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Real tenant project", is_active: true };
+    const accountDevice = {
+      id: "account-device",
+      project_id: "account-project",
+      name: "Customer ESP32",
+      board: "ESP32",
+      is_online: true,
+      token: "spk_once_visible",
+      telemetry_topic: "spark/v1/account-tenant/account-device/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/account-device/command/{channel}"
+    };
+    const accountTemplate = {
+      id: "template-account",
+      name: "Customer Greenhouse",
+      board: "ESP32",
+      description: "Real account template",
+      revision: 1,
+      datastreams: [
+        { id: "ds-temp", name: "Temperature", pin: "V0", dataType: "float", unit: "C", min: 0, max: 100, color: "#2563eb" }
+      ],
+      notifications: [],
+      dashboard: {
+        id: "account-dashboard",
+        project_id: "account-project",
+        name: "Customer Greenhouse Dashboard",
+        revision: 1,
+        widgets: [{ id: "w-temp", type: "gauge", title: "Temperature", x: 0, y: 0, w: 3, h: 3, deviceId: "", channel: "V0", datastreamId: "ds-temp" }]
+      }
+    };
+    let savedTemplateBody = "";
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/projects")) return new Response(JSON.stringify([accountProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/devices")) return new Response(JSON.stringify([accountDevice]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/templates")) return new Response(JSON.stringify([accountTemplate]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/templates/template-account") && init?.method === "PUT") {
+        savedTemplateBody = String(init.body ?? "");
+        return new Response(savedTemplateBody, { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/notifications") || url.includes("/schedules")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/tenant/usage")) return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 1, max_devices: 3, projects: 1, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/dashboards/project/account-project")) return new Response(JSON.stringify(accountTemplate.dashboard), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/telemetry/projects/account-project/latest")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Templates"));
+    fireEvent.click(within(await screen.findByRole("article", { name: /Customer Greenhouse template/i })).getByRole("button", { name: /Open studio/i }));
+
+    expect(await screen.findByText("Dashboard needs device binding")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Bind dashboard to Customer ESP32/i }));
+    expect(screen.getByText("Dashboard bound to Customer ESP32")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Save$/i }));
+
+    await vi.waitFor(() => expect(savedTemplateBody).toContain('"deviceId":"account-device"'));
+    expect(JSON.parse(savedTemplateBody).dashboard.widgets[0].deviceId).toBe("account-device");
+  });
+
 
   it("lets users sign in and out from the Settings account panel", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
