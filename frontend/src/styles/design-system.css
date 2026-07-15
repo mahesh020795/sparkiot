@@ -3042,3 +3042,53 @@ body {
     width: 100%;
   }
 }
+
+/* Settings: browser push opt-in. */
+.spark-ui .browser-push-card {
+  min-width: 0;
+  display: grid;
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .push-state-row {
+  min-width: 0;
+  display: grid;
+  gap: 0.3rem;
+  padding: var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-muted);
+}
+
+.spark-ui .push-state-row strong {
+  color: var(--spark-text);
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.spark-ui .push-state-row span {
+  color: var(--spark-muted);
+  font-size: var(--spark-text-sm);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .browser-push-card.enabled .push-state-row {
+  border-color: #bbf7d0;
+  background: var(--spark-success-soft);
+}
+
+.spark-ui .browser-push-card.enabled .push-state-row strong {
+  color: #047857;
+}
+
+.spark-ui .browser-push-card.error .push-state-row,
+.spark-ui .browser-push-card.unsupported .push-state-row {
+  border-color: #fecdd3;
+  background: var(--spark-danger-soft);
+}
+
+.spark-ui .browser-push-card.error .push-state-row strong,
+.spark-ui .browser-push-card.unsupported .push-state-row strong {
+  color: #be123c;
+}

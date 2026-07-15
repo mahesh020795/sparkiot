@@ -1,13 +1,16 @@
-import { LogIn, LogOut, Map, ShieldCheck, UserCircle } from "lucide-react";
+import { BellRing, LogIn, LogOut, Map, ShieldCheck, UserCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, clearSession, getSession, saveSession } from "../lib/api";
 
 type AccountProfile = { full_name: string; email: string; tenant_id: string; plan_code: string };
 type AccountStatus = "idle" | "loading" | "signed-in" | "error";
+type PushStatus = "idle" | "checking" | "enabled" | "error" | "unsupported";
 
 export function SettingsPage() {
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [status, setStatus] = useState<AccountStatus>(getSession() ? "loading" : "idle");
+  const [pushStatus, setPushStatus] = useState<PushStatus>("idle");
+  const [pushMessage, setPushMessage] = useState("Sign in, then enable browser notifications for Blynk-style alert delivery.");
   const [error, setError] = useState("");
 
   async function loadProfile() {
@@ -53,7 +56,53 @@ export function SettingsPage() {
     clearSession();
     setProfile(null);
     setStatus("idle");
+    setPushStatus("idle");
+    setPushMessage("Sign in, then enable browser notifications for Blynk-style alert delivery.");
     setError("");
+  }
+
+  async function enableBrowserPush() {
+    if (!profile || !getSession()) {
+      setPushStatus("error");
+      setPushMessage("Sign in before enabling browser push notifications.");
+      return;
+    }
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+      setPushStatus("unsupported");
+      setPushMessage("This browser does not support Web Push. Use Chrome, Edge, Firefox or another supported browser.");
+      return;
+    }
+
+    setPushStatus("checking");
+    setPushMessage("Requesting browser permission and registering Spark IoT push worker...");
+    try {
+      const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushStatus("error");
+        setPushMessage("Browser notification permission was not granted.");
+        return;
+      }
+
+      const { public_key: publicKey } = await api.pushPublicKey();
+      if (!publicKey) {
+        setPushStatus("error");
+        setPushMessage("VAPID public key is not configured on the server yet.");
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.register("/spark-push-sw.js");
+      const existing = await registration.pushManager.getSubscription();
+      const subscription = existing ?? await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+      await api.savePushSubscription(subscription.toJSON());
+      setPushStatus("enabled");
+      setPushMessage("Browser push enabled");
+    } catch {
+      setPushStatus("error");
+      setPushMessage("Could not enable browser push. Check HTTPS/domain setup and VAPID keys.");
+    }
   }
 
   return (
@@ -77,9 +126,31 @@ export function SettingsPage() {
           )}
           {error && <p className="error account-error">{error}</p>}
         </article>
+        <article className={`panel settings-card browser-push-card ${pushStatus}`} data-testid="browser-push-card">
+          <div className="panel-title"><BellRing size={18} /><h2>Browser push</h2></div>
+          <p>Enable real browser push subscriptions for threshold alerts, schedule events and manual notification tests.</p>
+          <div className="push-state-row">
+            <strong>{pushStatus === "enabled" ? "Browser push enabled" : pushStatus === "checking" ? "Enabling push..." : pushStatus === "unsupported" ? "Push unsupported" : "Push opt-in required"}</strong>
+            <span>{pushMessage}</span>
+          </div>
+          <button type="button" className="primary" onClick={enableBrowserPush} disabled={!profile || pushStatus === "checking"}>
+            <BellRing size={16} />Enable browser push
+          </button>
+        </article>
         <article className="panel settings-card"><div className="panel-title"><ShieldCheck size={18} /><h2>Starter plan</h2></div><p>1 user, 3 devices, 3 dashboards, GPS, camera URL, push notifications and 30-day history.</p></article>
         <article className="panel settings-card"><div className="panel-title"><Map size={18} /><h2>Map tiles</h2></div><p>Set VITE_MAP_TILE_URL and VITE_MAP_ATTRIBUTION for a commercial-safe tile provider before production.</p></article>
       </section>
     </section>
   );
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let index = 0; index < rawData.length; index++) {
+    outputArray[index] = rawData.charCodeAt(index);
+  }
+  return outputArray;
 }

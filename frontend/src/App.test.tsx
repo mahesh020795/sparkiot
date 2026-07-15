@@ -402,6 +402,61 @@ describe("App", () => {
     expect(localStorage.getItem("spark_iot_session")).toBeNull();
   });
 
+  it("lets signed-in users enable browser push notifications from Settings", async () => {
+    const subscriptionJson = {
+      endpoint: "https://push.example/subscription",
+      keys: { p256dh: "client-key", auth: "client-auth" }
+    };
+    const subscribe = vi.fn(async () => ({ toJSON: () => subscriptionJson }));
+    const register = vi.fn(async () => ({
+      pushManager: {
+        getSubscription: vi.fn(async () => null),
+        subscribe
+      }
+    }));
+    Object.defineProperty(navigator, "serviceWorker", { value: { register }, configurable: true });
+    vi.stubGlobal("PushManager", function PushManager() {});
+    vi.stubGlobal("Notification", {
+      permission: "default",
+      requestPermission: vi.fn(async () => "granted")
+    });
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/login")) {
+        return new Response(JSON.stringify({ access_token: "push-token", refresh_token: "refresh-token", token_type: "bearer" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/me")) {
+        return new Response(JSON.stringify({ full_name: "Demo User", email: "demo@sparkiot.dev", tenant_id: "demo-tenant", plan_code: "starter" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/notifications/push-public-key")) {
+        return new Response(JSON.stringify({ public_key: "AQID" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/notifications/push-subscriptions")) {
+        expect(init?.method).toBe("POST");
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer push-token");
+        expect(init?.body).toContain("https://push.example/subscription");
+        return new Response(JSON.stringify({ status: "stored" }), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Settings"));
+    fireEvent.click(screen.getByRole("button", { name: /Sign in demo account/i }));
+    expect(await screen.findByText("Signed in as Demo User")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Enable browser push/i }));
+
+    expect((await screen.findAllByText("Browser push enabled")).length).toBeGreaterThan(0);
+    expect(register).toHaveBeenCalledWith("/spark-push-sw.js");
+    expect(subscribe).toHaveBeenCalledWith(expect.objectContaining({ userVisibleOnly: true }));
+  });
+
   it("supports switching from no-login demo mode into authenticated account mode", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
