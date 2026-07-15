@@ -1,6 +1,6 @@
 import { ArrowRight, Bell, CheckCircle2, ClipboardCheck, Copy, Cpu, Database, Gauge, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, PlugZap, Plus, RadioTower, Settings, TerminalSquare, UserCircle, Workflow } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { LocalDashboardPage } from "./pages/DashboardPage";
+import { DashboardPage, LocalDashboardPage } from "./pages/DashboardPage";
 import { DevicesPage } from "./pages/DevicesPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -9,7 +9,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api, clearSession, getSession, type Session } from "./lib/api";
-import type { CommandLogItem, Device, DeviceTemplate, LiveBoardTestPayload, Project, Telemetry } from "./lib/types";
+import type { CommandLogItem, Dashboard, Device, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, Telemetry } from "./lib/types";
 
 type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "history" | "notifications" | "settings";
 type SaveState = "saved" | "unsaved" | "saving" | "error";
@@ -20,13 +20,26 @@ export function App() {
   const [authScreenOpen, setAuthScreenOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(demoProjects[0].id);
   const [templates, setTemplates] = useState<DeviceTemplate[]>(demoTemplates);
+  const [accountProjects, setAccountProjects] = useState<Project[]>([]);
+  const [accountDevices, setAccountDevices] = useState<Device[]>([]);
+  const [accountDashboards, setAccountDashboards] = useState<Record<string, Dashboard>>({});
+  const [accountLatest, setAccountLatest] = useState<Record<string, Telemetry>>({});
+  const [accountNotifications, setAccountNotifications] = useState<NotificationItem[]>([]);
+  const [accountUsage, setAccountUsage] = useState<{ devices: number; max_devices: number; projects: number; max_projects: number; retention_days: number } | null>(null);
+  const [accountLoadState, setAccountLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [templateStudioId, setTemplateStudioId] = useState<string | null>(null);
   const [templateSaveStates, setTemplateSaveStates] = useState<Record<string, SaveState>>(() => Object.fromEntries(demoTemplates.map((template) => [template.id, "saved"])));
   const [templateSaveError, setTemplateSaveError] = useState<string>("");
 
-  const selectedProject = useMemo(() => demoProjects.find((project) => project.id === selectedProjectId), [selectedProjectId]);
-  const selectedDevice = useMemo(() => demoDevices.find((device) => device.project_id === selectedProjectId), [selectedProjectId]);
-  const selectedTemplate = useMemo(() => templates.find((template) => template.dashboard.project_id === selectedProjectId) ?? templates[0], [selectedProjectId, templates]);
+  const isAccountMode = Boolean(session);
+  const activeProjects = isAccountMode ? accountProjects : demoProjects;
+  const activeDevices = isAccountMode ? accountDevices : demoDevices;
+  const activeLatest = isAccountMode ? accountLatest : demoLatest;
+  const accountTemplateSurrogates = useMemo(() => buildAccountTemplateSurrogates(accountProjects, accountDevices, accountDashboards), [accountProjects, accountDevices, accountDashboards]);
+  const activeTemplates = isAccountMode ? accountTemplateSurrogates : templates;
+  const selectedProject = useMemo(() => activeProjects.find((project) => project.id === selectedProjectId), [activeProjects, selectedProjectId]);
+  const selectedDevice = useMemo(() => activeDevices.find((device) => device.project_id === selectedProjectId), [activeDevices, selectedProjectId]);
+  const selectedTemplate = useMemo(() => activeTemplates.find((template) => template.dashboard.project_id === selectedProjectId) ?? activeTemplates[0] ?? templates[0], [activeTemplates, selectedProjectId, templates]);
 
   const nav = [
     ["dashboard", LayoutDashboard, "Overview"],
@@ -59,6 +72,64 @@ export function App() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadAccountWorkspace() {
+      if (!session) {
+        setAccountProjects([]);
+        setAccountDevices([]);
+        setAccountDashboards({});
+        setAccountLatest({});
+        setAccountNotifications([]);
+        setAccountUsage(null);
+        setAccountLoadState("idle");
+        if (!demoProjects.some((project) => project.id === selectedProjectId)) setSelectedProjectId(demoProjects[0].id);
+        return;
+      }
+      setAccountLoadState("loading");
+      try {
+        const [projects, devices, notifications, usage] = await Promise.all([
+          api.projects(),
+          api.devices(),
+          api.notifications().catch(() => []),
+          api.usage().catch(() => null)
+        ]);
+        if (!mounted) return;
+        setAccountProjects(projects);
+        setAccountDevices(devices);
+        setAccountNotifications(notifications);
+        setAccountUsage(usage);
+        setAccountLoadState("ready");
+        if (projects.length && !projects.some((project) => project.id === selectedProjectId)) setSelectedProjectId(projects[0].id);
+      } catch {
+        if (mounted) setAccountLoadState("error");
+      }
+    }
+    void loadAccountWorkspace();
+    return () => {
+      mounted = false;
+    };
+  }, [session]);
+
+  useEffect(() => {
+    if (!session || !selectedProjectId || !accountProjects.some((project) => project.id === selectedProjectId)) return;
+    let mounted = true;
+    async function loadSelectedAccountProject() {
+      try {
+        const [dashboard, readings] = await Promise.all([api.dashboard(selectedProjectId), api.latest(selectedProjectId)]);
+        if (!mounted) return;
+        setAccountDashboards((current) => ({ ...current, [selectedProjectId]: dashboard }));
+        setAccountLatest(Object.fromEntries(readings.map((reading) => [`${reading.device_id}:${reading.channel}`, reading])));
+      } catch {
+        // Keep the account shell usable even when a tenant has no dashboard yet.
+      }
+    }
+    void loadSelectedAccountProject();
+    return () => {
+      mounted = false;
+    };
+  }, [session, selectedProjectId, accountProjects]);
 
   function updateTemplate(nextTemplate: DeviceTemplate) {
     setTemplates((current) => current.map((item) => item.id === nextTemplate.id ? nextTemplate : item));
@@ -148,31 +219,31 @@ export function App() {
             {view === "dashboard" && (
               <label className="project-switcher spark-page-header-selector" data-testid="dashboard-header-selector">
                 <span>Dashboard</span>
-                <select aria-label="Dashboard project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{demoProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
+                <select aria-label="Dashboard project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{activeProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
               </label>
             )}
             {view === "dashboard" && (
               <div className="cockpit-metrics spark-page-header-metrics" data-testid="dashboard-header-metrics">
-                <span><PlugZap size={19} /><strong>{demoDevices.filter((device) => device.is_online).length}/{demoDevices.length}</strong><small>Nodes online</small></span>
+                <span><PlugZap size={19} /><strong>{activeDevices.filter((device) => device.is_online).length}/{activeDevices.length}</strong><small>Nodes online</small></span>
                 <span><LayoutDashboard size={19} /><strong>{selectedTemplate.dashboard.widgets.length}</strong><small>Widgets active</small></span>
                 <span><RadioTower size={19} /><strong>{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</strong><small>Telemetry time</small></span>
                 <span><Bell size={19} /><strong>Active</strong><small>Flow safety</small></span>
               </div>
             )}
             {view !== "dashboard" && <div className="preview-status"><RadioTower size={16} /><div><strong>Production preview</strong><small>Local MVP Â· no login mode</small></div></div>}
-            {view !== "dashboard" && <select aria-label="Project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{demoProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>}
+            {view !== "dashboard" && <select aria-label="Project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{activeProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>}
           </div>
           </div>
         </header>
-        {view === "dashboard" && <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />}
-        {view === "projects" && <ProjectsView projects={demoProjects} templates={templates} />}
+        {view === "dashboard" && (isAccountMode ? <DashboardPage key={selectedProjectId} projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} /> : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />)}
+        {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} />}
         {view === "templates" && (
           templateStudioId ? (
             <TemplateStudioPage
-              templates={templates}
+              templates={activeTemplates}
               selectedTemplateId={templateStudioId}
               device={selectedDevice}
-              latest={demoLatest}
+              latest={activeLatest}
               saveState={templateSaveStates[templateStudioId] ?? "saved"}
               saveError={templateSaveError}
               onSave={() => void saveTemplate(templateStudioId)}
@@ -180,7 +251,7 @@ export function App() {
             />
           ) : (
             <TemplateLibrary
-              templates={templates}
+              templates={activeTemplates}
               onOpen={(template) => {
                 setSelectedProjectId(template.dashboard.project_id);
                 setTemplateStudioId(template.id);
@@ -188,10 +259,10 @@ export function App() {
             />
           )
         )}
-        {view === "devices" && <DevicesPage devices={demoDevices} templates={templates} />}
-        {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : demoDevices} latest={demoLatest} />}
-        {view === "history" && <HistoryPage devices={demoDevices} initialLatest={demoLatest} />}
-        {view === "notifications" && <NotificationsPage initialItems={demoNotifications} />}
+        {view === "devices" && <DevicesPage devices={activeDevices} templates={activeTemplates} />}
+        {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} latest={activeLatest} />}
+        {view === "history" && <HistoryPage devices={activeDevices} initialLatest={activeLatest} />}
+        {view === "notifications" && <NotificationsPage initialItems={isAccountMode ? accountNotifications : demoNotifications} />}
         {view === "settings" && <SettingsPage />}
       </main>
     </div>
@@ -429,6 +500,39 @@ function formatLiveValue(value: unknown) {
 function formatCommandValue(value: unknown) {
   if (typeof value === "object" && value !== null) return JSON.stringify(value);
   return String(value);
+}
+
+function buildAccountTemplateSurrogates(projects: Project[], devices: Device[], dashboards: Record<string, Dashboard>): DeviceTemplate[] {
+  return projects.map((project) => {
+    const projectDevice = devices.find((device) => device.project_id === project.id);
+    const dashboard = dashboards[project.id] ?? {
+      id: `${project.id}-dashboard`,
+      project_id: project.id,
+      name: `${project.name} Dashboard`,
+      revision: 1,
+      widgets: []
+    };
+    const channels = Array.from(new Set(dashboard.widgets.map((widget) => widget.channel).filter(Boolean))).slice(0, 10);
+    return {
+      id: `${project.id}-account-template`,
+      name: project.name,
+      board: (projectDevice?.board as DeviceTemplate["board"] | undefined) ?? "ESP32",
+      description: project.description || `${project.name} account workspace`,
+      revision: dashboard.revision,
+      datastreams: channels.map((channel, index) => ({
+        id: `${project.id}-${channel}`,
+        name: channel,
+        pin: channel as `V${number}`,
+        dataType: "float",
+        unit: dashboard.widgets.find((widget) => widget.channel === channel)?.unit ?? "",
+        min: dashboard.widgets.find((widget) => widget.channel === channel)?.min,
+        max: dashboard.widgets.find((widget) => widget.channel === channel)?.max,
+        color: dashboard.widgets.find((widget) => widget.channel === channel)?.color ?? (index % 2 ? "#10b981" : "#2563eb")
+      })),
+      notifications: [],
+      dashboard
+    };
+  });
 }
 
 function TemplateLibrary({ templates, onOpen }: { templates: DeviceTemplate[]; onOpen: (template: DeviceTemplate) => void }) {

@@ -78,7 +78,9 @@ describe("App", () => {
 
     expect(css).toContain("--spark-metric-min");
     expect(css).toContain("--spark-compact-metric-min");
-    expect(css).toContain("--spark-compact-metric-min: 7.25rem");
+    expect(css).toContain("--spark-metric-min: 8.75rem");
+    expect(css).toContain("--spark-compact-metric-min: 6.75rem");
+    expect(css).toContain("box-sizing: border-box");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))");
     expect(css).toContain(".spark-ui .project-stat-row span > *");
@@ -339,6 +341,86 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Sign out/i }));
     expect(screen.getByText("Demo mode active")).toBeInTheDocument();
     expect(localStorage.getItem("spark_iot_session")).toBeNull();
+  });
+
+  it("loads protected workspace data after account sign in while preserving demo mode before login", async () => {
+    const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Real tenant project", is_active: true };
+    const accountDevice = {
+      id: "account-device",
+      project_id: "account-project",
+      name: "ESP32 Greenhouse Node",
+      board: "ESP32",
+      is_online: true,
+      telemetry_topic: "spark/v1/account-tenant/account-device/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/account-device/command/{channel}"
+    };
+    const accountDashboard = {
+      id: "account-dashboard",
+      project_id: "account-project",
+      name: "Customer Greenhouse Dashboard",
+      revision: 4,
+      widgets: [
+        { id: "account-widget-temp", type: "value", title: "Greenhouse Temperature", x: 0, y: 0, w: 3, h: 3, deviceId: "account-device", channel: "V0", unit: "C", min: 0, max: 60 }
+      ]
+    };
+    const accountLatest = [
+      { id: "account-reading-v0", device_id: "account-device", channel: "V0", value: 28.6, unit: "C", observed_at: "2026-07-15T05:00:00Z", server_at: "2026-07-15T05:00:01Z" }
+    ];
+    const accountNotifications = [
+      { id: "account-notification", title: "Account alert", body: "Greenhouse temperature stable", read: false, created_at: "2026-07-15T05:01:00Z" }
+    ];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/login")) {
+        return new Response(JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token", token_type: "bearer" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/dashboards/project/account-project")) {
+        return new Response(JSON.stringify(accountDashboard), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/telemetry/projects/account-project/latest")) {
+        return new Response(JSON.stringify(accountLatest), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/projects")) {
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        return new Response(JSON.stringify([accountProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/devices")) {
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        return new Response(JSON.stringify([accountDevice]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/notifications")) {
+        return new Response(JSON.stringify(accountNotifications), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/tenant/usage")) {
+        return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 1, max_devices: 3, projects: 1, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    expect(await screen.findByText("Smart Irrigation Dashboard")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Sign in to account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
+
+    expect(await screen.findByText("Customer Greenhouse Dashboard")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dashboard project selector")).toHaveValue("account-project");
+    expect(await screen.findByText("Greenhouse Temperature")).toBeInTheDocument();
+    expect(await screen.findByText(/28\.6/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Projects"));
+    expect((await screen.findAllByText("Customer Greenhouse")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Smart Irrigation")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Devices"));
+    expect(await screen.findByText("ESP32 Greenhouse Node")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Notifications"));
+    expect(await screen.findByText("Account alert")).toBeInTheDocument();
   });
 
   it("shows a production-ready firmware export workflow in the Code tab", async () => {

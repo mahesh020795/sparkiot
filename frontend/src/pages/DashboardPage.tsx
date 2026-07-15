@@ -13,15 +13,25 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
   const [draggingId, setDraggingId] = useState<string>("");
 
   useEffect(() => {
-    Promise.all([api.dashboard(projectId), api.latest(projectId)]).then(([nextDashboard, readings]) => {
-      setDashboard(nextDashboard);
-      setLatest(Object.fromEntries(readings.map((reading) => [`${reading.device_id}:${reading.channel}`, reading])));
-    });
+    let mounted = true;
+    setDashboard(null);
+    Promise.all([api.dashboard(projectId), api.latest(projectId)])
+      .then(([nextDashboard, readings]) => {
+        if (!mounted) return;
+        setDashboard(nextDashboard);
+        setLatest(Object.fromEntries(readings.map((reading) => [`${reading.device_id}:${reading.channel}`, reading])));
+      })
+      .catch(() => {
+        if (mounted) setDashboard({ id: `${projectId}-empty-dashboard`, project_id: projectId, name: "Dashboard", revision: 1, widgets: [] });
+      });
+    return () => {
+      mounted = false;
+    };
   }, [projectId]);
 
   useEffect(() => {
     const token = getSession()?.access_token;
-    if (!token) return;
+    if (!token || typeof WebSocket === "undefined") return;
     const ws = new WebSocket(realtimeUrl(token));
     ws.onopen = () => setConnected(true);
     ws.onclose = () => setConnected(false);

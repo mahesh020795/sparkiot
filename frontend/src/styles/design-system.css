@@ -59,6 +59,11 @@
   --spark-small: 0.8rem;
 }
 
+.spark-ui,
+.spark-ui * {
+  box-sizing: border-box;
+}
+
 html,
 body,
 #root {
@@ -2361,7 +2366,7 @@ body {
 :root {
   --spark-page-pad-x: clamp(1.25rem, 2vw, 2rem);
   --spark-page-pad-y: clamp(1.35rem, 2vw, 2rem);
-  --spark-title-xl: clamp(2rem, 2.6vw, 2.85rem);
+  --spark-title-xl: clamp(1.85rem, 2.3vw, 2.55rem);
   --spark-title-lg: clamp(1.55rem, 2vw, 2rem);
   --spark-title-md: 1.15rem;
   --spark-text-md: 0.94rem;
@@ -2371,8 +2376,8 @@ body {
   --spark-card-radius: 20px;
   --spark-card-border: #e5edf6;
   --spark-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 16px 34px rgba(15, 23, 42, 0.04);
-  --spark-metric-min: 10.5rem;
-  --spark-compact-metric-min: 7.25rem;
+  --spark-metric-min: 8.75rem;
+  --spark-compact-metric-min: 6.75rem;
 }
 
 .spark-ui {
@@ -2381,7 +2386,7 @@ body {
 
 .spark-ui .spark-page-header-grid.dashboard-header-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(min(100%, 250px), 320px);
+  grid-template-columns: minmax(0, 1fr) minmax(min(100%, 13rem), 18rem);
   grid-template-areas:
     "primary selector"
     "metrics metrics";
@@ -2433,7 +2438,7 @@ body {
 .spark-ui .topbar h1,
 .spark-ui .overview-hero h2,
 .spark-ui .support-hero h2 {
-  max-width: 100%;
+  max-width: min(100%, 44rem);
   color: var(--spark-text);
   font-size: var(--spark-title-xl);
   line-height: 1.06;
@@ -2519,6 +2524,14 @@ body {
   overflow: hidden;
 }
 
+.spark-ui.dashboard-shell .cockpit-metrics span > span,
+.spark-ui .overview-metric > div,
+.spark-ui .support-metrics span > div,
+.spark-ui .project-stat-row span > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .spark-ui.dashboard-shell .cockpit-metrics span > svg,
 .spark-ui .overview-metric > span,
 .spark-ui .support-metrics span > svg,
@@ -2552,6 +2565,8 @@ body {
 
 .spark-ui .project-stat-row {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr));
+  display: grid;
+  gap: 0.65rem;
   min-width: 0;
   max-width: 100%;
   contain: inline-size;
@@ -2560,9 +2575,10 @@ body {
 
 .spark-ui .project-stat-row span {
   grid-template-columns: minmax(0, 1fr);
-  min-height: 5.55rem;
+  min-height: 5.15rem;
   align-content: center;
   justify-items: start;
+  padding: 0.75rem;
 }
 
 .spark-ui .project-stat-row span > * {
@@ -2579,6 +2595,31 @@ body {
   overflow: visible;
   text-overflow: clip;
   white-space: normal;
+}
+
+.spark-ui .project-stat-row strong {
+  font-size: clamp(0.86rem, 1.5vw, 1rem);
+  line-height: 1.12;
+  word-break: break-word;
+}
+
+.spark-ui .project-stat-row small {
+  font-size: 0.65rem;
+  letter-spacing: 0.07em;
+}
+
+.spark-ui .project-card h2,
+.spark-ui .template-library-card h2 {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .project-card p,
+.spark-ui .template-library-card p {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .spark-ui .project-card,
