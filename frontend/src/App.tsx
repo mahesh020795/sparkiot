@@ -241,6 +241,17 @@ export function App() {
           <div><CheckCircle2 size={16} /><strong>Demo realtime active</strong></div>
           <small>3 projects Â· 3 devices Â· 30-day data window</small>
         </div>
+        <div className="launch-checklist-card" data-testid="launch-checklist-card">
+          <span className="section-kicker">Launch checklist</span>
+          <strong>Project → Template → Device → Code → Live Test</strong>
+          <small>Use this flow when connecting ESP32 or NodeMCU boards.</small>
+          <ol aria-label="Spark IoT launch flow">
+            <li><CheckCircle2 size={13} />Select project</li>
+            <li><CheckCircle2 size={13} />Open template</li>
+            <li><CheckCircle2 size={13} />Copy device token</li>
+            <li><CheckCircle2 size={13} />Upload Arduino sketch</li>
+          </ol>
+        </div>
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
           <span className="section-kicker">{session ? "Account mode active" : "Demo mode active"}</span>
           <div><UserCircle size={16} /><strong>{session ? "Authenticated workspace" : "No-login preview"}</strong></div>
@@ -479,6 +490,21 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
           <span><strong>{status}</strong><small>API state</small></span>
         </div>
       </div>
+
+      <section className="panel board-readiness-checklist" data-testid="board-readiness-checklist">
+        <div>
+          <span className="section-kicker">Real board readiness</span>
+          <h2>Before you upload the sketch</h2>
+          <p>Use this quick checklist when testing ESP32, NodeMCU ESP8266, Arduino Uno R4 WiFi or Ethernet boards.</p>
+        </div>
+        <div className="readiness-steps">
+          <span><CheckCircle2 size={16} /><strong>Install SparkIoT v1.0.0</strong><small>Arduino IDE library plus PubSubClient.</small></span>
+          <span><RadioTower size={16} /><strong>Set broker host</strong><small>34.73.29.12 or your LAN IP</small></span>
+          <span><TerminalSquare size={16} /><strong>Open Serial Monitor at 115200</strong><small>Watch WiFi, MQTT and command logs.</small></span>
+          <span><Database size={16} /><strong>Publish V0 telemetry</strong><small>Confirm a live value appears here.</small></span>
+          <span><PlugZap size={16} /><strong>Confirm command ACK</strong><small>Switch command must return board ACK.</small></span>
+        </div>
+      </section>
 
       <section className="connection-proof-timeline" data-testid="connection-proof-timeline">
         <div>

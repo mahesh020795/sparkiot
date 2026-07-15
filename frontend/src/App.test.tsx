@@ -42,6 +42,9 @@ describe("App", () => {
     expect(navigation.compareDocumentPosition(screen.getByText("Workspace health")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
     expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
+    expect(screen.getByText("Launch checklist")).toBeInTheDocument();
+    expect(screen.getByText("Project → Template → Device → Code → Live Test")).toBeInTheDocument();
+    expect(screen.getByText("Use this flow when connecting ESP32 or NodeMCU boards.")).toBeInTheDocument();
   });
 
   it("uses the standardized design-system shell and non-overlapping dashboard header", async () => {
@@ -1067,6 +1070,20 @@ describe("App", () => {
     expect(await screen.findByText("Board ACK")).toBeInTheDocument();
     expect(await screen.findByText(/Pump command applied/)).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/demo/projects/account-project/board-test"), expect.anything());
+  });
+
+  it("shows a real-board readiness checklist on Live Test", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Live Test"));
+
+    expect(await screen.findByTestId("board-readiness-checklist")).toHaveClass("board-readiness-checklist");
+    expect(screen.getByText("Real board readiness")).toBeInTheDocument();
+    expect(screen.getByText("Install SparkIoT v1.0.0")).toBeInTheDocument();
+    expect(screen.getByText("Set broker host")).toBeInTheDocument();
+    expect(screen.getByText("Open Serial Monitor at 115200")).toBeInTheDocument();
+    expect(screen.getByText("Publish V0 telemetry")).toBeInTheDocument();
+    expect(screen.getByText("Confirm command ACK")).toBeInTheDocument();
+    expect(screen.getByText("34.73.29.12 or your LAN IP")).toBeInTheDocument();
   });
 
   it("shows a production-ready firmware export workflow in the Code tab", async () => {
