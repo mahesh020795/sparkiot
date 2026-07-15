@@ -16,6 +16,7 @@ type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "sched
 type SaveState = "saved" | "unsaved" | "saving" | "error";
 type TemplatePreset = "Smart Irrigation" | "Smart Home" | "Energy Monitor" | "Blank";
 type StudioLaunchStep = "Setup" | "Migrate" | "Datastreams" | "Dashboard" | "Notifications" | "Code" | "Simulator";
+type QuickStartDraft = { projectName: string; projectDescription: string; board: DeviceTemplate["board"]; preset: TemplatePreset; deviceName: string };
 
 export function App() {
   const [view, setView] = useState<View>("dashboard");
@@ -229,6 +230,32 @@ export function App() {
     return created;
   }
 
+  async function createAccountQuickStart(draft: QuickStartDraft) {
+    const projectName = draft.projectName.trim();
+    const projectDescription = draft.projectDescription.trim();
+    const deviceName = draft.deviceName.trim();
+    if (!projectName || !deviceName) throw new Error("Project and device name are required");
+
+    const project = await api.createProject({
+      name: projectName,
+      description: projectDescription || `${draft.preset} workspace`
+    });
+    const dashboard = await api.dashboard(project.id);
+    const templateDraft = buildStarterTemplateDraft(project, dashboard, undefined, draft.board, draft.preset);
+    const template = await api.createTemplate(templateDraft);
+    const device = await api.createDevice({ project_id: project.id, name: deviceName, board: draft.board });
+
+    setAccountProjects((current) => [project, ...current.filter((item) => item.id !== project.id)]);
+    setAccountDashboards((current) => ({ ...current, [project.id]: template.dashboard }));
+    setAccountTemplates((current) => [template, ...current.filter((item) => item.id !== template.id)]);
+    setAccountDevices((current) => [device, ...current.filter((item) => item.id !== device.id)]);
+    setTemplateSaveStates((current) => ({ ...current, [template.id]: "saved" }));
+    setSelectedProjectId(project.id);
+    setTemplateStudioInitialStep("Code");
+    setTemplateStudioId(template.id);
+    setView("templates");
+  }
+
   function openSelectedTemplateStudio(initialStep: StudioLaunchStep = "Setup") {
     const template = selectedTemplate ?? activeTemplates[0] ?? templates[0];
     if (!template) {
@@ -330,6 +357,8 @@ export function App() {
             datastreamCount={selectedTemplate?.datastreams.length ?? 0}
             selectedProjectName={selectedProject?.name ?? "Spark IoT project"}
             selectedDeviceName={selectedDevice?.name ?? activeDevices[0]?.name ?? "ESP board"}
+            accountMode={isAccountMode}
+            onCreateQuickStart={isAccountMode ? createAccountQuickStart : undefined}
             onOpenProjects={() => setView("projects")}
             onOpenTemplate={() => openSelectedTemplateStudio("Setup")}
             onOpenDatastreams={() => openSelectedTemplateStudio("Datastreams")}
@@ -404,6 +433,8 @@ function LaunchWizardPanel({
   datastreamCount,
   selectedProjectName,
   selectedDeviceName,
+  accountMode = false,
+  onCreateQuickStart,
   onOpenProjects,
   onOpenTemplate,
   onOpenDatastreams,
@@ -417,6 +448,8 @@ function LaunchWizardPanel({
   datastreamCount: number;
   selectedProjectName: string;
   selectedDeviceName: string;
+  accountMode?: boolean;
+  onCreateQuickStart?: (draft: QuickStartDraft) => Promise<void>;
   onOpenProjects: () => void;
   onOpenTemplate: () => void;
   onOpenDatastreams: () => void;
@@ -424,6 +457,15 @@ function LaunchWizardPanel({
   onOpenCode: () => void;
   onOpenLiveTest: () => void;
 }) {
+  const [quickStartDraft, setQuickStartDraft] = useState<QuickStartDraft>({
+    projectName: "Smart Irrigation",
+    projectDescription: "GPS, camera and pump controls",
+    board: "ESP32",
+    preset: "Smart Irrigation",
+    deviceName: "ESP32 Irrigation Node"
+  });
+  const [quickStartState, setQuickStartState] = useState<"idle" | "building" | "error">("idle");
+  const [quickStartError, setQuickStartError] = useState("");
   const steps = [
     { title: "Create project", detail: `${projectCount}/3 projects ready`, action: "Open project setup", onClick: onOpenProjects, icon: MapPinned },
     { title: "Choose template", detail: `${templateCount}/3 templates ready`, action: "Open template studio", onClick: onOpenTemplate, icon: Workflow },
@@ -432,6 +474,19 @@ function LaunchWizardPanel({
     { title: "Generate Arduino code", detail: `Sketch targets ${selectedDeviceName}`, action: "Open code generator", onClick: onOpenCode, icon: TerminalSquare },
     { title: "Live board test", detail: "MQTT telemetry and command ACK", action: "Open live test", onClick: onOpenLiveTest, icon: PlugZap }
   ] as const;
+
+  async function buildQuickStartWorkspace() {
+    if (!onCreateQuickStart) return;
+    setQuickStartState("building");
+    setQuickStartError("");
+    try {
+      await onCreateQuickStart(quickStartDraft);
+      setQuickStartState("idle");
+    } catch (error) {
+      setQuickStartState("error");
+      setQuickStartError(error instanceof Error ? error.message : "Quick start failed. Check Starter plan limits and try again.");
+    }
+  }
 
   return (
     <section className="launch-wizard-panel" data-testid="launch-wizard-panel" aria-label="Spark IoT first-use launch wizard">
@@ -443,6 +498,61 @@ function LaunchWizardPanel({
           <span><CheckCircle2 size={16} /><strong>6/6 ready</strong></span>
           <small>{selectedProjectName} is ready for ESP32 / NodeMCU testing.</small>
         </div>
+        {accountMode && (
+          <div className="account-quickstart-card" data-testid="account-quickstart-card">
+            <span className="section-kicker">Account Quick Start Builder</span>
+            <div className="account-quickstart-grid">
+              <label>
+                Project name
+                <input
+                  aria-label="Quick start project name"
+                  value={quickStartDraft.projectName}
+                  onChange={(event) => setQuickStartDraft((current) => ({ ...current, projectName: event.target.value }))}
+                />
+              </label>
+              <label>
+                Description
+                <input
+                  aria-label="Quick start project description"
+                  value={quickStartDraft.projectDescription}
+                  onChange={(event) => setQuickStartDraft((current) => ({ ...current, projectDescription: event.target.value }))}
+                />
+              </label>
+              <label>
+                Board
+                <select
+                  aria-label="Quick start board"
+                  value={quickStartDraft.board}
+                  onChange={(event) => setQuickStartDraft((current) => ({ ...current, board: event.target.value as DeviceTemplate["board"] }))}
+                >
+                  {["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"].map((board) => <option key={board}>{board}</option>)}
+                </select>
+              </label>
+              <label>
+                Preset
+                <select
+                  aria-label="Quick start preset"
+                  value={quickStartDraft.preset}
+                  onChange={(event) => setQuickStartDraft((current) => ({ ...current, preset: event.target.value as TemplatePreset }))}
+                >
+                  {["Smart Irrigation", "Smart Home", "Energy Monitor", "Blank"].map((preset) => <option key={preset}>{preset}</option>)}
+                </select>
+              </label>
+              <label>
+                Device name
+                <input
+                  aria-label="Quick start device name"
+                  value={quickStartDraft.deviceName}
+                  onChange={(event) => setQuickStartDraft((current) => ({ ...current, deviceName: event.target.value }))}
+                />
+              </label>
+            </div>
+            <button className="primary" type="button" onClick={() => void buildQuickStartWorkspace()} disabled={quickStartState === "building"}>
+              <Plus size={16} />{quickStartState === "building" ? "Building..." : "Build workspace"}
+            </button>
+            {quickStartError && <small className="account-quickstart-error">{quickStartError}</small>}
+          </div>
+        )}
       </div>
       <div className="launch-wizard-steps">
         {steps.map((step, index) => {
