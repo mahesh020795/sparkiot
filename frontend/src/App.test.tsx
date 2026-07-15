@@ -78,16 +78,22 @@ describe("App", () => {
 
     expect(css).toContain("--spark-metric-min");
     expect(css).toContain("--spark-compact-metric-min");
-    expect(css).toContain("--spark-metric-min: 8.75rem");
-    expect(css).toContain("--spark-compact-metric-min: 6.75rem");
+    expect(css).toContain("--spark-metric-min: 7.25rem");
+    expect(css).toContain("--spark-compact-metric-min: 5.75rem");
     expect(css).toContain("box-sizing: border-box");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.25rem), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.25rem), 1fr))");
+    expect(css).toContain("overflow: clip");
     expect(css).toContain(".spark-ui .project-stat-row span > *");
     expect(css).toContain("overflow-wrap: anywhere");
     expect(css).toContain("white-space: normal");
     expect(css).toContain("contain: inline-size");
     expect(css).toContain("container-type: inline-size");
+    expect(css).toContain(".spark-ui .project-card::after");
+    expect(css).toContain("display: none");
+    expect(css).toContain("@container spark-page-header (max-width: 72rem)");
     expect(css).toContain("@container spark-metric-row (max-width: 25rem)");
   });
 
