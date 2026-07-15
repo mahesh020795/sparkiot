@@ -22,13 +22,14 @@
     "@testing-library/jest-dom": "latest",
     "@testing-library/react": "latest",
     "@types/leaflet": "latest",
+    "@types/node": "^26.1.1",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@types/react-grid-layout": "latest",
     "eslint": "latest",
+    "jsdom": "latest",
     "typescript": "latest",
     "vite": "latest",
-    "vitest": "latest",
-    "jsdom": "latest"
+    "vitest": "latest"
   }
 }

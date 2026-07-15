@@ -1,5 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
@@ -15,7 +17,11 @@ vi.mock("leaflet", () => ({
   }
 }));
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  localStorage.clear();
+});
 
 describe("App", () => {
   it("opens directly on the Spark IoT dashboard without login", async () => {
@@ -64,6 +70,18 @@ describe("App", () => {
     expect(screen.getByText("Water, pressure, flow models synced with scheduler output")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Edit labels/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Publish Changes/i })).toBeInTheDocument();
+  });
+
+  it("keeps KPI and project metric cards inside narrow screens with shared overflow-safe CSS", () => {
+    const css = `${readFileSync(resolve(__dirname, "styles/app.css"), "utf8")}\n${readFileSync(resolve(__dirname, "styles/design-system.css"), "utf8")}`;
+
+    expect(css).toContain("--spark-metric-min");
+    expect(css).toContain("--spark-compact-metric-min");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))");
+    expect(css).toContain(".spark-ui .project-stat-row span > *");
+    expect(css).toContain("overflow-wrap: anywhere");
+    expect(css).toContain("contain: inline-size");
   });
 
   it("toggles the demo solenoid switch immediately on the dashboard", async () => {
@@ -246,6 +264,41 @@ describe("App", () => {
     expect(screen.getByText(/SparkIoT\.ack\("V0", state, "V0 command applied"\)/)).toBeInTheDocument();
   });
 
+
+  it("lets users sign in and out from the Settings account panel", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/login")) {
+        expect(init?.method).toBe("POST");
+        return new Response(JSON.stringify({ access_token: "access-demo", refresh_token: "refresh-demo", token_type: "bearer" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/me")) {
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer access-demo");
+        return new Response(JSON.stringify({ full_name: "Demo User", email: "demo@sparkiot.dev", tenant_id: "demo-tenant", plan_code: "starter" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Settings"));
+
+    expect(screen.getByText("Account access")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Sign in demo account/i }));
+
+    expect(await screen.findByText("Signed in as Demo User")).toBeInTheDocument();
+    expect(screen.getByText(/demo@sparkiot\.dev/)).toBeInTheDocument();
+    expect(screen.getByText(/starter/)).toBeInTheDocument();
+    expect(screen.getByText(/demo-tenant/)).toBeInTheDocument();
+    expect(localStorage.getItem("spark_iot_session")).toContain("access-demo");
+
+    fireEvent.click(screen.getByRole("button", { name: /Sign out/i }));
+    expect(screen.getByText("Not signed in")).toBeInTheDocument();
+    expect(localStorage.getItem("spark_iot_session")).toBeNull();
+  });
   it("shows a production-ready firmware export workflow in the Code tab", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Templates"));

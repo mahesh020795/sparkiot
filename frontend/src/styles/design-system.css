@@ -2371,6 +2371,8 @@ body {
   --spark-card-radius: 20px;
   --spark-card-border: #e5edf6;
   --spark-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 16px 34px rgba(15, 23, 42, 0.04);
+  --spark-metric-min: 10.5rem;
+  --spark-compact-metric-min: 5.6rem;
 }
 
 .spark-ui {
@@ -2379,14 +2381,17 @@ body {
 
 .spark-ui .spark-page-header-grid.dashboard-header-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px);
+  grid-template-columns: minmax(0, 1fr) minmax(min(100%, 250px), 320px);
   grid-template-areas:
     "primary selector"
     "metrics metrics";
   gap: 1rem 1.25rem;
   align-items: start;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: var(--spark-page-pad-y) var(--spark-page-pad-x);
+  overflow: hidden;
 }
 
 .spark-ui .spark-page-header-primary {
@@ -2398,10 +2403,15 @@ body {
 .spark-ui .spark-page-header-selector {
   grid-area: selector;
   align-self: start;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .spark-ui .spark-page-header-metrics {
   grid-area: metrics;
+  min-width: 0;
+  max-width: 100%;
+  contain: inline-size;
 }
 
 .spark-ui.dashboard-shell .dashboard-main .topbar.cockpit-header,
@@ -2467,6 +2477,9 @@ body {
 }
 
 .spark-ui.dashboard-shell .project-switcher select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   height: var(--spark-control-height);
   min-height: var(--spark-control-height);
   font-size: var(--spark-text-md);
@@ -2475,14 +2488,22 @@ body {
 
 .spark-ui.dashboard-shell .cockpit-metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr));
   gap: 0.75rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  contain: inline-size;
 }
 
 .spark-ui.dashboard-shell .cockpit-metrics span,
 .spark-ui .overview-metric,
 .spark-ui .support-metrics span,
 .spark-ui .project-stat-row span {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem 0.72rem;
   min-width: 0;
   min-height: 68px;
   padding: 0.75rem;
@@ -2490,22 +2511,58 @@ body {
   border-radius: 16px;
   background: var(--spark-surface);
   box-shadow: var(--spark-card-shadow);
+  overflow: hidden;
+}
+
+.spark-ui.dashboard-shell .cockpit-metrics span > svg,
+.spark-ui .overview-metric > span,
+.spark-ui .support-metrics span > svg,
+.spark-ui .project-stat-row span > svg {
+  flex: 0 0 auto;
 }
 
 .spark-ui.dashboard-shell .cockpit-metrics strong,
 .spark-ui .overview-metric strong,
 .spark-ui .support-metrics strong,
 .spark-ui .project-stat-row strong {
+  min-width: 0;
+  max-width: 100%;
   font-size: 1rem;
   line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .spark-ui.dashboard-shell .cockpit-metrics small,
 .spark-ui .overview-metric small,
 .spark-ui .support-metrics small,
 .spark-ui .project-stat-row small {
+  min-width: 0;
+  max-width: 100%;
   font-size: 0.66rem;
   line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .project-stat-row {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr));
+  min-width: 0;
+  max-width: 100%;
+  contain: inline-size;
+}
+
+.spark-ui .project-stat-row span {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 5.55rem;
+  align-content: center;
+  justify-items: start;
+}
+
+.spark-ui .project-stat-row span > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .spark-ui .project-stat-row strong,
@@ -2586,11 +2643,11 @@ body {
 
 @media (max-width: 1380px) {
   .spark-ui .spark-page-header-grid.dashboard-header-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+    grid-template-columns: minmax(0, 1fr) minmax(min(100%, 230px), 300px);
   }
 
   .spark-ui.dashboard-shell .cockpit-metrics {
-    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr));
   }
 }
 
@@ -2604,13 +2661,13 @@ body {
   }
 
   .spark-ui.dashboard-shell .cockpit-metrics {
-    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr));
   }
 }
 
 @media (max-width: 640px) {
   .spark-ui.dashboard-shell .cockpit-metrics {
-    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
   }
 
   .spark-ui .dashboard-toolbar.gemini-action-strip {

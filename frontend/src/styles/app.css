@@ -91,6 +91,14 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
 .template-open-button { justify-content: space-between; min-height: 46px; border-radius: 15px; font-weight: 900; background: #111827; border-color: #111827; color: #fff; }
 .template-open-button:hover { background: #0f172a; color: #fff; border-color: #0f172a; transform: translateY(-1px); }
 .device-card, .settings-card, .data-history-panel, .notification-inbox { border-radius: 20px; background: linear-gradient(180deg, #ffffff, #fbfcfe); }
+.account-access-card { display: grid; gap: 14px; border-color: #dbe7ff; background: linear-gradient(180deg, #ffffff, #f8fbff); }
+.account-state { display: grid; gap: 10px; min-width: 0; padding: 14px; border: 1px solid #e8edf5; border-radius: 18px; background: #f8fafc; }
+.account-state.signed-in { border-color: #b9e8ce; background: #f4fcf7; }
+.account-state strong { color: #111827; letter-spacing: -0.02em; }
+.account-state span { color: #64748b; font-weight: 750; line-height: 1.45; overflow-wrap: anywhere; }
+.account-state button { width: fit-content; font-weight: 850; }
+.account-error { margin: 0; color: #b42318; font-weight: 800; }
+
 .device-card code { margin-bottom: 8px; }
 .device-card button { width: fit-content; margin-top: 4px; font-weight: 800; }
 .device-provisioning-page { gap: 18px; }
