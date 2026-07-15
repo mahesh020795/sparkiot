@@ -80,8 +80,8 @@ describe("App", () => {
     expect(css).toContain("--spark-compact-metric-min");
     expect(css).toContain(".spark-ui .spark-page-header-grid > .top-actions");
     expect(css).toContain("display: contents");
-    expect(css).toContain("--spark-metric-min: 5.75rem");
-    expect(css).toContain("--spark-compact-metric-min: 4.85rem");
+    expect(css).toContain("--spark-metric-min: 7.25rem");
+    expect(css).toContain("--spark-compact-metric-min: 6.35rem");
     expect(css).toContain("--spark-title-xl: clamp(1.55rem, 1.8vw, 2.05rem)");
     expect(css).toContain('"primary"');
     expect(css).toContain('"selector"');
@@ -89,14 +89,18 @@ describe("App", () => {
     expect(css).toContain("box-sizing: border-box");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))");
-    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr))");
-    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.85rem), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))");
     expect(css).toContain(".spark-ui .project-grid");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr))");
     expect(css).toContain("overflow: clip");
     expect(css).toContain(".spark-ui .dashboard-header-grid.spark-page-header-grid");
     expect(css).toContain(".spark-ui .spark-page-header-primary h1");
     expect(css).toContain(".spark-ui .project-stat-row span > *");
+    expect(css).toContain(".spark-ui.dashboard-shell .cockpit-metrics span > svg");
+    expect(css).toContain("grid-row: 1 / span 2");
+    expect(css).toContain(".spark-ui.dashboard-shell .cockpit-metrics strong");
+    expect(css).toContain("grid-column: 2");
     expect(css).toContain("overflow-wrap: anywhere");
     expect(css).toContain("white-space: normal");
     expect(css).toContain("contain: inline-size");
@@ -941,6 +945,7 @@ describe("App", () => {
     const accountLatest = [
       { id: "account-reading-v0", device_id: "account-device", channel: "V0", value: 28.6, unit: "C", observed_at: "2026-07-15T05:00:00Z", server_at: "2026-07-15T05:00:01Z" }
     ];
+    let commandPublished = false;
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.includes("/demo/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -956,7 +961,18 @@ describe("App", () => {
         expect(init?.method).toBe("POST");
         expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
         expect(init?.body).toContain('"channel":"V3"');
+        commandPublished = true;
         return new Response(JSON.stringify({ status: "published" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/devices/account-device/command-logs")) {
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        const logs = commandPublished
+          ? [
+              { id: "ack-1", device_id: "account-device", channel: "V3", value: { status: "ok", value: true, message: "Pump command applied" }, status: "ack", created_at: "2026-07-15T05:00:05Z" },
+              { id: "cmd-1", device_id: "account-device", channel: "V3", value: true, status: "published", created_at: "2026-07-15T05:00:04Z" }
+            ]
+          : [];
+        return new Response(JSON.stringify(logs), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       if (url.includes("/demo/projects/account-project/board-test") || url.includes("/demo/devices/account-device")) {
         throw new Error(`Account Live Test must not call demo endpoint ${url}`);
@@ -979,8 +995,9 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Publish test command/i }));
 
-    expect(await screen.findByText("published")).toBeInTheDocument();
-    expect(await screen.findByText("Command queued")).toBeInTheDocument();
+    expect((await screen.findAllByText("published")).length).toBeGreaterThan(0);
+    expect(await screen.findByText("Board ACK")).toBeInTheDocument();
+    expect(await screen.findByText(/Pump command applied/)).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/demo/projects/account-project/board-test"), expect.anything());
   });
 

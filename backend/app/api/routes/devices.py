@@ -63,3 +63,27 @@ def send_command(device_id: str, payload: CommandRequest, user: User = Depends(c
     db.add(CommandLog(tenant_id=user.tenant_id, device_id=device_id, channel=payload.channel, value={"raw": payload.value}, status=status))
     db.commit()
     return {"status": status, "topic": command_topic(user.tenant_id, device_id, payload.channel)}
+
+
+@router.get("/{device_id}/command-logs")
+def command_logs(device_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    device = db.get(Device, device_id)
+    if not device or device.tenant_id != user.tenant_id:
+        raise HTTPException(status_code=404, detail="Device not found")
+    logs = db.scalars(
+        select(CommandLog)
+        .where(CommandLog.tenant_id == user.tenant_id, CommandLog.device_id == device_id)
+        .order_by(CommandLog.created_at.desc())
+        .limit(40)
+    ).all()
+    return [
+        {
+            "id": item.id,
+            "device_id": item.device_id,
+            "channel": item.channel,
+            "value": item.value.get("raw", item.value) if isinstance(item.value, dict) else item.value,
+            "status": item.status,
+            "created_at": item.created_at,
+        }
+        for item in logs
+    ]

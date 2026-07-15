@@ -60,6 +60,7 @@ export const api = {
   saveTemplate: (template: DeviceTemplate) => request<DeviceTemplate>(`/templates/${template.id}`, { method: "PUT", body: JSON.stringify(template) }),
   demoCommand: (deviceId: string, channel: string, value: unknown) => request<{ status: string; topic: string; payload: { value: unknown } }>(`/demo/devices/${deviceId}/commands`, { method: "POST", body: JSON.stringify({ channel, value }) }),
   demoCommandLogs: (deviceId: string) => request<CommandLogItem[]>(`/demo/devices/${deviceId}/command-logs`),
+  commandLogs: (deviceId: string) => request<CommandLogItem[]>(`/devices/${deviceId}/command-logs`),
   demoHistory: (deviceId: string, channel?: string) => request<Telemetry[]>(`/demo/devices/${deviceId}/history${channel ? `?channel=${encodeURIComponent(channel)}` : ""}`),
   demoHistoryCsvUrl: (deviceId: string, channel?: string) => apiUrl(`/demo/devices/${deviceId}/history.csv${channel ? `?channel=${encodeURIComponent(channel)}` : ""}`),
   history: (deviceId: string, channel: string) => request<Telemetry[]>(`/telemetry/devices/${deviceId}/history?channel=${encodeURIComponent(channel)}`),

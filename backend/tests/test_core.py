@@ -8,6 +8,7 @@ from app.core.database import Base, make_engine
 from app.core.security import hash_secret
 from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, Schedule, Tenant, User
 from app.api.routes.templates import create_template, list_templates, update_template
+from app.api.routes.devices import command_logs
 from sqlalchemy.orm import sessionmaker
 from datetime import UTC, datetime
 
@@ -298,6 +299,39 @@ def test_account_template_routes_reject_cross_tenant_dashboard_project():
         assert getattr(exc, "status_code", None) == 404
     else:
         raise AssertionError("expected cross-tenant dashboard/project to fail")
+
+
+def test_account_device_command_logs_are_tenant_scoped_and_include_ack_entries():
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    db = Session()
+    tenant = Tenant(id="tenant-command", name="Command Tenant")
+    other_tenant = Tenant(id="tenant-command-other", name="Other Command Tenant")
+    user = User(id="user-command", tenant_id=tenant.id, email="command@example.com", full_name="Command User", password_hash=hash_secret("SparkDemo123!"))
+    other_user = User(id="user-other-command", tenant_id=other_tenant.id, email="other-command@example.com", full_name="Other User", password_hash=hash_secret("SparkDemo123!"))
+    project = Project(id="project-command", tenant_id=tenant.id, name="Command Project")
+    device = Device(id="device-command", tenant_id=tenant.id, project_id=project.id, name="Command Device", board="ESP32", secret_hash=hash_secret("device-token"))
+    db.add_all([tenant, other_tenant, user, other_user, project, device])
+    db.flush()
+    db.add_all([
+        CommandLog(tenant_id=tenant.id, device_id=device.id, channel="V3", value={"raw": True}, status="published", created_at=datetime(2026, 7, 15, 8, 0, tzinfo=UTC)),
+        CommandLog(tenant_id=tenant.id, device_id=device.id, channel="V3", value={"status": "ok", "value": True, "message": "Pump command applied"}, status="ack", created_at=datetime(2026, 7, 15, 8, 1, tzinfo=UTC)),
+    ])
+    db.commit()
+
+    rows = command_logs(device.id, user=user, db=db)
+
+    assert [row["status"] for row in rows] == ["ack", "published"]
+    assert rows[0]["value"] == {"status": "ok", "value": True, "message": "Pump command applied"}
+    assert rows[1]["value"] is True
+
+    try:
+        command_logs(device.id, user=other_user, db=db)
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 404
+    else:
+        raise AssertionError("expected cross-tenant command log access to fail")
 
 
 def test_threshold_alert_creates_notification_once_per_cooldown(monkeypatch):

@@ -421,14 +421,20 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
       if (accountMode) {
         await api.command(device.id, quickTestChannel, true);
         setQuickTestStatus("published");
-        setCommandLogs((current) => [{
+        const queuedLog = {
           id: `local-command-${Date.now()}`,
           device_id: device.id,
           channel: quickTestChannel,
           value: true,
           status: "Command queued",
           created_at: new Date().toISOString()
-        }, ...current]);
+        };
+        try {
+          const next = await api.commandLogs(device.id);
+          setCommandLogs(next.length ? next : [queuedLog]);
+        } catch {
+          setCommandLogs((current) => [queuedLog, ...current]);
+        }
       } else {
         const response = await api.demoCommand(device.id, quickTestChannel, true);
         setQuickTestStatus(response.status === "published" ? "published" : "error");
@@ -442,11 +448,10 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
 
   useEffect(() => {
     if (!device?.id) return;
-    if (accountMode) return;
     let mounted = true;
     async function loadLogs() {
       try {
-        const next = await api.demoCommandLogs(device.id);
+        const next = accountMode ? await api.commandLogs(device.id) : await api.demoCommandLogs(device.id);
         if (mounted) setCommandLogs(next);
       } catch {
         if (mounted) setCommandLogs([]);
