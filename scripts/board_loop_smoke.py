@@ -8,9 +8,9 @@ telemetry -> command -> ACK -> command log
 
 It uses the public demo API plus Mosquitto publishing. By default it assumes
 you run it from the repository root on the Docker Compose host. For the Google
-Cloud test VPS, pass:
+Cloud test VPS, pass the Nginx-proxied API base:
 
-python scripts/board_loop_smoke.py --api-base http://34.73.29.12:8000/api/v1
+python scripts/board_loop_smoke.py --api-base http://34.73.29.12/api/v1
 """
 
 from __future__ import annotations

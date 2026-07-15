@@ -23,11 +23,15 @@ def test_board_loop_smoke_script_exists_and_documents_full_loop():
 
 def test_board_testing_docs_explain_one_command_smoke_path():
     docs = BOARD_DOCS.read_text(encoding="utf-8")
+    script = SCRIPT.read_text(encoding="utf-8")
 
     for expected in [
         "One-command board loop smoke test",
         "python scripts/board_loop_smoke.py",
         "telemetry -> command -> ACK -> command log",
-        "--api-base http://34.73.29.12:8000/api/v1",
+        "--api-base http://34.73.29.12/api/v1",
     ]:
         assert expected in docs
+
+    assert "34.73.29.12:8000" not in docs
+    assert "34.73.29.12:8000" not in script

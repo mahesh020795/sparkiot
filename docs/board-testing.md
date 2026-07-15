@@ -220,8 +220,10 @@ python scripts/board_loop_smoke.py
 Current Google Cloud VPS:
 
 ```bash
-python scripts/board_loop_smoke.py --api-base http://34.73.29.12:8000/api/v1
+python scripts/board_loop_smoke.py --api-base http://34.73.29.12/api/v1
 ```
+
+Use the Nginx-proxied `/api/v1` URL for production-style VPS tests. Direct port `8000` is intentionally not required from the public internet.
 
 The script publishes demo telemetry to `telemetry/V0`, calls the demo command API for `command/V3`, simulates the board ACK to `ack/V3`, then confirms the ACK appears in `/demo/devices/{device_id}/command-logs`.
 

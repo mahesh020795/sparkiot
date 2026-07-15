@@ -49,7 +49,7 @@ docker compose ps
 Set these values for the current demo VPS:
 
 ```env
-CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173,http://34.73.29.12:8000
+CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173
 VITE_API_BASE=/api/v1
 ```
 
@@ -132,7 +132,7 @@ Keep production-only values in VPS `.env`, never in Git:
 
 ```env
 ENVIRONMENT=production
-CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173,http://34.73.29.12:8000
+CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173
 VITE_API_BASE=/api/v1
 JWT_SECRET=<long-random-secret>
 ```

@@ -191,7 +191,7 @@ bash scripts/deploy_vps.sh
 For the current demo VPS:
 
 ```env
-CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173,http://34.73.29.12:8000
+CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173
 VITE_API_BASE=/api/v1
 ```
 
