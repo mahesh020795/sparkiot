@@ -1,13 +1,14 @@
-import { ArrowRight, Bell, CheckCircle2, ClipboardCheck, Copy, Cpu, Database, Gauge, LayoutDashboard, Lock, MapPinned, PlugZap, Plus, RadioTower, Settings, TerminalSquare, Workflow } from "lucide-react";
+import { ArrowRight, Bell, CheckCircle2, ClipboardCheck, Copy, Cpu, Database, Gauge, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, PlugZap, Plus, RadioTower, Settings, TerminalSquare, UserCircle, Workflow } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { LocalDashboardPage } from "./pages/DashboardPage";
 import { DevicesPage } from "./pages/DevicesPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { LoginPage } from "./pages/LoginPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
-import { api } from "./lib/api";
+import { api, clearSession, getSession, type Session } from "./lib/api";
 import type { CommandLogItem, Device, DeviceTemplate, LiveBoardTestPayload, Project, Telemetry } from "./lib/types";
 
 type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "history" | "notifications" | "settings";
@@ -15,6 +16,8 @@ type SaveState = "saved" | "unsaved" | "saving" | "error";
 
 export function App() {
   const [view, setView] = useState<View>("dashboard");
+  const [session, setSession] = useState<Session | null>(() => getSession());
+  const [authScreenOpen, setAuthScreenOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(demoProjects[0].id);
   const [templates, setTemplates] = useState<DeviceTemplate[]>(demoTemplates);
   const [templateStudioId, setTemplateStudioId] = useState<string | null>(null);
@@ -79,6 +82,23 @@ export function App() {
     }
   }
 
+  function handleLogin(nextSession: Session) {
+    setSession(nextSession);
+    setAuthScreenOpen(false);
+    setView("dashboard");
+  }
+
+  function signOut() {
+    clearSession();
+    setSession(null);
+    setAuthScreenOpen(false);
+    setView("dashboard");
+  }
+
+  if (authScreenOpen) {
+    return <LoginPage onLogin={handleLogin} onCancel={() => setAuthScreenOpen(false)} />;
+  }
+
   return (
     <div className={view === "dashboard" ? "app-shell spark-ui dashboard-shell" : "app-shell spark-ui"} data-testid="app-shell">
       <aside className="sidebar">
@@ -88,6 +108,16 @@ export function App() {
           <span className="section-kicker">Workspace health</span>
           <div><CheckCircle2 size={16} /><strong>Demo realtime active</strong></div>
           <small>3 projects Â· 3 devices Â· 30-day data window</small>
+        </div>
+        <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
+          <span className="section-kicker">{session ? "Account mode active" : "Demo mode active"}</span>
+          <div><UserCircle size={16} /><strong>{session ? "Authenticated workspace" : "No-login preview"}</strong></div>
+          <small>{session ? "Tenant API session connected. Starter limits and protected endpoints are available." : "Default sales/demo dashboard remains open before account signup."}</small>
+          {session ? (
+            <button type="button" onClick={signOut}><LogOut size={16} />Sign out</button>
+          ) : (
+            <button type="button" className="primary" onClick={() => setAuthScreenOpen(true)}><LogIn size={16} />Sign in to account</button>
+          )}
         </div>
         {view !== "dashboard" && (
           <>

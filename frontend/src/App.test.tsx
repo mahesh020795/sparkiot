@@ -304,6 +304,39 @@ describe("App", () => {
     expect(screen.getByText("Not signed in")).toBeInTheDocument();
     expect(localStorage.getItem("spark_iot_session")).toBeNull();
   });
+
+  it("supports switching from no-login demo mode into authenticated account mode", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/login")) {
+        expect(init?.method).toBe("POST");
+        expect(init?.body).toContain("demo@sparkiot.dev");
+        return new Response(JSON.stringify({ access_token: "account-demo", refresh_token: "refresh-demo", token_type: "bearer" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    expect(await screen.findByText("Demo mode active")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Sign in to account/i }));
+
+    expect(screen.getByRole("heading", { name: /Sign in to your IoT control center/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
+
+    expect(await screen.findByText("Account mode active")).toBeInTheDocument();
+    expect(screen.getByText("Authenticated workspace")).toBeInTheDocument();
+    expect(localStorage.getItem("spark_iot_session")).toContain("account-demo");
+
+    fireEvent.click(screen.getByRole("button", { name: /Sign out/i }));
+    expect(screen.getByText("Demo mode active")).toBeInTheDocument();
+    expect(localStorage.getItem("spark_iot_session")).toBeNull();
+  });
+
   it("shows a production-ready firmware export workflow in the Code tab", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Templates"));

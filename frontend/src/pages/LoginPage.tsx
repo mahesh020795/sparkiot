@@ -2,7 +2,7 @@ import { Activity, Lock, Mail } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { api, saveSession, type Session } from "../lib/api";
 
-export function LoginPage({ onLogin }: { onLogin: (session: Session) => void }) {
+export function LoginPage({ onLogin, onCancel }: { onLogin: (session: Session) => void; onCancel?: () => void }) {
   const [email, setEmail] = useState("demo@sparkiot.dev");
   const [password, setPassword] = useState("SparkDemo123!");
   const [error, setError] = useState("");
@@ -29,6 +29,7 @@ export function LoginPage({ onLogin }: { onLogin: (session: Session) => void }) 
           <label><Lock size={17} />Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
           {error && <p className="error">{error}</p>}
           <button className="primary">Sign in</button>
+          {onCancel && <button type="button" onClick={onCancel}>Continue demo mode</button>}
         </form>
         <p className="muted-text">Demo: demo@sparkiot.dev / SparkDemo123!</p>
       </section>
