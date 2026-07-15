@@ -12,12 +12,14 @@ docker compose up --build
 Open the web app:
 
 ```text
+http://localhost
 http://localhost:5173
 ```
 
 For a VPS deployment, open:
 
 ```text
+http://YOUR_VPS_IP
 http://YOUR_VPS_IP:5173
 ```
 
@@ -286,6 +288,6 @@ Then open `Live Test` and check the `Command monitor`.
 - Board WiFi never connects: check SSID/password and use 2.4 GHz WiFi for ESP8266.
 - Telemetry rejected: check the topic device ID, tenant ID, and token. They must match the seeded demo device.
 - Web app does not update from MQTT: check `MQTT_CONSUMER_ENABLED=true`, API logs, and whether the dashboard is connected to the same backend process.
-- Dashboard switch does not reach the board: subscribe to the command topic with `mosquitto_sub`, check `VITE_API_BASE`, and confirm CORS allows the frontend origin.
+- Dashboard switch does not reach the board: subscribe to the command topic with `mosquitto_sub`, check `VITE_API_BASE`, and confirm the frontend can reach `/api/v1` through the Nginx proxy.
 - Command monitor shows `published` but no `Board ACK`: the board received or acted on the command but did not publish to the `ack` topic, or the board sketch is old.
 - Do not use `localhost` in Arduino sketches. Use your PC LAN IP.

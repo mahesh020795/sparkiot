@@ -22,11 +22,14 @@ docker compose up --build
 
 Open:
 
-- Frontend: http://localhost:5173
+- Frontend: http://localhost
+- Frontend compatibility alias: http://localhost:5173
 - API docs: http://localhost:8000/api/docs
 - Health: http://localhost:8000/health/ready
 
 The frontend currently starts without login and shows the Smart Irrigation dashboard first.
+The Docker frontend image serves the built React app with Nginx. Vite dev server is not used in the production Compose stack.
+Nginx proxies browser calls from `/api/v1` to the FastAPI container, so the normal web app path does not require browser CORS.
 
 Backend demo login for API testing:
 
@@ -184,9 +187,11 @@ docker compose up -d --build
 For the current demo VPS:
 
 ```env
-CORS_ORIGINS=http://localhost:5173,http://localhost:8080,http://34.73.29.12:5173,http://34.73.29.12:8000
-VITE_API_BASE=http://34.73.29.12:8000/api/v1
+CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173,http://34.73.29.12:8000
+VITE_API_BASE=/api/v1
 ```
+
+On the current demo VPS, open the production frontend at `http://34.73.29.12`. The old testing URL `http://34.73.29.12:5173` is kept as a temporary compatibility alias that serves the same Nginx-built app, not the Vite dev server.
 
 After GitHub is connected, deploy updates on the VPS with:
 

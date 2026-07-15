@@ -1,9 +1,7 @@
 import type { CommandLogItem, Dashboard, Device, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, Telemetry } from "./types";
 
 function defaultApiBase() {
-  if (typeof window === "undefined") return "http://localhost:8000/api/v1";
-  const protocol = window.location.protocol === "https:" ? "https:" : "http:";
-  return `${protocol}//${window.location.hostname}:8000/api/v1`;
+  return "/api/v1";
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? defaultApiBase();
@@ -69,6 +67,9 @@ export const api = {
 };
 
 export function realtimeUrl(token: string) {
-  const base = API_BASE.replace("http://", "ws://").replace("https://", "wss://");
+  const absoluteBase = API_BASE.startsWith("http")
+    ? API_BASE
+    : `${window.location.origin}${API_BASE.startsWith("/") ? "" : "/"}${API_BASE}`;
+  const base = absoluteBase.replace("http://", "ws://").replace("https://", "wss://");
   return `${base}/realtime/ws?token=${encodeURIComponent(token)}`;
 }

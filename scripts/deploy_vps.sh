@@ -50,4 +50,5 @@ docker update --restart unless-stopped \
 
 docker compose ps
 curl -fsS http://localhost:8000/health/ready >/dev/null
-echo "Deploy complete: API ready"
+curl -fsS http://localhost/health/frontend >/dev/null
+echo "Deploy complete: API and frontend ready"

@@ -62,10 +62,16 @@ services:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-/api/v1}
+        VITE_MAP_TILE_URL: ${VITE_MAP_TILE_URL:-https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png}
+        VITE_MAP_ATTRIBUTION: ${VITE_MAP_ATTRIBUTION:-OpenStreetMap contributors}
     env_file: .env
     ports:
-      - "5173:5173"
+      - "80:80"
+      - "5173:80"
     depends_on:
       api:
         condition: service_healthy

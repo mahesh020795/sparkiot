@@ -49,9 +49,12 @@ docker compose ps
 Set these values for the current demo VPS:
 
 ```env
-CORS_ORIGINS=http://localhost:5173,http://localhost:8080,http://34.73.29.12:5173,http://34.73.29.12:8000
-VITE_API_BASE=http://34.73.29.12:8000/api/v1
+CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173,http://34.73.29.12:8000
+VITE_API_BASE=/api/v1
 ```
+
+The Docker frontend image serves the built React app with Nginx. Vite dev server is not used in the production Compose stack.
+Open the current demo VPS at `http://34.73.29.12`. The compatibility URL `http://34.73.29.12:5173` is also mapped to the same Nginx container during testing.
 
 ## Repeat deployment from VPS
 
@@ -128,10 +131,12 @@ Keep production-only values in VPS `.env`, never in Git:
 
 ```env
 ENVIRONMENT=production
-CORS_ORIGINS=http://localhost:5173,http://localhost:8080,http://34.73.29.12:5173,http://34.73.29.12:8000
-VITE_API_BASE=http://34.73.29.12:8000/api/v1
+CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173,http://34.73.29.12:8000
+VITE_API_BASE=/api/v1
 JWT_SECRET=<long-random-secret>
 ```
+
+For a domain deployment, point the domain or reverse proxy to the frontend container on port 80 and keep `VITE_API_BASE=/api/v1` so browser API and WebSocket calls stay same-origin through Nginx.
 
 ## Release ZIP
 

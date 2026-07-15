@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
+import { realtimeUrl } from "./lib/api";
 
 vi.mock("echarts", () => ({
   init: () => ({ setOption: vi.fn(), dispose: vi.fn() })
@@ -82,6 +83,10 @@ describe("App", () => {
     expect(css).toContain(".spark-ui .project-stat-row span > *");
     expect(css).toContain("overflow-wrap: anywhere");
     expect(css).toContain("contain: inline-size");
+  });
+
+  it("builds same-origin websocket URLs when the production API base is relative", () => {
+    expect(realtimeUrl("demo-token")).toBe("ws://localhost:3000/api/v1/realtime/ws?token=demo-token");
   });
 
   it("toggles the demo solenoid switch immediately on the dashboard", async () => {
