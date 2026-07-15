@@ -134,6 +134,8 @@ See:
 
 Docker Compose is for local deployment and VPS evaluation. Production requires HTTPS, rotated secrets, off-server PostgreSQL backups, restore tests, monitoring, dependency updates, commercial-safe map tiles, and privacy/acceptable-use documents. Camera streaming in this MVP supports snapshot or direct-stream URLs only; relay, recording and transcoding need a separate bandwidth cost study.
 
+For VPS deployment, `scripts/deploy_vps.sh` uses `docker-compose.prod.yml` on top of the local Compose file. In that production profile, PostgreSQL and Valkey are not exposed publicly, and the direct API port 8000 is bound to localhost only. Browser traffic and HTTP fallback from boards should use `http://YOUR_VPS_IP/api/v1` through the frontend Nginx proxy; MQTT board traffic continues to use port 1883.
+
 Browser Web Push is production-shaped but requires VAPID keys before real browser delivery is enabled:
 
 ```env
@@ -181,7 +183,7 @@ git clone https://github.com/mahesh020795/sparkiot.git ~/spark-iot
 cd ~/spark-iot
 cp .env.example .env
 nano .env
-docker compose up -d --build
+bash scripts/deploy_vps.sh
 ```
 
 For the current demo VPS:

@@ -5,11 +5,13 @@ APP_DIR="${APP_DIR:-$HOME/spark-iot}"
 REPO_URL="${REPO_URL:-https://github.com/mahesh020795/sparkiot.git}"
 BRANCH="${BRANCH:-main}"
 BACKUP_DIR="${BACKUP_DIR:-$HOME/spark-iot-backups}"
+COMPOSE_FILES="${COMPOSE_FILES:-"-f docker-compose.yml -f docker-compose.prod.yml"}"
 
 echo "Spark IoT deploy"
 echo "APP_DIR=$APP_DIR"
 echo "REPO_URL=$REPO_URL"
 echo "BRANCH=$BRANCH"
+echo "COMPOSE_FILES=$COMPOSE_FILES"
 
 mkdir -p "$BACKUP_DIR"
 PRESERVED_ENV="$BACKUP_DIR/.env.preserved"
@@ -39,7 +41,7 @@ if [ ! -f .env ]; then
   echo "Created .env from .env.example. Edit production secrets before public launch."
 fi
 
-docker compose up -d --build
+docker compose $COMPOSE_FILES up -d --build
 docker update --restart unless-stopped \
   spark-iot-postgres-1 \
   spark-iot-valkey-1 \
@@ -48,7 +50,7 @@ docker update --restart unless-stopped \
   spark-iot-worker-1 \
   spark-iot-frontend-1 >/dev/null
 
-docker compose ps
+docker compose $COMPOSE_FILES ps
 curl -fsS http://localhost:8000/health/ready >/dev/null
 curl -fsS http://localhost/health/frontend >/dev/null
 echo "Deploy complete: API and frontend ready"

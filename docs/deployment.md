@@ -56,6 +56,8 @@ VITE_API_BASE=/api/v1
 The Docker frontend image serves the built React app with Nginx. Vite dev server is not used in the production Compose stack.
 Open the current demo VPS at `http://34.73.29.12`. The compatibility URL `http://34.73.29.12:5173` is also mapped to the same Nginx container during testing.
 
+For VPS use, prefer the deploy script instead of plain Compose. It layers `docker-compose.prod.yml` over `docker-compose.yml`, so PostgreSQL and Valkey are not exposed publicly, and the direct API port 8000 is bound to localhost only. HTTP fallback should use `http://YOUR_VPS_IP/api/v1` through Nginx, while MQTT devices continue to use public port 1883.
+
 ## Repeat deployment from VPS
 
 After code is pushed to GitHub:
@@ -63,8 +65,7 @@ After code is pushed to GitHub:
 ```bash
 cd ~/spark-iot
 git pull --ff-only origin main
-docker compose up -d --build
-docker compose ps
+bash scripts/deploy_vps.sh
 curl http://localhost:8000/health/ready
 ```
 

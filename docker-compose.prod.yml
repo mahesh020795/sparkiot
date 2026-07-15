@@ -1,0 +1,29 @@
+# Production/VPS override.
+#
+# Local development keeps docker-compose.yml convenient with direct host ports.
+# VPS deployment layers this file on top so internal data services are not
+# reachable from the public internet.
+
+services:
+  postgres:
+    ports: !reset []
+
+  valkey:
+    ports: !reset []
+
+  api:
+    # Keep direct API health checks available only from the VPS itself.
+    # Browsers and boards should use Nginx through http://HOST/api/v1.
+    ports: !override
+      - "127.0.0.1:8000:8000"
+
+  frontend:
+    ports:
+      - "80:80"
+      - "5173:80"
+
+  mosquitto:
+    # MQTT remains public for ESP32/ESP8266 tests. Add authentication/TLS
+    # before commercial launch.
+    ports:
+      - "1883:1883"
