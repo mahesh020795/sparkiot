@@ -23,6 +23,8 @@ Devices publish telemetry, ack and status in their own namespace. Devices subscr
 }
 ```
 
+`message_id` is optional but recommended. Spark IoT treats repeated telemetry with the same tenant, device, channel, and `message_id` as the same reading. This lets ESP32/ESP8266 boards safely retry MQTT publishes after weak WiFi without duplicating history rows or retriggering alert rules.
+
 GPS value:
 
 ```json
@@ -53,7 +55,8 @@ SparkIoT.onCommand("V3", callback);
 SparkIoT.ack("V3", true, "Command applied");
 ```
 
-Version 1 supports ESP32 and ESP8266 through PubSubClient. Other Arduino boards need future networking adapters.
+Version 1 supports ESP32 and ESP8266 through the built-in WiFi helper and also supports Ethernet, WiFiNINA, WiFiS3, MKR GSM/NB, and similar boards through `SparkIoT.begin(networkClient, ...)` when the board library exposes an Arduino `Client`.
+
 ## MQTT ingestion bridge
 
 The local MVP API starts an MQTT ingestion bridge when `MQTT_CONSUMER_ENABLED=true`.
@@ -75,6 +78,8 @@ Telemetry payloads must be JSON objects:
   "message_id": "optional-id"
 }
 ```
+
+If a board retries the same telemetry packet, reuse the same `message_id`. If it is a new sensor sample, generate a new `message_id`.
 
 GPS virtual pins can send a value object:
 

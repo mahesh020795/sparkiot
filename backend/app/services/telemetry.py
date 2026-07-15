@@ -34,6 +34,21 @@ def ingest(db: Session, tenant_id: str, payload: TelemetryIngestRequest) -> Tele
         raise ValueError("Device not found")
     if not verify_secret(payload.token, device.secret_hash):
         raise ValueError("Invalid device token")
+    if payload.message_id:
+        existing = db.scalar(
+            select(Telemetry).where(
+                Telemetry.tenant_id == tenant_id,
+                Telemetry.device_id == device.id,
+                Telemetry.channel == payload.channel,
+                Telemetry.message_id == payload.message_id,
+            )
+        )
+        if existing:
+            device.is_online = True
+            device.last_seen_at = datetime.now(UTC)
+            db.commit()
+            db.refresh(existing)
+            return existing
     record = Telemetry(tenant_id=tenant_id, project_id=device.project_id, device_id=device.id, channel=payload.channel, value=normalize_value(payload.channel, payload.value), unit=payload.unit, message_id=payload.message_id, observed_at=payload.ts or datetime.now(UTC))
     device.is_online = True
     device.last_seen_at = datetime.now(UTC)

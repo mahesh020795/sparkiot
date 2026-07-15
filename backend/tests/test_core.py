@@ -1,16 +1,20 @@
 from app.services.mqtt import command_topic, parse_topic, telemetry_topic
 from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request, is_successful_connect, telemetry_event_payload
-from app.services.telemetry import evaluate_alerts, normalize_value
+from app.services.telemetry import evaluate_alerts, ingest, normalize_value
 from app.services.schedules import due_occurrence_key, run_due_schedules_once
 from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
-from app.schemas.api import ScheduleCreate, TemplateStudioUpdate
+from app.schemas.api import ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
 from app.core.database import Base, make_engine
 from app.core.security import hash_secret
-from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, Schedule, Tenant, User
+from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, Schedule, Telemetry, Tenant, User
 from app.api.routes.templates import create_template, list_templates, update_template
 from app.api.routes.devices import command_logs
 from sqlalchemy.orm import sessionmaker
 from datetime import UTC, datetime
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_topic_helpers_create_spark_namespace():
@@ -82,6 +86,41 @@ def test_telemetry_event_payload_unwraps_raw_values():
         server_at = "2026-07-13T10:00:01Z"
 
     assert telemetry_event_payload(Record())["value"] == 30.2
+
+
+def test_telemetry_ingest_is_idempotent_by_device_channel_and_message_id():
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    db = Session()
+
+    tenant = Tenant(id="tenant-idempotent", name="Idempotent Tenant")
+    project = Project(id="project-idempotent", tenant_id=tenant.id, name="Idempotent Project")
+    device = Device(id="device-idempotent", tenant_id=tenant.id, project_id=project.id, name="Idempotent Device", board="ESP32", secret_hash=hash_secret("device-token"))
+    db.add_all([tenant, project, device])
+    db.commit()
+
+    first = ingest(db, tenant.id, TelemetryIngestRequest(device_id=device.id, token="device-token", channel="V0", value=29.4, unit="C", message_id="wifi-retry-1"))
+    second = ingest(db, tenant.id, TelemetryIngestRequest(device_id=device.id, token="device-token", channel="V0", value=99.9, unit="C", message_id="wifi-retry-1"))
+    other_channel = ingest(db, tenant.id, TelemetryIngestRequest(device_id=device.id, token="device-token", channel="V1", value=55, unit="%", message_id="wifi-retry-1"))
+
+    rows = db.query(Telemetry).order_by(Telemetry.channel).all()
+
+    assert second.id == first.id
+    assert second.value == {"raw": 29.4}
+    assert other_channel.id != first.id
+    assert [(row.channel, row.message_id, row.value) for row in rows] == [
+        ("V0", "wifi-retry-1", {"raw": 29.4}),
+        ("V1", "wifi-retry-1", {"raw": 55}),
+    ]
+
+
+def test_mqtt_protocol_documents_message_id_idempotency():
+    docs = (ROOT / "docs" / "mqtt-protocol.md").read_text(encoding="utf-8")
+
+    assert "same tenant, device, channel, and `message_id`" in docs
+    assert "without duplicating history rows or retriggering alert rules" in docs
+    assert "reuse the same `message_id`" in docs
 
 
 def test_mqtt_connect_accepts_paho_v2_success_reason_code_object():
