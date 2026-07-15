@@ -76,10 +76,10 @@ export const api = {
   removePushSubscription: (subscription: PushSubscriptionJSON) => request<void>("/notifications/push-subscriptions", { method: "DELETE", body: JSON.stringify(subscription) })
 };
 
-export function realtimeUrl(token: string) {
+export function realtimeUrl(token: string, projectId: string) {
   const absoluteBase = API_BASE.startsWith("http")
     ? API_BASE
     : `${window.location.origin}${API_BASE.startsWith("/") ? "" : "/"}${API_BASE}`;
   const base = absoluteBase.replace("http://", "ws://").replace("https://", "wss://");
-  return `${base}/realtime/ws?token=${encodeURIComponent(token)}`;
+  return `${base}/realtime/ws?token=${encodeURIComponent(token)}&project_id=${encodeURIComponent(projectId)}`;
 }

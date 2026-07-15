@@ -24,6 +24,10 @@ Main resources:
 - `/schedules`
 - `/realtime/ws`
 
+## Realtime WebSocket
+
+Dashboards connect to `GET /api/v1/realtime/ws?token={access_token}&project_id={project_id}`. The server validates the access token, confirms the project belongs to the authenticated tenant, then subscribes the browser only to telemetry events for that project.
+
 ## Demo Template Studio Persistence
 
 The no-login MVP uses demo endpoints so the web dashboard can be tested before full auth is enabled:

@@ -114,7 +114,7 @@ describe("App", () => {
   });
 
   it("builds same-origin websocket URLs when the production API base is relative", () => {
-    expect(realtimeUrl("demo-token")).toBe("ws://localhost:3000/api/v1/realtime/ws?token=demo-token");
+    expect(realtimeUrl("demo-token", "project-irrigation")).toBe("ws://localhost:3000/api/v1/realtime/ws?token=demo-token&project_id=project-irrigation");
   });
 
   it("toggles the demo solenoid switch immediately on the dashboard", async () => {

@@ -13,7 +13,7 @@ router = APIRouter(prefix="/telemetry", tags=["telemetry"])
 
 
 def _response(record: Telemetry) -> TelemetryResponse:
-    return TelemetryResponse(id=record.id, device_id=record.device_id, channel=record.channel, value=record.value.get("raw", record.value), unit=record.unit, observed_at=record.observed_at, server_at=record.server_at)
+    return TelemetryResponse(id=record.id, project_id=record.project_id, device_id=record.device_id, channel=record.channel, value=record.value.get("raw", record.value), unit=record.unit, observed_at=record.observed_at, server_at=record.server_at)
 
 
 @router.post("/ingest", response_model=TelemetryResponse, status_code=201)
@@ -25,7 +25,7 @@ async def ingest_telemetry(payload: TelemetryIngestRequest, db: Session = Depend
         record = ingest(db, device.tenant_id, payload)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    await hub.publish(record.tenant_id, {"type": "telemetry", "payload": _response(record).model_dump(mode="json")})
+    await hub.publish(record.tenant_id, {"type": "telemetry", "payload": _response(record).model_dump(mode="json")}, record.project_id)
     return _response(record)
 
 

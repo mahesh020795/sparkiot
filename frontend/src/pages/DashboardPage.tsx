@@ -32,7 +32,7 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
   useEffect(() => {
     const token = getSession()?.access_token;
     if (!token || typeof WebSocket === "undefined") return;
-    const ws = new WebSocket(realtimeUrl(token));
+    const ws = new WebSocket(realtimeUrl(token, projectId));
     ws.onopen = () => setConnected(true);
     ws.onclose = () => setConnected(false);
     ws.onmessage = (event) => {

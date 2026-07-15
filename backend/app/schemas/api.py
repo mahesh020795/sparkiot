@@ -181,6 +181,7 @@ class TelemetryIngestRequest(BaseModel):
 
 class TelemetryResponse(BaseModel):
     id: str
+    project_id: str
     device_id: str
     channel: str
     value: Any

@@ -5,11 +5,12 @@ from app.services.schedules import due_occurrence_key, run_due_schedules_once
 from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
 from app.schemas.api import ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
 from app.core.database import Base, ensure_runtime_indexes, make_engine
-from app.core.security import hash_secret
+from app.core.security import create_access_token, hash_secret
 from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, Schedule, Telemetry, Tenant, User
 from app.api.routes.templates import create_template, list_templates, update_template
 from app.api.routes.devices import command_logs
 from app.api.routes.notifications import mark_notification_read
+from app.api.routes.realtime import realtime_subscription_scope
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
 from datetime import UTC, datetime
@@ -80,6 +81,7 @@ def test_normalize_virtual_pin_camera_payload_by_shape():
 def test_telemetry_event_payload_unwraps_raw_values():
     class Record:
         id = "telemetry-1"
+        project_id = "project-irrigation"
         device_id = "device-irrigation"
         channel = "V0"
         value = {"raw": 30.2}
@@ -87,7 +89,35 @@ def test_telemetry_event_payload_unwraps_raw_values():
         observed_at = "2026-07-13T10:00:00Z"
         server_at = "2026-07-13T10:00:01Z"
 
-    assert telemetry_event_payload(Record())["value"] == 30.2
+    payload = telemetry_event_payload(Record())
+    assert payload["value"] == 30.2
+    assert payload["project_id"] == "project-irrigation"
+
+
+def test_realtime_subscription_scope_requires_token_project_tenant_match():
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    db = Session()
+
+    tenant = Tenant(id="tenant-realtime", name="Realtime Tenant")
+    other_tenant = Tenant(id="tenant-realtime-other", name="Other Realtime Tenant")
+    user = User(id="user-realtime", tenant_id=tenant.id, email="realtime@example.com", full_name="Realtime User", password_hash=hash_secret("SparkDemo123!"))
+    project = Project(id="project-realtime", tenant_id=tenant.id, name="Realtime Project")
+    other_project = Project(id="project-realtime-other", tenant_id=other_tenant.id, name="Other Realtime Project")
+    db.add_all([tenant, other_tenant, user, project, other_project])
+    db.commit()
+
+    token = create_access_token(user.id, tenant.id)
+
+    assert realtime_subscription_scope(token, project.id, db) == (tenant.id, project.id)
+
+    try:
+        realtime_subscription_scope(token, other_project.id, db)
+    except ValueError as exc:
+        assert "Project not found" in str(exc)
+    else:
+        raise AssertionError("expected cross-tenant realtime subscription to fail")
 
 
 def test_telemetry_ingest_is_idempotent_by_device_channel_and_message_id():

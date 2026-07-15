@@ -79,6 +79,7 @@ def telemetry_event_payload(record: Any) -> dict[str, Any]:
     value = record.value.get("raw", record.value) if isinstance(record.value, dict) else record.value
     return {
         "id": record.id,
+        "project_id": record.project_id,
         "device_id": record.device_id,
         "channel": record.channel,
         "value": value,
@@ -137,7 +138,7 @@ class MqttIngestionBridge:
                 event_type = "command_ack"
             else:
                 return
-            future = asyncio.run_coroutine_threadsafe(hub.publish(topic_parts["tenant_id"], {"type": event_type, "payload": event}), self.loop)
+            future = asyncio.run_coroutine_threadsafe(hub.publish(topic_parts["tenant_id"], {"type": event_type, "payload": event}, event.get("project_id")), self.loop)
             future.add_done_callback(self._log_publish_error)
         except Exception as exc:  # noqa: BLE001 - broker callbacks must never crash the MQTT loop
             logger.warning("MQTT message rejected from %s: %s", message.topic, exc)
