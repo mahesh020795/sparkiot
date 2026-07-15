@@ -373,6 +373,67 @@ describe("App", () => {
     expect(screen.getByText("Project created. Next: add a template and provision a board.")).toBeInTheDocument();
   });
 
+  it("creates and saves real account templates for signed-in projects", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Live protected tenant workspace", is_active: true };
+    const accountDashboard = { id: "account-dashboard", project_id: "account-project", name: "Customer Greenhouse Dashboard", revision: 1, widgets: [] };
+    const createdTemplate = {
+      id: "template-account",
+      name: "Customer Greenhouse",
+      board: "ESP32",
+      description: "Smart Irrigation template for Customer Greenhouse",
+      revision: 1,
+      datastreams: [
+        { id: "ds-temp", name: "Temperature", pin: "V0", dataType: "float", unit: "C", min: 0, max: 100, color: "#2563eb" }
+      ],
+      notifications: [],
+      dashboard: {
+        ...accountDashboard,
+        widgets: [{ id: "w-temp", type: "gauge", title: "Temperature", x: 0, y: 0, w: 3, h: 3, deviceId: "", channel: "V0", datastreamId: "ds-temp" }]
+      }
+    };
+    const savedTemplate = { ...createdTemplate, name: "Greenhouse Controller", revision: 2, dashboard: { ...createdTemplate.dashboard, revision: 2 } };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/projects")) return new Response(JSON.stringify([accountProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/devices")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/templates") && init?.method === "POST") {
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        const payload = JSON.parse(String(init.body));
+        expect(payload.dashboard.project_id).toBe("account-project");
+        expect(payload.datastreams[0].pin).toBe("V0");
+        return new Response(JSON.stringify(createdTemplate), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.endsWith("/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/templates/template-account") && init?.method === "PUT") {
+        const payload = JSON.parse(String(init.body));
+        expect(payload.name).toBe("Greenhouse Controller");
+        return new Response(JSON.stringify(savedTemplate), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/notifications") || url.includes("/schedules")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/tenant/usage")) return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 0, max_devices: 3, projects: 1, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/dashboards/project/account-project")) return new Response(JSON.stringify(accountDashboard), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/telemetry/projects/account-project/latest")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Templates"));
+
+    expect(await screen.findByText("0/3 templates used")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Create template/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Save template/i }));
+
+    expect(await screen.findByText("Spark IoT Template Studio")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Template name"), { target: { value: "Greenhouse Controller" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save/i }));
+
+    expect(await screen.findByText("Saved")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Greenhouse Controller")).toBeInTheDocument();
+  });
+
   it("shows a live board test panel with MQTT connection details", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Live Test"));

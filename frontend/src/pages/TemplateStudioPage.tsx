@@ -252,7 +252,7 @@ export function TemplateStudioPage({
           <div className="studio-section">
             <div className="section-title"><h2>Template setup</h2><button onClick={autoGenerateFromPrompt}><Sparkles size={16} />AI suggest pins</button></div>
             <div className="template-fields">
-              <label>Name<input value={template.name} onChange={(event) => patchTemplate({ name: event.target.value })} /></label>
+              <label>Name<input aria-label="Template name" value={template.name} onChange={(event) => patchTemplate({ name: event.target.value })} /></label>
               <label>Board<select value={template.board} onChange={(event) => patchTemplate({ board: event.target.value as DeviceTemplate["board"] })}>{boards.map((board) => <option key={board}>{board}</option>)}</select></label>
             </div>
             <label>Description<input value={template.description} onChange={(event) => patchTemplate({ description: event.target.value })} /></label>

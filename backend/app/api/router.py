@@ -1,12 +1,13 @@
 from fastapi import APIRouter
 
-from app.api.routes import auth, dashboards, demo, devices, notifications, projects, realtime, schedules, telemetry, tenant
+from app.api.routes import auth, dashboards, demo, devices, notifications, projects, realtime, schedules, telemetry, templates, tenant
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
 api_router.include_router(tenant.router)
 api_router.include_router(projects.router)
 api_router.include_router(devices.router)
+api_router.include_router(templates.router)
 api_router.include_router(dashboards.router)
 api_router.include_router(telemetry.router)
 api_router.include_router(demo.router)

@@ -68,13 +68,20 @@ spark/v1/{tenant_id}/{device_id}/status
 
 ## Persistent Template Studio
 
-The no-login web MVP now loads and saves Template Studio data through the backend:
+The no-login web MVP loads and saves Template Studio data through demo-safe backend routes:
 
 - `GET /api/v1/demo/templates`
 - `GET /api/v1/demo/templates/{template_id}`
 - `PUT /api/v1/demo/templates/{template_id}`
 
-Saved data includes template name, board, description, virtual pins/datastreams, notification rules, and dashboard widget layout/config. The API uses optimistic `revision` checks so stale browser tabs cannot silently overwrite newer template changes.
+Signed-in customer workspaces use real tenant-scoped template routes:
+
+- `GET /api/v1/templates`
+- `POST /api/v1/templates`
+- `GET /api/v1/templates/{template_id}`
+- `PUT /api/v1/templates/{template_id}`
+
+The recommended account flow is now `Projects -> Templates -> Devices -> Code -> Live Test`. Create the project first, create one template for that project, configure datastreams/dashboard/notifications in Template Studio, then provision the physical board. Saved data includes template name, board, description, virtual pins/datastreams, notification rules, and dashboard widget layout/config. The API uses optimistic `revision` checks so stale browser tabs cannot silently overwrite newer template changes.
 
 
 ## Data History and CSV Export
@@ -122,7 +129,7 @@ Included examples:
 
 Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Google Cloud VPS test, use `34.73.29.12`.
 
-For authenticated customer workspaces, open `Projects` to create up to three Starter plan project spaces. Then open `Devices`, click `Provision device`, select the project and board, and copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Spark IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
+For authenticated customer workspaces, open `Projects` to create up to three Starter plan project spaces. Then open `Templates`, click `Create template`, select the project, board and starter preset, and save the generated Blynk-style virtual-pin model. After that, open `Devices`, click `Provision device`, select the project and board, and copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Spark IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
 
 See:
 

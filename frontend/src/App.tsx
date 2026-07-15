@@ -14,6 +14,7 @@ import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, L
 
 type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
 type SaveState = "saved" | "unsaved" | "saving" | "error";
+type TemplatePreset = "Smart Irrigation" | "Smart Home" | "Energy Monitor" | "Blank";
 
 export function App() {
   const [view, setView] = useState<View>("dashboard");
@@ -23,6 +24,7 @@ export function App() {
   const [templates, setTemplates] = useState<DeviceTemplate[]>(demoTemplates);
   const [accountProjects, setAccountProjects] = useState<Project[]>([]);
   const [accountDevices, setAccountDevices] = useState<Device[]>([]);
+  const [accountTemplates, setAccountTemplates] = useState<DeviceTemplate[]>([]);
   const [accountDashboards, setAccountDashboards] = useState<Record<string, Dashboard>>({});
   const [accountLatest, setAccountLatest] = useState<Record<string, Telemetry>>({});
   const [accountNotifications, setAccountNotifications] = useState<NotificationItem[]>([]);
@@ -37,8 +39,7 @@ export function App() {
   const activeProjects = isAccountMode ? accountProjects : demoProjects;
   const activeDevices = isAccountMode ? accountDevices : demoDevices;
   const activeLatest = isAccountMode ? accountLatest : demoLatest;
-  const accountTemplateSurrogates = useMemo(() => buildAccountTemplateSurrogates(accountProjects, accountDevices, accountDashboards), [accountProjects, accountDevices, accountDashboards]);
-  const activeTemplates = isAccountMode ? accountTemplateSurrogates : templates;
+  const activeTemplates = isAccountMode ? accountTemplates : templates;
   const selectedProject = useMemo(() => activeProjects.find((project) => project.id === selectedProjectId), [activeProjects, selectedProjectId]);
   const selectedDevice = useMemo(() => activeDevices.find((device) => device.project_id === selectedProjectId), [activeDevices, selectedProjectId]);
   const selectedTemplate = useMemo(() => activeTemplates.find((template) => template.dashboard.project_id === selectedProjectId) ?? activeTemplates[0] ?? templates[0], [activeTemplates, selectedProjectId, templates]);
@@ -82,6 +83,7 @@ export function App() {
       if (!session) {
         setAccountProjects([]);
         setAccountDevices([]);
+        setAccountTemplates([]);
         setAccountDashboards({});
         setAccountLatest({});
         setAccountNotifications([]);
@@ -93,9 +95,10 @@ export function App() {
       }
       setAccountLoadState("loading");
       try {
-        const [projects, devices, notifications, schedules, usage] = await Promise.all([
+        const [projects, devices, accountTemplateRows, notifications, schedules, usage] = await Promise.all([
           api.projects(),
           api.devices(),
+          api.templates().catch(() => []),
           api.notifications().catch(() => []),
           api.schedules().catch(() => []),
           api.usage().catch(() => null)
@@ -103,6 +106,8 @@ export function App() {
         if (!mounted) return;
         setAccountProjects(projects);
         setAccountDevices(devices);
+        setAccountTemplates(accountTemplateRows);
+        setTemplateSaveStates((current) => ({ ...current, ...Object.fromEntries(accountTemplateRows.map((template) => [template.id, "saved" as SaveState])) }));
         setAccountNotifications(notifications);
         setAccountSchedules(schedules);
         setAccountUsage(usage);
@@ -138,19 +143,29 @@ export function App() {
   }, [session, selectedProjectId, accountProjects]);
 
   function updateTemplate(nextTemplate: DeviceTemplate) {
-    setTemplates((current) => current.map((item) => item.id === nextTemplate.id ? nextTemplate : item));
+    if (isAccountMode) {
+      setAccountTemplates((current) => current.map((item) => item.id === nextTemplate.id ? nextTemplate : item));
+    } else {
+      setTemplates((current) => current.map((item) => item.id === nextTemplate.id ? nextTemplate : item));
+    }
     setTemplateSaveStates((current) => ({ ...current, [nextTemplate.id]: "unsaved" }));
     setTemplateSaveError("");
   }
 
   async function saveTemplate(templateId: string) {
-    const template = templates.find((item) => item.id === templateId);
+    const source = isAccountMode ? accountTemplates : templates;
+    const template = source.find((item) => item.id === templateId);
     if (!template) return;
     setTemplateSaveStates((current) => ({ ...current, [templateId]: "saving" }));
     setTemplateSaveError("");
     try {
-      const saved = await api.saveDemoTemplate(template);
-      setTemplates((current) => current.map((item) => item.id === saved.id ? saved : item));
+      const saved = isAccountMode ? await api.saveTemplate(template) : await api.saveDemoTemplate(template);
+      if (isAccountMode) {
+        setAccountTemplates((current) => current.map((item) => item.id === saved.id ? saved : item));
+        setAccountDashboards((current) => ({ ...current, [saved.dashboard.project_id]: saved.dashboard }));
+      } else {
+        setTemplates((current) => current.map((item) => item.id === saved.id ? saved : item));
+      }
       setTemplateSaveStates((current) => ({ ...current, [templateId]: "saved" }));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Save failed";
@@ -194,6 +209,21 @@ export function App() {
     const created = await api.createProject(project);
     setAccountProjects((current) => [created, ...current]);
     setSelectedProjectId(created.id);
+    return created;
+  }
+
+  async function createAccountTemplate(projectId: string, board: DeviceTemplate["board"], preset: TemplatePreset) {
+    const project = accountProjects.find((item) => item.id === projectId);
+    if (!project) throw new Error("Project not found");
+    const dashboard = accountDashboards[projectId] ?? await api.dashboard(projectId);
+    const device = accountDevices.find((item) => item.project_id === projectId);
+    const draft = buildStarterTemplateDraft(project, dashboard, device, board, preset);
+    const created = await api.createTemplate(draft);
+    setAccountTemplates((current) => [created, ...current.filter((item) => item.id !== created.id)]);
+    setAccountDashboards((current) => ({ ...current, [created.dashboard.project_id]: created.dashboard }));
+    setTemplateSaveStates((current) => ({ ...current, [created.id]: "saved" }));
+    setSelectedProjectId(created.dashboard.project_id);
+    setTemplateStudioId(created.id);
     return created;
   }
 
@@ -256,7 +286,7 @@ export function App() {
             {view === "dashboard" && (
               <div className="cockpit-metrics spark-page-header-metrics" data-testid="dashboard-header-metrics">
                 <span><PlugZap size={19} /><strong>{activeDevices.filter((device) => device.is_online).length}/{activeDevices.length}</strong><small>Nodes online</small></span>
-                <span><LayoutDashboard size={19} /><strong>{selectedTemplate.dashboard.widgets.length}</strong><small>Widgets active</small></span>
+                <span><LayoutDashboard size={19} /><strong>{selectedTemplate?.dashboard.widgets.length ?? 0}</strong><small>Widgets active</small></span>
                 <span><RadioTower size={19} /><strong>{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</strong><small>Telemetry time</small></span>
                 <span><Bell size={19} /><strong>Active</strong><small>Flow safety</small></span>
               </div>
@@ -283,6 +313,9 @@ export function App() {
           ) : (
             <TemplateLibrary
               templates={activeTemplates}
+              projects={activeProjects}
+              accountMode={isAccountMode}
+              onCreateTemplate={isAccountMode ? createAccountTemplate : undefined}
               onOpen={(template) => {
                 setSelectedProjectId(template.dashboard.project_id);
                 setTemplateStudioId(template.id);
@@ -552,42 +585,137 @@ function formatCommandValue(value: unknown) {
   return String(value);
 }
 
-function buildAccountTemplateSurrogates(projects: Project[], devices: Device[], dashboards: Record<string, Dashboard>): DeviceTemplate[] {
-  return projects.map((project) => {
-    const projectDevice = devices.find((device) => device.project_id === project.id);
-    const dashboard = dashboards[project.id] ?? {
-      id: `${project.id}-dashboard`,
-      project_id: project.id,
-      name: `${project.name} Dashboard`,
-      revision: 1,
-      widgets: []
-    };
-    const channels = Array.from(new Set(dashboard.widgets.map((widget) => widget.channel).filter(Boolean))).slice(0, 10);
+function buildStarterTemplateDraft(project: Project, dashboard: Dashboard, device: Device | undefined, board: DeviceTemplate["board"], preset: TemplatePreset): DeviceTemplate {
+  const seedStreams = starterDatastreams(preset);
+  const datastreams = seedStreams.map((stream, index) => ({ ...stream, id: `ds-${project.id}-${index}` }));
+  const widgets = datastreams.slice(0, 10).map((stream, index) => {
+    const type = widgetTypeForTemplateStream(stream.dataType);
+    const isWide = type === "gps" || type === "camera" || type === "serial_lcd";
     return {
-      id: `${project.id}-account-template`,
-      name: project.name,
-      board: (projectDevice?.board as DeviceTemplate["board"] | undefined) ?? "ESP32",
-      description: project.description || `${project.name} account workspace`,
-      revision: dashboard.revision,
-      datastreams: channels.map((channel, index) => ({
-        id: `${project.id}-${channel}`,
-        name: channel,
-        pin: channel as `V${number}`,
-        dataType: "float",
-        unit: dashboard.widgets.find((widget) => widget.channel === channel)?.unit ?? "",
-        min: dashboard.widgets.find((widget) => widget.channel === channel)?.min,
-        max: dashboard.widgets.find((widget) => widget.channel === channel)?.max,
-        color: dashboard.widgets.find((widget) => widget.channel === channel)?.color ?? (index % 2 ? "#10b981" : "#2563eb")
-      })),
-      notifications: [],
-      dashboard
+      id: `w-${project.id}-${index}`,
+      type,
+      title: stream.name,
+      x: (index % 4) * 3,
+      y: Math.floor(index / 4) * 3,
+      w: isWide ? 6 : 3,
+      h: isWide ? 3 : 2,
+      deviceId: device?.id ?? "",
+      channel: stream.pin,
+      datastreamId: stream.id,
+      unit: stream.unit,
+      min: stream.min,
+      max: stream.max,
+      color: stream.color,
+      align: "center" as const
     };
   });
+  return {
+    id: `draft-${project.id}`,
+    name: project.name,
+    board,
+    description: `${preset} template for ${project.name}`,
+    revision: 1,
+    datastreams,
+    notifications: datastreams[0] ? [{
+      id: `rule-${project.id}-${datastreams[0].pin}`,
+      name: `${datastreams[0].name} Alert`,
+      datastreamId: datastreams[0].id,
+      operator: ">",
+      threshold: datastreams[0].max ? Math.round(datastreams[0].max * 0.8) : 1,
+      channel: "push",
+      cooldownMinutes: 15
+    }] : [],
+    dashboard: {
+      ...dashboard,
+      name: `${project.name} Dashboard`,
+      widgets
+    }
+  };
 }
 
-function TemplateLibrary({ templates, onOpen }: { templates: DeviceTemplate[]; onOpen: (template: DeviceTemplate) => void }) {
+function starterDatastreams(preset: TemplatePreset) {
+  const streams = {
+    "Smart Irrigation": [
+      ["Temperature", "V0", "float", "C", 0, 100, "#2563eb"],
+      ["Humidity", "V1", "integer", "%", 0, 100, "#0ea5e9"],
+      ["Soil Moisture", "V2", "integer", "%", 0, 100, "#10b981"],
+      ["Pump Control", "V3", "boolean", "", 0, 1, "#f59e0b"],
+      ["GPS Location", "V4", "gps", "", undefined, undefined, "#2563eb"],
+      ["Camera Snapshot", "V5", "image", "", undefined, undefined, "#7c3aed"]
+    ],
+    "Smart Home": [
+      ["Room Temperature", "V0", "float", "C", 0, 60, "#2563eb"],
+      ["Main Switch", "V1", "boolean", "", 0, 1, "#10b981"],
+      ["LED State", "V2", "boolean", "", 0, 1, "#f59e0b"],
+      ["Power Meter", "V3", "float", "W", 0, 5000, "#0ea5e9"],
+      ["LCD Message", "V4", "string", "", undefined, undefined, "#64748b"]
+    ],
+    "Energy Monitor": [
+      ["Voltage", "V0", "float", "V", 0, 260, "#2563eb"],
+      ["Current", "V1", "float", "A", 0, 100, "#0ea5e9"],
+      ["Power", "V2", "float", "W", 0, 10000, "#10b981"],
+      ["Energy", "V3", "float", "kWh", 0, 1000, "#f59e0b"],
+      ["Relay", "V4", "boolean", "", 0, 1, "#7c3aed"]
+    ],
+    Blank: [
+      ["Value", "V0", "float", "", 0, 100, "#2563eb"]
+    ]
+  } satisfies Record<TemplatePreset, Array<[string, `V${number}`, DeviceTemplate["datastreams"][number]["dataType"], string, number | undefined, number | undefined, string]>>;
+  return streams[preset].map(([name, pin, dataType, unit, min, max, color]) => ({ name, pin, dataType, unit, min, max, color }));
+}
+
+function widgetTypeForTemplateStream(dataType: DeviceTemplate["datastreams"][number]["dataType"]) {
+  if (dataType === "boolean") return "switch";
+  if (dataType === "gps") return "gps";
+  if (dataType === "image") return "camera";
+  if (dataType === "string") return "serial_lcd";
+  if (dataType === "time") return "time";
+  if (dataType === "date") return "date";
+  return "gauge";
+}
+
+function TemplateLibrary({
+  templates,
+  projects,
+  accountMode = false,
+  onCreateTemplate,
+  onOpen
+}: {
+  templates: DeviceTemplate[];
+  projects: Project[];
+  accountMode?: boolean;
+  onCreateTemplate?: (projectId: string, board: DeviceTemplate["board"], preset: TemplatePreset) => Promise<DeviceTemplate>;
+  onOpen: (template: DeviceTemplate) => void;
+}) {
   const templateLimit = 3;
   const isAtLimit = templates.length >= templateLimit;
+  const availableProjects = projects.filter((project) => !templates.some((template) => template.dashboard.project_id === project.id));
+  const [createOpen, setCreateOpen] = useState(false);
+  const [draftProjectId, setDraftProjectId] = useState(availableProjects[0]?.id ?? projects[0]?.id ?? "");
+  const [draftBoard, setDraftBoard] = useState<DeviceTemplate["board"]>("ESP32");
+  const [draftPreset, setDraftPreset] = useState<TemplatePreset>("Smart Irrigation");
+  const [createState, setCreateState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [createMessage, setCreateMessage] = useState("");
+
+  useEffect(() => {
+    if (!draftProjectId && availableProjects[0]) setDraftProjectId(availableProjects[0].id);
+  }, [draftProjectId, availableProjects]);
+
+  async function createTemplate() {
+    if (!onCreateTemplate || isAtLimit || !draftProjectId) return;
+    setCreateState("saving");
+    setCreateMessage("");
+    try {
+      const created = await onCreateTemplate(draftProjectId, draftBoard, draftPreset);
+      setCreateState("saved");
+      setCreateMessage("Template created. Open studio to configure datastreams, dashboard and code.");
+      setCreateOpen(false);
+      onOpen(created);
+    } catch {
+      setCreateState("error");
+      setCreateMessage("Template creation failed. Check project limits and API session.");
+    }
+  }
 
   return (
     <section className="support-page template-library-page">
@@ -609,11 +737,55 @@ function TemplateLibrary({ templates, onOpen }: { templates: DeviceTemplate[]; o
           <strong>{templates.length}/3 templates used</strong>
           <span>Starter plan keeps the MVP simple: one template/dashboard per project.</span>
         </div>
-        <button className="primary" disabled={isAtLimit} aria-disabled={isAtLimit} title={isAtLimit ? "Starter plan limit reached" : "Create template"}>
+        <button
+          className="primary"
+          disabled={isAtLimit || (accountMode && (!onCreateTemplate || !availableProjects.length))}
+          aria-disabled={isAtLimit || (accountMode && (!onCreateTemplate || !availableProjects.length))}
+          title={isAtLimit ? "Starter plan limit reached" : accountMode ? "Create account template" : "Demo templates are already filled"}
+          onClick={() => accountMode && setCreateOpen((current) => !current)}
+        >
           {isAtLimit ? <Lock size={16} /> : <Plus size={16} />}
           Create template
         </button>
       </div>
+
+      {createOpen && (
+        <article className="panel project-create-card" data-testid="template-create-form">
+          <div>
+            <span className="section-kicker">New device template</span>
+            <h2>Create template</h2>
+            <p>Select the project, board and starter preset. Spark IoT will generate virtual pins, starter widgets and Arduino-ready bindings.</p>
+          </div>
+          <div className="project-create-grid">
+            <label>
+              Project
+              <select aria-label="Template project" value={draftProjectId} onChange={(event) => setDraftProjectId(event.target.value)}>
+                {availableProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+              </select>
+            </label>
+            <label>
+              Board
+              <select aria-label="Template board" value={draftBoard} onChange={(event) => setDraftBoard(event.target.value as DeviceTemplate["board"])}>
+                {["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"].map((board) => <option key={board}>{board}</option>)}
+              </select>
+            </label>
+            <label>
+              Preset
+              <select aria-label="Template preset" value={draftPreset} onChange={(event) => setDraftPreset(event.target.value as TemplatePreset)}>
+                {["Smart Irrigation", "Smart Home", "Energy Monitor", "Blank"].map((preset) => <option key={preset}>{preset}</option>)}
+              </select>
+            </label>
+          </div>
+          <div className="provisioning-actions">
+            <button className="primary" type="button" disabled={createState === "saving"} onClick={() => void createTemplate()}>
+              <Plus size={16} />{createState === "saving" ? "Saving..." : "Save template"}
+            </button>
+            <button type="button" onClick={() => setCreateOpen(false)}>Cancel</button>
+          </div>
+        </article>
+      )}
+
+      {createMessage && <span className={`project-create-state ${createState}`}>{createMessage}</span>}
 
       <section className="template-library-grid">
         {templates.map((template) => (

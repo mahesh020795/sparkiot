@@ -6,7 +6,8 @@ from app.services.demo_live import build_board_test_payload, build_demo_command_
 from app.schemas.api import ScheduleCreate, TemplateStudioUpdate
 from app.core.database import Base, make_engine
 from app.core.security import hash_secret
-from app.models.domain import AlertRule, CommandLog, Device, Notification, Project, Schedule, Tenant, User
+from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, Schedule, Tenant, User
+from app.api.routes.templates import create_template, list_templates, update_template
 from sqlalchemy.orm import sessionmaker
 from datetime import UTC, datetime
 
@@ -209,6 +210,94 @@ def test_template_studio_rejects_more_than_ten_widgets():
         assert "Starter plan allows 10 widgets" in str(exc)
     else:
         raise AssertionError("expected starter widget limit to fail")
+
+
+def template_route_db():
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    db = Session()
+    tenant = Tenant(id="tenant-template", name="Template Tenant")
+    other_tenant = Tenant(id="tenant-other", name="Other Tenant")
+    user = User(id="user-template", tenant_id=tenant.id, email="template@example.com", full_name="Template User", password_hash=hash_secret("SparkDemo123!"))
+    project = Project(id="project-template", tenant_id=tenant.id, name="Template Project", description="Real account template")
+    dashboard = Dashboard(id="dashboard-template", tenant_id=tenant.id, project_id=project.id, name="Template Project Dashboard", widgets=[])
+    other_project = Project(id="project-other", tenant_id=other_tenant.id, name="Other Project", description="Wrong tenant")
+    other_dashboard = Dashboard(id="dashboard-other", tenant_id=other_tenant.id, project_id=other_project.id, name="Other Dashboard", widgets=[])
+    db.add_all([tenant, other_tenant, user, project, dashboard, other_project, other_dashboard])
+    db.commit()
+    return db, user, project, dashboard
+
+
+def account_template_payload(project_id: str, dashboard_id: str, revision: int = 1) -> dict:
+    payload = valid_template_payload()
+    payload["revision"] = revision
+    payload["name"] = "Customer Irrigation"
+    payload["dashboard"]["id"] = dashboard_id
+    payload["dashboard"]["project_id"] = project_id
+    payload["dashboard"]["revision"] = revision
+    payload["dashboard"]["name"] = "Customer Irrigation Dashboard"
+    return payload
+
+
+def test_account_template_routes_create_list_and_update_persistent_template():
+    db, user, project, dashboard = template_route_db()
+
+    created = create_template(TemplateStudioUpdate(**account_template_payload(project.id, dashboard.id)), user=user, db=db)
+
+    assert created["name"] == "Customer Irrigation"
+    assert created["revision"] == 1
+    assert created["dashboard"]["id"] == dashboard.id
+    assert created["datastreams"][0]["pin"] == "V0"
+
+    rows = list_templates(user=user, db=db)
+    assert [row["id"] for row in rows] == [created["id"]]
+
+    update_payload = account_template_payload(project.id, dashboard.id, revision=1)
+    update_payload["name"] = "Customer Irrigation v2"
+    update_payload["dashboard"]["widgets"][0]["title"] = "Temperature v2"
+    updated = update_template(created["id"], TemplateStudioUpdate(**update_payload), user=user, db=db)
+
+    assert updated["name"] == "Customer Irrigation v2"
+    assert updated["revision"] == 2
+    assert updated["dashboard"]["revision"] == 2
+    assert db.get(DeviceTemplateRecord, created["id"]).datastreams[0]["pin"] == "V0"
+
+
+def test_account_template_routes_reject_duplicate_project_template_and_stale_revision():
+    db, user, project, dashboard = template_route_db()
+    created = create_template(TemplateStudioUpdate(**account_template_payload(project.id, dashboard.id)), user=user, db=db)
+
+    try:
+        create_template(TemplateStudioUpdate(**account_template_payload(project.id, dashboard.id)), user=user, db=db)
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 409
+        assert exc.detail["code"] == "template_project_exists"
+    else:
+        raise AssertionError("expected one template per project enforcement")
+
+    try:
+        first_update = account_template_payload(project.id, dashboard.id, revision=1)
+        update_template(created["id"], TemplateStudioUpdate(**first_update), user=user, db=db)
+        stale_update = account_template_payload(project.id, dashboard.id, revision=1)
+        stale_update["dashboard"]["revision"] = 2
+        update_template(created["id"], TemplateStudioUpdate(**stale_update), user=user, db=db)
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 409
+        assert exc.detail["code"] == "stale_template_revision"
+    else:
+        raise AssertionError("expected stale revision to fail")
+
+
+def test_account_template_routes_reject_cross_tenant_dashboard_project():
+    db, user, _project, _dashboard = template_route_db()
+
+    try:
+        create_template(TemplateStudioUpdate(**account_template_payload("project-other", "dashboard-other")), user=user, db=db)
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 404
+    else:
+        raise AssertionError("expected cross-tenant dashboard/project to fail")
 
 
 def test_threshold_alert_creates_notification_once_per_cooldown(monkeypatch):

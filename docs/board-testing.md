@@ -25,7 +25,15 @@ http://YOUR_VPS_IP:5173
 
 Then open the `Live Test` tab. It shows the MQTT broker host, port, tenant ID, device ID, device token, telemetry topic, command topic, and latest received virtual pin values.
 
-For signed-in account testing, open `Projects` first if you need a new workspace, then open `Devices` and use `Provision device` to create a real board credential for that project. Copy the token as soon as it appears and update your Arduino sketch. Use `Regenerate token` when you need a fresh credential for an existing board. The backend stores only token hashes, so visible values are one-time credentials and old sketches should be reflashed after rotation.
+For signed-in account testing, use the real customer setup flow:
+
+1. Open `Projects` and create/select the workspace.
+2. Open `Templates`, click `Create template`, select the project, board and starter preset, then save it.
+3. Open the template studio to adjust virtual pins, dashboard widgets, notifications and generated code.
+4. Open `Devices` and use `Provision device` to create a real board credential for that project.
+5. Copy the token as soon as it appears and update your Arduino sketch.
+
+Use `Regenerate token` when you need a fresh credential for an existing board. The backend stores only token hashes, so visible values are one-time credentials and old sketches should be reflashed after rotation.
 
 Mosquitto MQTT is exposed on:
 
@@ -82,14 +90,15 @@ Install:
 In Spark IoT:
 
 1. Open `Templates`.
-2. Open a template.
-3. Open the `Code` tab.
-4. Copy the generated sketch. It uses the clean `SparkIoT.h` library API instead of long raw MQTT code.
-5. Replace:
+2. In account mode, create a template first if the project does not have one yet.
+3. Open a template.
+4. Open the `Code` tab.
+5. Copy the generated sketch. It uses the clean `SparkIoT.h` library API instead of long raw MQTT code.
+6. Replace:
    - `YOUR_WIFI_NAME`
    - `YOUR_WIFI_PASSWORD`
    - `BROKER_HOST`
-6. Upload to the board.
+7. Upload to the board.
 
 The generated sketch includes command acknowledgement support for boolean virtual pins. When a dashboard switch sends a command, the board echoes the updated telemetry value and publishes an ACK packet back to Spark IoT so the `Live Test` command monitor can prove the full loop.
 

@@ -9,6 +9,8 @@ Main resources:
 - `/projects`
 - `/devices`
 - `/dashboards/project/{project_id}`
+- `/templates`
+- `/templates/{template_id}`
 - `/demo/templates`
 - `/demo/templates/{template_id}`
 - `/demo/devices/{device_id}/history`
@@ -33,6 +35,17 @@ The no-login MVP uses demo endpoints so the web dashboard can be tested before f
 The save payload includes `revision`. If the server revision has changed, the API returns `409` with `stale_template_revision`; the frontend should refresh before saving again.
 
 Errors use HTTP status codes and stable detail codes for plan limits, stale dashboard revisions, and stale template revisions.
+
+## Account Template Studio Persistence
+
+Signed-in tenants use authenticated template endpoints for real customer projects:
+
+- `GET /api/v1/templates` lists tenant templates.
+- `POST /api/v1/templates` creates one template for a project dashboard.
+- `GET /api/v1/templates/{template_id}` loads one tenant template.
+- `PUT /api/v1/templates/{template_id}` saves template metadata, board, datastreams, notification rules, and dashboard widget JSON.
+
+The payload shape matches the demo Template Studio payload. Spark IoT enforces one template per project and uses `revision` checks on both the template and dashboard. Duplicate project templates return `409` with `template_project_exists`; stale template saves return `409` with `stale_template_revision`.
 
 
 ## Demo History and CSV Export
