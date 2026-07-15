@@ -1,17 +1,18 @@
-import { ArrowRight, Bell, CheckCircle2, ClipboardCheck, Copy, Cpu, Database, Gauge, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, PlugZap, Plus, RadioTower, Settings, TerminalSquare, UserCircle, Workflow } from "lucide-react";
+import { ArrowRight, Bell, CalendarClock, CheckCircle2, ClipboardCheck, Copy, Cpu, Database, Gauge, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, PlugZap, Plus, RadioTower, Settings, TerminalSquare, UserCircle, Workflow } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { DashboardPage, LocalDashboardPage } from "./pages/DashboardPage";
 import { DevicesPage } from "./pages/DevicesPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import { SchedulesPage } from "./pages/SchedulesPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api, clearSession, getSession, type Session } from "./lib/api";
-import type { CommandLogItem, Dashboard, Device, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, Telemetry } from "./lib/types";
+import type { CommandLogItem, Dashboard, Device, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ScheduleCreate, ScheduleItem, Telemetry } from "./lib/types";
 
-type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "history" | "notifications" | "settings";
+type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
 type SaveState = "saved" | "unsaved" | "saving" | "error";
 
 export function App() {
@@ -25,6 +26,7 @@ export function App() {
   const [accountDashboards, setAccountDashboards] = useState<Record<string, Dashboard>>({});
   const [accountLatest, setAccountLatest] = useState<Record<string, Telemetry>>({});
   const [accountNotifications, setAccountNotifications] = useState<NotificationItem[]>([]);
+  const [accountSchedules, setAccountSchedules] = useState<ScheduleItem[]>([]);
   const [accountUsage, setAccountUsage] = useState<{ devices: number; max_devices: number; projects: number; max_projects: number; retention_days: number } | null>(null);
   const [accountLoadState, setAccountLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [templateStudioId, setTemplateStudioId] = useState<string | null>(null);
@@ -47,6 +49,7 @@ export function App() {
     ["templates", Workflow, "Templates"],
     ["devices", Cpu, "Devices"],
     ["live", PlugZap, "Live Test"],
+    ["schedules", CalendarClock, "Schedules"],
     ["history", Database, "Data History"],
     ["notifications", Bell, "Notifications"],
     ["settings", Settings, "Settings"]
@@ -82,6 +85,7 @@ export function App() {
         setAccountDashboards({});
         setAccountLatest({});
         setAccountNotifications([]);
+        setAccountSchedules([]);
         setAccountUsage(null);
         setAccountLoadState("idle");
         if (!demoProjects.some((project) => project.id === selectedProjectId)) setSelectedProjectId(demoProjects[0].id);
@@ -89,16 +93,18 @@ export function App() {
       }
       setAccountLoadState("loading");
       try {
-        const [projects, devices, notifications, usage] = await Promise.all([
+        const [projects, devices, notifications, schedules, usage] = await Promise.all([
           api.projects(),
           api.devices(),
           api.notifications().catch(() => []),
+          api.schedules().catch(() => []),
           api.usage().catch(() => null)
         ]);
         if (!mounted) return;
         setAccountProjects(projects);
         setAccountDevices(devices);
         setAccountNotifications(notifications);
+        setAccountSchedules(schedules);
         setAccountUsage(usage);
         setAccountLoadState("ready");
         if (projects.length && !projects.some((project) => project.id === selectedProjectId)) setSelectedProjectId(projects[0].id);
@@ -164,6 +170,12 @@ export function App() {
     setSession(null);
     setAuthScreenOpen(false);
     setView("dashboard");
+  }
+
+  async function createAccountSchedule(schedule: ScheduleCreate) {
+    const created = await api.createSchedule(schedule);
+    setAccountSchedules((current) => [created, ...current]);
+    return created;
   }
 
   if (authScreenOpen) {
@@ -261,6 +273,16 @@ export function App() {
         )}
         {view === "devices" && <DevicesPage devices={activeDevices} templates={activeTemplates} />}
         {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} latest={activeLatest} />}
+        {view === "schedules" && (
+          <SchedulesPage
+            accountMode={isAccountMode}
+            projects={activeProjects}
+            devices={activeDevices}
+            schedules={accountSchedules}
+            selectedProjectId={selectedProjectId}
+            onCreateSchedule={createAccountSchedule}
+          />
+        )}
         {view === "history" && <HistoryPage devices={activeDevices} initialLatest={activeLatest} />}
         {view === "notifications" && <NotificationsPage initialItems={isAccountMode ? accountNotifications : demoNotifications} />}
         {view === "settings" && <SettingsPage />}

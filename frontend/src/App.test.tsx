@@ -245,6 +245,97 @@ describe("App", () => {
     expect(screen.getByText("Shows dashboard commands and board acknowledgements. This is how you prove the switch reached the ESP32/NodeMCU.")).toBeInTheDocument();
   });
 
+  it("shows a Blynk Timer-style schedule automation page in demo mode", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Schedules"));
+
+    expect(screen.getByTestId("schedules-page")).toHaveClass("schedule-system-page");
+    expect(screen.getByText("Schedule automation")).toBeInTheDocument();
+    expect(screen.getByText("Blynk Timer-style day and time control for boards, pumps, relays and status outputs.")).toBeInTheDocument();
+    expect(screen.getByText("Demo-only planner")).toBeInTheDocument();
+    expect(screen.getByText("Irrigation morning run")).toBeInTheDocument();
+    expect(screen.getAllByText("V3").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Device")).toHaveValue("device-irrigation");
+    expect(screen.getByLabelText("Virtual pin")).toHaveValue("V3");
+    expect(screen.getByLabelText("Command value")).toHaveValue("true");
+    expect(screen.getByLabelText("Run time")).toHaveValue("06:00");
+    expect(screen.getByLabelText("Repeat")).toHaveValue("mon,wed,fri");
+    expect(screen.getByRole("button", { name: /Add demo schedule/i })).toBeInTheDocument();
+  });
+
+  it("loads and creates authenticated schedules with the protected API", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Real tenant project", is_active: true };
+    const accountDevice = {
+      id: "account-device",
+      project_id: "account-project",
+      name: "ESP32 Greenhouse Node",
+      board: "ESP32",
+      is_online: true,
+      telemetry_topic: "spark/v1/account-tenant/account-device/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/account-device/command/{channel}"
+    };
+    const accountSchedule = {
+      id: "schedule-greenhouse-fan",
+      project_id: "account-project",
+      device_id: "account-device",
+      channel: "V4",
+      value: true,
+      time_of_day: "18:30",
+      recurrence: "daily",
+      timezone: "Asia/Kuala_Lumpur",
+      is_active: true
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/projects")) {
+        return new Response(JSON.stringify([accountProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/devices")) {
+        return new Response(JSON.stringify([accountDevice]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/notifications")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/tenant/usage")) {
+        return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 1, max_devices: 3, projects: 1, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/dashboards/project/account-project")) {
+        return new Response(JSON.stringify({ id: "account-dashboard", project_id: "account-project", name: "Customer Greenhouse Dashboard", revision: 1, widgets: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/telemetry/projects/account-project/latest")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/schedules") && init?.method === "POST") {
+        expect((init.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        expect(init.body).toContain('"device_id":"account-device"');
+        expect(init.body).toContain('"channel":"V3"');
+        return new Response(JSON.stringify({ ...accountSchedule, id: "schedule-new", channel: "V3", time_of_day: "06:00" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/schedules")) {
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        return new Response(JSON.stringify([accountSchedule]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Schedules"));
+
+    expect(await screen.findByText("Customer Greenhouse fan")).toBeInTheDocument();
+    expect(screen.getByText("18:30")).toBeInTheDocument();
+    expect(screen.getByText("Asia/Kuala_Lumpur")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Create live schedule/i }));
+
+    expect(await screen.findByText("schedule-new")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/schedules"), expect.objectContaining({ method: "POST" }));
+  });
+
   it("generates board-specific SparkIoT Arduino library sketches from selected templates and devices", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Templates"));
