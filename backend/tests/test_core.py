@@ -4,12 +4,13 @@ from app.services.telemetry import evaluate_alerts, ingest, normalize_value
 from app.services.schedules import due_occurrence_key, run_due_schedules_once
 from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
 from app.schemas.api import ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
-from app.core.database import Base, make_engine
+from app.core.database import Base, ensure_runtime_indexes, make_engine
 from app.core.security import hash_secret
 from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, Schedule, Telemetry, Tenant, User
 from app.api.routes.templates import create_template, list_templates, update_template
 from app.api.routes.devices import command_logs
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import text
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -123,6 +124,22 @@ def test_telemetry_schema_has_database_retry_dedupe_guard():
     assert [column.name for column in index.columns] == ["tenant_id", "device_id", "channel", "message_id"]
     assert str(index.dialect_options["postgresql"]["where"]) == "message_id IS NOT NULL"
     assert str(index.dialect_options["sqlite"]["where"]) == "message_id IS NOT NULL"
+
+
+def test_runtime_index_upgrade_adds_retry_guard_to_existing_sqlite_database():
+    engine = make_engine("sqlite:///:memory:")
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE telemetry (id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, device_id TEXT NOT NULL, channel TEXT NOT NULL, message_id TEXT NULL)"))
+
+    ensure_runtime_indexes(engine)
+
+    with engine.connect() as connection:
+        indexes = connection.execute(text("PRAGMA index_list('telemetry')")).mappings().all()
+        retry_index = next((index for index in indexes if index["name"] == "uq_telemetry_message_retry"), None)
+
+    assert retry_index is not None
+    assert retry_index["unique"] == 1
+    assert retry_index["partial"] == 1
 
 
 def test_mqtt_protocol_documents_message_id_idempotency():
