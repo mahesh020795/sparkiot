@@ -1023,6 +1023,63 @@ body {
   justify-content: center;
 }
 
+.spark-ui .provisioning-create-card {
+  display: grid;
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .device-create-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.75fr) minmax(150px, 0.55fr);
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .device-create-grid label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  font-weight: 900;
+}
+
+.spark-ui .device-create-grid input,
+.spark-ui .device-create-grid select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface);
+  color: var(--spark-text);
+  font: inherit;
+  padding: 0 0.8rem;
+}
+
+.spark-ui .device-create-state {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface);
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  font-weight: 850;
+}
+
+.spark-ui .device-create-state.saved {
+  border-color: #bbf7d0;
+  background: var(--spark-success-soft);
+  color: var(--spark-success);
+}
+
+.spark-ui .device-create-state.error {
+  border-color: #fecdd3;
+  background: var(--spark-danger-soft);
+  color: var(--spark-danger);
+}
+
 .spark-ui .token-rotation-state {
   color: var(--spark-muted);
   font-size: var(--spark-small);
@@ -1396,6 +1453,7 @@ body {
 
 @media (max-width: 980px) {
   .spark-ui .device-system-grid,
+  .spark-ui .device-create-grid,
   .spark-ui .live-system-grid,
   .spark-ui .connection-proof-timeline,
   .spark-ui .proof-steps,

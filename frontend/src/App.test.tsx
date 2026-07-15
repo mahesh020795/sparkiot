@@ -277,6 +277,62 @@ describe("App", () => {
     expect(within(deviceCard).getByText(/#define SPARK_TOKEN "spk_dev_rotated_once_1234"/)).toBeInTheDocument();
   });
 
+  it("provisions an account device and reveals its one-time token", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Live protected tenant workspace", is_active: true };
+    const existingDevice = {
+      id: "account-device",
+      project_id: "account-project",
+      name: "Existing ESP32",
+      board: "ESP32",
+      is_online: true,
+      token: null,
+      telemetry_topic: "spark/v1/account-tenant/account-device/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/account-device/command/{channel}"
+    };
+    const createdDevice = {
+      id: "new-node",
+      project_id: "account-project",
+      name: "Greenhouse Node 2",
+      board: "ESP8266",
+      is_online: false,
+      token: "spk_dev_new_node_once_5678",
+      telemetry_topic: "spark/v1/account-tenant/new-node/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/new-node/command/{channel}"
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/projects")) return new Response(JSON.stringify([accountProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/devices") && init?.method !== "POST") return new Response(JSON.stringify([existingDevice]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/devices") && init?.method === "POST") {
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        expect(JSON.parse(String(init.body))).toEqual({ project_id: "account-project", name: "Greenhouse Node 2", board: "ESP8266" });
+        return new Response(JSON.stringify(createdDevice), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/notifications") || url.includes("/schedules")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/tenant/usage")) return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 1, max_devices: 3, projects: 1, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/dashboards/project/account-project")) return new Response(JSON.stringify({ id: "account-dashboard", project_id: "account-project", name: "Customer Greenhouse Dashboard", revision: 1, widgets: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/telemetry/projects/account-project/latest")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Devices"));
+
+    expect(await screen.findByText("1/3 devices used")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Provision device/i }));
+    fireEvent.change(screen.getByLabelText("Device name"), { target: { value: "Greenhouse Node 2" } });
+    fireEvent.change(screen.getByLabelText("Board type"), { target: { value: "ESP8266" } });
+    fireEvent.click(screen.getByRole("button", { name: /Create device/i }));
+
+    const newDeviceCard = await screen.findByRole("article", { name: /Greenhouse Node 2 provisioning card/i });
+    expect(within(newDeviceCard).getByText("spk_dev_new_node_once_5678")).toBeInTheDocument();
+    expect(within(newDeviceCard).getByText(/#define SPARK_TOKEN "spk_dev_new_node_once_5678"/)).toBeInTheDocument();
+    expect(screen.getByText("New device token shown once. Copy it before leaving this page.")).toBeInTheDocument();
+  });
+
   it("shows a live board test panel with MQTT connection details", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Live Test"));

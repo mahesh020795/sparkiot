@@ -1,20 +1,32 @@
 import { CheckCircle2, Clipboard, Copy, KeyRound, Lock, Plus, RadioTower, Router, ShieldCheck, TerminalSquare } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import type { Device, DeviceTemplate } from "../lib/types";
+import type { BoardType, Device, DeviceCreate, DeviceTemplate, Project } from "../lib/types";
 
 type Props = {
   devices: Device[];
   templates: DeviceTemplate[];
+  projects?: Project[];
   accountMode?: boolean;
+  onCreateDevice?: (device: DeviceCreate) => Promise<Device>;
   onRegenerateToken?: (deviceId: string) => Promise<Device>;
 };
 
-export function DevicesPage({ devices, templates, accountMode = false, onRegenerateToken }: Props) {
+const boardOptions: BoardType[] = ["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"];
+
+export function DevicesPage({ devices, templates, projects = [], accountMode = false, onCreateDevice, onRegenerateToken }: Props) {
   const deviceLimit = 3;
   const isAtLimit = devices.length >= deviceLimit;
   const onlineCount = devices.filter((device) => device.is_online).length;
   const [tokenStates, setTokenStates] = useState<Record<string, "idle" | "saving" | "saved" | "error">>({});
+  const [provisionOpen, setProvisionOpen] = useState(false);
+  const [provisionState, setProvisionState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [provisionMessage, setProvisionMessage] = useState("");
+  const [newDevice, setNewDevice] = useState<DeviceCreate>({
+    project_id: projects[0]?.id ?? templates[0]?.dashboard.project_id ?? "",
+    name: "",
+    board: "ESP32"
+  });
 
   async function regenerateToken(deviceId: string) {
     if (!onRegenerateToken) return;
@@ -24,6 +36,29 @@ export function DevicesPage({ devices, templates, accountMode = false, onRegener
       setTokenStates((current) => ({ ...current, [deviceId]: "saved" }));
     } catch {
       setTokenStates((current) => ({ ...current, [deviceId]: "error" }));
+    }
+  }
+
+  async function createDevice() {
+    if (!onCreateDevice || isAtLimit) return;
+    const projectId = newDevice.project_id || projects[0]?.id || templates[0]?.dashboard.project_id || "";
+    const name = newDevice.name.trim();
+    if (!projectId || name.length < 2) {
+      setProvisionState("error");
+      setProvisionMessage("Choose a project and enter a device name with at least 2 characters.");
+      return;
+    }
+    setProvisionState("saving");
+    setProvisionMessage("");
+    try {
+      await onCreateDevice({ project_id: projectId, name, board: newDevice.board });
+      setProvisionState("saved");
+      setProvisionMessage("New device token shown once. Copy it before leaving this page.");
+      setNewDevice((current) => ({ ...current, name: "" }));
+      setProvisionOpen(false);
+    } catch {
+      setProvisionState("error");
+      setProvisionMessage("Device provisioning failed. Check starter limits and API session.");
     }
   }
 
@@ -47,11 +82,68 @@ export function DevicesPage({ devices, templates, accountMode = false, onRegener
           <strong>{devices.length}/3 devices used</strong>
           <span>Starter plan supports three active boards across three projects.</span>
         </div>
-        <button className="primary" disabled={isAtLimit} aria-disabled={isAtLimit} title={isAtLimit ? "Starter plan device limit reached" : "Provision device"}>
+        <button
+          className="primary"
+          disabled={isAtLimit || !onCreateDevice}
+          aria-disabled={isAtLimit || !onCreateDevice}
+          title={isAtLimit ? "Starter plan device limit reached" : accountMode ? "Provision device" : "Sign in to provision real devices"}
+          onClick={() => setProvisionOpen((current) => !current)}
+        >
           {isAtLimit ? <Lock size={16} /> : <Plus size={16} />}
           Provision device
         </button>
       </div>
+
+      {provisionOpen && (
+        <article className="panel provisioning-create-card" data-testid="device-create-form">
+          <div>
+            <span className="section-kicker">New board credential</span>
+            <h2>Provision a device</h2>
+            <p>Create the backend device, reveal the one-time token, then paste it into the Arduino sketch before refreshing.</p>
+          </div>
+          <div className="device-create-grid">
+            <label>
+              Project
+              <select
+                aria-label="Project"
+                value={newDevice.project_id}
+                onChange={(event) => setNewDevice((current) => ({ ...current, project_id: event.target.value }))}
+              >
+                {(projects.length ? projects : templates.map((template) => ({ id: template.dashboard.project_id, name: template.name }))).map((project) => (
+                  <option key={project.id} value={project.id}>{project.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Device name
+              <input
+                aria-label="Device name"
+                value={newDevice.name}
+                placeholder="Greenhouse Node 2"
+                onChange={(event) => setNewDevice((current) => ({ ...current, name: event.target.value }))}
+              />
+            </label>
+            <label>
+              Board type
+              <select
+                aria-label="Board type"
+                value={newDevice.board}
+                onChange={(event) => setNewDevice((current) => ({ ...current, board: event.target.value as BoardType }))}
+              >
+                {boardOptions.map((board) => <option key={board} value={board}>{board}</option>)}
+              </select>
+            </label>
+          </div>
+          <div className="provisioning-actions">
+            <button className="primary" type="button" onClick={() => void createDevice()} disabled={provisionState === "saving"}>
+              <Plus size={16} />{provisionState === "saving" ? "Creating..." : "Create device"}
+            </button>
+            <button type="button" onClick={() => setProvisionOpen(false)}>Cancel</button>
+          </div>
+        </article>
+      )}
+
+      {provisionMessage && <span className={`device-create-state ${provisionState}`}>{provisionMessage}</span>}
 
       <section className="device-provisioning-grid device-system-grid" data-testid="device-provisioning-grid">
         {devices.map((device) => {

@@ -1,5 +1,6 @@
 export type Project = { id: string; name: string; description: string; is_active: boolean };
 export type Device = { id: string; project_id: string; name: string; board: string; is_online: boolean; last_seen_at?: string | null; token?: string | null; telemetry_topic: string; command_topic: string };
+export type DeviceCreate = { project_id: string; name: string; board: BoardType };
 export type Dashboard = { id: string; project_id: string; name: string; revision: number; widgets: WidgetConfig[] };
 export type Telemetry = { id: string; device_id: string; channel: string; value: unknown; unit?: string | null; observed_at: string; server_at: string };
 export type NotificationItem = { id: string; title: string; body: string; read: boolean; created_at: string };

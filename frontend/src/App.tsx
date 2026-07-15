@@ -10,7 +10,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api, clearSession, getSession, type Session } from "./lib/api";
-import type { CommandLogItem, Dashboard, Device, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ScheduleCreate, ScheduleItem, Telemetry } from "./lib/types";
+import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ScheduleCreate, ScheduleItem, Telemetry } from "./lib/types";
 
 type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
 type SaveState = "saved" | "unsaved" | "saving" | "error";
@@ -184,6 +184,12 @@ export function App() {
     return updated;
   }
 
+  async function createAccountDevice(device: DeviceCreate) {
+    const created = await api.createDevice(device);
+    setAccountDevices((current) => [created, ...current]);
+    return created;
+  }
+
   if (authScreenOpen) {
     return <LoginPage onLogin={handleLogin} onCancel={() => setAuthScreenOpen(false)} />;
   }
@@ -277,7 +283,16 @@ export function App() {
             />
           )
         )}
-        {view === "devices" && <DevicesPage devices={activeDevices} templates={activeTemplates} accountMode={isAccountMode} onRegenerateToken={isAccountMode ? regenerateAccountDeviceToken : undefined} />}
+        {view === "devices" && (
+          <DevicesPage
+            devices={activeDevices}
+            templates={activeTemplates}
+            projects={activeProjects}
+            accountMode={isAccountMode}
+            onCreateDevice={isAccountMode ? createAccountDevice : undefined}
+            onRegenerateToken={isAccountMode ? regenerateAccountDeviceToken : undefined}
+          />
+        )}
         {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} latest={activeLatest} />}
         {view === "schedules" && (
           <SchedulesPage
