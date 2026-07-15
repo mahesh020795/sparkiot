@@ -35,6 +35,8 @@ For signed-in account testing, use the real customer setup flow:
 
 Use `Regenerate token` when you need a fresh credential for an existing board. The backend stores only token hashes, so visible values are one-time credentials and old sketches should be reflashed after rotation.
 
+If the Code tab shows `ROTATE_TOKEN_TO_REVEAL_ONCE`, the selected account device exists but its raw token is already hidden. Open `Devices`, click `Regenerate token`, copy the newly revealed token immediately, then return to `Templates -> Code` or paste it into the generated sketch.
+
 Mosquitto MQTT is exposed on:
 
 ```text
@@ -98,6 +100,7 @@ In Spark IoT:
    - `YOUR_WIFI_NAME`
    - `YOUR_WIFI_PASSWORD`
    - `BROKER_HOST`
+   - `ROTATE_TOKEN_TO_REVEAL_ONCE` if the selected account device token is hidden
 7. Upload to the board.
 
 The generated sketch includes command acknowledgement support for boolean virtual pins. When a dashboard switch sends a command, the board echoes the updated telemetry value and publishes an ACK packet back to Spark IoT so the `Live Test` command monitor can prove the full loop.

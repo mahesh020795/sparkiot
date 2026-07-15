@@ -38,18 +38,26 @@ def test_dashboard_and_project_summary_cards_are_overflow_safe():
     design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
 
     for expected in [
-        '"primary selector"',
-        '"metrics metrics"',
+        '"primary"',
+        '"selector"',
+        '"metrics"',
+        "--spark-title-xl: clamp(1.55rem, 1.8vw, 2.05rem)",
         "--spark-metric-min",
         "--spark-compact-metric-min",
+        "--spark-metric-min: 5.75rem",
+        "--spark-compact-metric-min: 4.85rem",
         "repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))",
         "repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))",
+        "repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr))",
+        "repeat(auto-fit, minmax(min(100%, 4.85rem), 1fr))",
         "contain: inline-size",
         "overflow-wrap: anywhere",
+        ".spark-ui .dashboard-header-grid.spark-page-header-grid",
+        ".spark-ui .spark-page-header-primary h1",
         ".spark-ui .project-stat-row span > *",
         ".spark-ui .project-stat-row strong,",
         ".spark-ui .project-stat-row small",
         "text-overflow: ellipsis;",
-        "white-space: nowrap;",
+        "white-space: normal;",
     ]:
         assert expected in design_system

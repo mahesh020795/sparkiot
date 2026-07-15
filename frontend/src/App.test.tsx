@@ -80,16 +80,22 @@ describe("App", () => {
     expect(css).toContain("--spark-compact-metric-min");
     expect(css).toContain(".spark-ui .spark-page-header-grid > .top-actions");
     expect(css).toContain("display: contents");
-    expect(css).toContain("--spark-metric-min: 6.75rem");
-    expect(css).toContain("--spark-compact-metric-min: 5.15rem");
+    expect(css).toContain("--spark-metric-min: 5.75rem");
+    expect(css).toContain("--spark-compact-metric-min: 4.85rem");
+    expect(css).toContain("--spark-title-xl: clamp(1.55rem, 1.8vw, 2.05rem)");
+    expect(css).toContain('"primary"');
+    expect(css).toContain('"selector"');
+    expect(css).toContain('"metrics"');
     expect(css).toContain("box-sizing: border-box");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))");
-    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.25rem), 1fr))");
-    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.75rem), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.85rem), 1fr))");
     expect(css).toContain(".spark-ui .project-grid");
-    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr))");
     expect(css).toContain("overflow: clip");
+    expect(css).toContain(".spark-ui .dashboard-header-grid.spark-page-header-grid");
+    expect(css).toContain(".spark-ui .spark-page-header-primary h1");
     expect(css).toContain(".spark-ui .project-stat-row span > *");
     expect(css).toContain("overflow-wrap: anywhere");
     expect(css).toContain("white-space: normal");
@@ -584,6 +590,64 @@ describe("App", () => {
     expect(screen.getByText(/SparkIoT\.virtualWrite\("V1", 50, "%"\)/)).toBeInTheDocument();
     expect(screen.getByText(/SparkIoT\.onCommand\("V0", onV0Command\)/)).toBeInTheDocument();
     expect(screen.getByText(/SparkIoT\.ack\("V0", state, "V0 command applied"\)/)).toBeInTheDocument();
+  });
+
+  it("makes account Code tab binding explicit when the matching device token is hidden", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Real tenant project", is_active: true };
+    const accountDevice = {
+      id: "account-device",
+      project_id: "account-project",
+      name: "Customer ESP32",
+      board: "ESP32",
+      is_online: false,
+      token: null,
+      telemetry_topic: "spark/v1/account-tenant/account-device/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/account-device/command/{channel}"
+    };
+    const accountTemplate = {
+      id: "template-account",
+      name: "Customer Greenhouse",
+      board: "ESP32",
+      description: "Real account template",
+      revision: 1,
+      datastreams: [
+        { id: "ds-temp", name: "Temperature", pin: "V0", dataType: "float", unit: "C", min: 0, max: 100, color: "#2563eb" },
+        { id: "ds-pump", name: "Pump", pin: "V1", dataType: "boolean", unit: "", min: 0, max: 1, color: "#10b981" }
+      ],
+      notifications: [],
+      dashboard: {
+        id: "account-dashboard",
+        project_id: "account-project",
+        name: "Customer Greenhouse Dashboard",
+        revision: 1,
+        widgets: [{ id: "w-temp", type: "gauge", title: "Temperature", x: 0, y: 0, w: 3, h: 3, deviceId: "account-device", channel: "V0", datastreamId: "ds-temp" }]
+      }
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/projects")) return new Response(JSON.stringify([accountProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/devices")) return new Response(JSON.stringify([accountDevice]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/templates")) return new Response(JSON.stringify([accountTemplate]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/notifications") || url.includes("/schedules")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/tenant/usage")) return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 1, max_devices: 3, projects: 1, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/dashboards/project/account-project")) return new Response(JSON.stringify(accountTemplate.dashboard), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/telemetry/projects/account-project/latest")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Templates"));
+    fireEvent.click(within(await screen.findByRole("article", { name: /Customer Greenhouse template/i })).getByRole("button", { name: /Open studio/i }));
+    fireEvent.click(screen.getByText("Code"));
+
+    expect(screen.getByText("Customer ESP32")).toBeInTheDocument();
+    expect(screen.getByText("Token hidden after first issue")).toBeInTheDocument();
+    expect(screen.getByText(/SPARK_DEVICE_ID = "account-device"/)).toBeInTheDocument();
+    expect(screen.getByText(/SPARK_DEVICE_TOKEN = "ROTATE_TOKEN_TO_REVEAL_ONCE"/)).toBeInTheDocument();
+    expect(screen.queryByText(/SPARK_DEVICE_TOKEN = "YOUR_DEVICE_TOKEN"/)).not.toBeInTheDocument();
   });
 
 

@@ -74,6 +74,7 @@ export function TemplateStudioPage({
   const sketchFileName = useMemo(() => `${sanitizeSketchName(template.name)}_SparkIoT.ino`, [template.name]);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const saveLabel = saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : saveState === "error" ? "Save failed" : "Unsaved changes";
+  const tokenLabel = device ? (device.token ?? "Token hidden after first issue") : "YOUR_DEVICE_TOKEN";
 
   function patchTemplate(patch: Partial<DeviceTemplate>) {
     onChange({ ...template, ...patch });
@@ -385,7 +386,7 @@ export function TemplateStudioPage({
               <div className="firmware-metadata-grid">
                 <span><small>Board</small><strong>{template.board}</strong></span>
                 <span><small>Device ID</small><strong>{device?.id ?? "YOUR_DEVICE_ID"}</strong></span>
-                <span><small>Token</small><strong>{device?.token ?? "YOUR_DEVICE_TOKEN"}</strong></span>
+                <span><small>Token</small><strong>{tokenLabel}</strong></span>
                 <span><small>Broker</small><strong>34.73.29.12:1883</strong></span>
               </div>
             </div>
@@ -623,7 +624,7 @@ function sanitizeSketchName(name: string) {
 function buildArduinoSketch(template: DeviceTemplate, device?: Device) {
   const board = template.board;
   const deviceId = device?.id ?? "YOUR_DEVICE_ID";
-  const token = device?.token ?? "YOUR_DEVICE_TOKEN";
+  const token = device ? (device.token ?? "ROTATE_TOKEN_TO_REVEAL_ONCE") : "YOUR_DEVICE_TOKEN";
   const tenantId = extractTenantId(device?.telemetry_topic) ?? "demo-tenant";
   const telemetryLines = template.datastreams.map((stream) => libraryPublishLine(stream)).join("\n");
   const commandHandlers = template.datastreams.filter((stream) => stream.dataType === "boolean").map((stream) => `void on${stream.pin}Command(const char* channel, bool state, const char* payload) {
