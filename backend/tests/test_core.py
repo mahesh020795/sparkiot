@@ -115,12 +115,23 @@ def test_telemetry_ingest_is_idempotent_by_device_channel_and_message_id():
     ]
 
 
+def test_telemetry_schema_has_database_retry_dedupe_guard():
+    index = next((item for item in Telemetry.__table__.indexes if item.name == "uq_telemetry_message_retry"), None)
+
+    assert index is not None
+    assert index.unique is True
+    assert [column.name for column in index.columns] == ["tenant_id", "device_id", "channel", "message_id"]
+    assert str(index.dialect_options["postgresql"]["where"]) == "message_id IS NOT NULL"
+    assert str(index.dialect_options["sqlite"]["where"]) == "message_id IS NOT NULL"
+
+
 def test_mqtt_protocol_documents_message_id_idempotency():
     docs = (ROOT / "docs" / "mqtt-protocol.md").read_text(encoding="utf-8")
 
     assert "same tenant, device, channel, and `message_id`" in docs
     assert "without duplicating history rows or retriggering alert rules" in docs
     assert "reuse the same `message_id`" in docs
+    assert "database-level unique retry guard" in docs
 
 
 def test_mqtt_connect_accepts_paho_v2_success_reason_code_object():

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -103,7 +103,19 @@ class DeviceTemplateRecord(Base):
 
 class Telemetry(Base):
     __tablename__ = "telemetry"
-    __table_args__ = (Index("ix_telemetry_tenant_device_channel_time", "tenant_id", "device_id", "channel", "observed_at"),)
+    __table_args__ = (
+        Index("ix_telemetry_tenant_device_channel_time", "tenant_id", "device_id", "channel", "observed_at"),
+        Index(
+            "uq_telemetry_message_retry",
+            "tenant_id",
+            "device_id",
+            "channel",
+            "message_id",
+            unique=True,
+            postgresql_where=text("message_id IS NOT NULL"),
+            sqlite_where=text("message_id IS NOT NULL"),
+        ),
+    )
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
