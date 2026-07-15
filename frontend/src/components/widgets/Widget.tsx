@@ -74,7 +74,7 @@ function GaugeWidget({ config, value }: { config: WidgetConfig; value: number })
   useResizeSignal(ref, () => chartRef.current?.resize?.());
 
   const isPressure = config.title.toLowerCase().includes("pressure");
-  return <article className={`widget widget-${config.type}`}><WidgetHeader config={config} /><div className="widget-live-value"><span>Live value</span><strong>{value}{config.unit ?? ""}</strong></div><div className="chart gauge-chart" ref={ref} /><WidgetFooter config={config} value={isPressure ? "PRESSURE OPTIMAL & SYSTEM NOMINAL" : `${config.min ?? 0} - ${config.max ?? 100}${config.unit ? ` ${config.unit}` : ""}`} /></article>;
+  return <article className={`widget spark-widget-card widget-${config.type}`}><WidgetHeader config={config} /><div className="widget-live-value"><span>Live value</span><strong>{value}{config.unit ?? ""}</strong></div><div className="chart gauge-chart" ref={ref} /><WidgetFooter config={config} value={isPressure ? "PRESSURE OPTIMAL & SYSTEM NOMINAL" : `${config.min ?? 0} - ${config.max ?? 100}${config.unit ? ` ${config.unit}` : ""}`} /></article>;
 }
 
 function ChartWidget({ config, value }: { config: WidgetConfig; value: number }) {
@@ -113,7 +113,7 @@ function ChartWidget({ config, value }: { config: WidgetConfig; value: number })
 
   useResizeSignal(ref, () => chartRef.current?.resize?.());
 
-  return <article className="widget widget-chart"><WidgetHeader config={config} /><div className="widget-live-value compact"><span>Trend</span><strong>{value}{config.unit ?? ""}</strong></div><div className="chart" ref={ref} /><WidgetFooter config={config} value="5-point demo history" /></article>;
+  return <article className="widget spark-widget-card widget-chart"><WidgetHeader config={config} /><div className="widget-live-value compact"><span>Trend</span><strong>{value}{config.unit ?? ""}</strong></div><div className="chart" ref={ref} /><WidgetFooter config={config} value="5-point demo history" /></article>;
 }
 
 function MapWidget({ config, value }: { config: WidgetConfig; value: any }) {
@@ -136,11 +136,11 @@ function MapWidget({ config, value }: { config: WidgetConfig; value: any }) {
 
   useResizeSignal(ref, () => mapRef.current?.invalidateSize?.());
 
-  return <article className="widget widget-gps cockpit-media-widget"><WidgetHeader config={config} icon={<MapPinned size={16} />} /><div className="media-frame"><div className="map" ref={ref} /></div><WidgetFooter config={config} value="Click on map nodes to override solenoid output" label="SPATIAL MAP" /></article>;
+  return <article className="widget spark-widget-card widget-gps cockpit-media-widget"><WidgetHeader config={config} icon={<MapPinned size={16} />} /><div className="media-frame"><div className="map" ref={ref} /></div><WidgetFooter config={config} value="Click on map nodes to override solenoid output" label="SPATIAL MAP" /></article>;
 }
 
 function CameraWidget({ config, value }: { config: WidgetConfig; value: any }) {
-  return <article className="widget widget-camera cockpit-media-widget"><WidgetHeader config={config} icon={<Camera size={16} />} /><div className="media-frame camera-frame"><img className="camera" src={value?.url ?? "https://placehold.co/640x360?text=ESP32-CAM"} alt="Camera snapshot" /><span className="camera-live-badge">Video out</span></div><WidgetFooter config={config} value="Use PTZ overlays to shift simulated camera horizon" label="VIDEO OUT" /></article>;
+  return <article className="widget spark-widget-card widget-camera cockpit-media-widget"><WidgetHeader config={config} icon={<Camera size={16} />} /><div className="media-frame camera-frame"><img className="camera" src={value?.url ?? "https://placehold.co/640x360?text=ESP32-CAM"} alt="Camera snapshot" /><span className="camera-live-badge">Video out</span></div><WidgetFooter config={config} value="Use PTZ overlays to shift simulated camera horizon" label="VIDEO OUT" /></article>;
 }
 
 function ScheduleWidget({ config, value }: { config: WidgetConfig; value: any }) {
@@ -149,7 +149,7 @@ function ScheduleWidget({ config, value }: { config: WidgetConfig; value: any })
   const duration = Number(value?.duration ?? 25);
   const days = ["M", "T", "W", "T", "F", "S", "S"];
   return (
-    <article className="widget widget-schedule">
+    <article className="widget spark-widget-card widget-schedule">
       <WidgetHeader config={config} icon={<CalendarDays size={16} />} />
       <div className="schedule-body">
         <label>1. Selected days</label>
@@ -166,7 +166,7 @@ function ScheduleWidget({ config, value }: { config: WidgetConfig; value: any })
 
 function PowerHubWidget({ config, value }: { config: WidgetConfig; value: number }) {
   return (
-    <article className="widget widget-power-hub">
+    <article className="widget spark-widget-card widget-power-hub">
       <WidgetHeader config={config} icon={<PlugZap size={16} />} />
       <div className="power-hub-body">
         <div><span>Capacity</span><strong>88%</strong></div>
@@ -181,7 +181,7 @@ function PowerHubWidget({ config, value }: { config: WidgetConfig; value: number
 function EventMonitorWidget({ config, value }: { config: WidgetConfig; value: string }) {
   const lines = value.split("\n").filter(Boolean);
   return (
-    <article className="widget widget-event-monitor">
+    <article className="widget spark-widget-card widget-event-monitor">
       <WidgetHeader config={config} icon={<Shield size={16} />} />
       <div className="event-console">
         {lines.map((line) => <span className={line.includes("WARN") ? "warn" : line.includes("INFO") ? "info" : "ok"} key={line}>{line}</span>)}
@@ -202,11 +202,11 @@ function ControlWidget({ config, device, value, icon, onCommand }: { config: Wid
     if (device) void api.command(device.id, config.channel, nextValue);
   }
   const solenoid = config.title.toLowerCase().includes("solenoid");
-  return <article className={`widget control widget-${config.type}`}><WidgetHeader config={config} icon={solenoid ? <SlidersHorizontal /> : icon} /><div className="command-surface-label">{solenoid ? "Valve status" : "Command surface"}</div><button className={value ? "toggle on" : "toggle"} onClick={sendCommand}><span className="toggle-track"><span className="toggle-dot" /></span><span className="toggle-copy"><strong>{isPush ? "SEND" : value ? solenoid ? "OPEN (FLOW ENABLED)" : "ON" : solenoid ? "CLOSED (BLOCKED)" : "OFF"}</strong><small>{value ? "Command active" : "Ready to send"}</small></span></button><WidgetFooter config={config} value={solenoid ? "manual override" : device?.name ?? "Demo device"} /></article>;
+  return <article className={`widget spark-widget-card control widget-${config.type}`}><WidgetHeader config={config} icon={solenoid ? <SlidersHorizontal /> : icon} /><div className="command-surface-label">{solenoid ? "Valve status" : "Command surface"}</div><button className={value ? "toggle on" : "toggle"} onClick={sendCommand}><span className="toggle-track"><span className="toggle-dot" /></span><span className="toggle-copy"><strong>{isPush ? "SEND" : value ? solenoid ? "OPEN (FLOW ENABLED)" : "ON" : solenoid ? "CLOSED (BLOCKED)" : "OFF"}</strong><small>{value ? "Command active" : "Ready to send"}</small></span></button><WidgetFooter config={config} value={solenoid ? "manual override" : device?.name ?? "Demo device"} /></article>;
 }
 
 function ValuePanel({ config, value, icon, mono, accent }: { config: WidgetConfig; value: string; icon: React.ReactNode; mono?: boolean; accent?: string }) {
-  return <article className={`widget value-widget widget-${config.type} ${accent ?? ""}`} style={{ ["--widget-accent" as string]: config.color ?? "#e3e8f0", textAlign: config.align ?? "left" }}><WidgetHeader config={config} icon={icon} /><div className="value-display"><span>Live value</span><strong className={mono ? "mono" : ""}>{value}</strong></div><WidgetFooter config={config} value="Latest telemetry" /></article>;
+  return <article className={`widget spark-widget-card value-widget widget-${config.type} ${accent ?? ""}`} style={{ ["--widget-accent" as string]: config.color ?? "#e3e8f0", textAlign: config.align ?? "left" }}><WidgetHeader config={config} icon={icon} /><div className="value-display"><span>Live value</span><strong className={mono ? "mono" : ""}>{value}</strong></div><WidgetFooter config={config} value="Latest telemetry" /></article>;
 }
 
 function WidgetHeader({ config, icon }: { config: WidgetConfig; icon?: React.ReactNode }) {

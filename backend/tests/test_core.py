@@ -11,6 +11,7 @@ from app.api.routes.templates import create_template, list_templates, update_tem
 from app.api.routes.devices import command_logs
 from app.api.routes.notifications import mark_notification_read
 from app.api.routes.realtime import realtime_subscription_scope
+from app.api.routes.telemetry import history_csv
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
 from datetime import UTC, datetime
@@ -430,6 +431,48 @@ def test_account_device_command_logs_are_tenant_scoped_and_include_ack_entries()
         assert getattr(exc, "status_code", None) == 404
     else:
         raise AssertionError("expected cross-tenant command log access to fail")
+
+
+def test_account_history_csv_export_is_tenant_scoped_and_json_safe():
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    db = Session()
+
+    tenant = Tenant(id="tenant-history", name="History Tenant")
+    other_tenant = Tenant(id="tenant-history-other", name="Other History Tenant")
+    user = User(id="user-history", tenant_id=tenant.id, email="history@example.com", full_name="History User", password_hash=hash_secret("SparkDemo123!"))
+    other_user = User(id="user-history-other", tenant_id=other_tenant.id, email="other-history@example.com", full_name="Other History User", password_hash=hash_secret("SparkDemo123!"))
+    project = Project(id="project-history", tenant_id=tenant.id, name="History Project")
+    device = Device(id="device-history", tenant_id=tenant.id, project_id=project.id, name="History Device", board="ESP32", secret_hash=hash_secret("device-token"))
+    other_project = Project(id="project-history-other", tenant_id=other_tenant.id, name="Other History Project")
+    other_device = Device(id="device-history-other", tenant_id=other_tenant.id, project_id=other_project.id, name="Other History Device", board="ESP8266", secret_hash=hash_secret("other-token"))
+    db.add_all([tenant, other_tenant, user, other_user, project, device, other_project, other_device])
+    db.flush()
+    db.add_all([
+        Telemetry(id="history-1", tenant_id=tenant.id, project_id=project.id, device_id=device.id, channel="V5", value={"raw": {"lat": 3.139, "lng": 101.6869, "speed": 14}}, unit=None, observed_at=datetime(2026, 7, 15, 8, 0, tzinfo=UTC), server_at=datetime(2026, 7, 15, 8, 0, 1, tzinfo=UTC)),
+        Telemetry(id="history-2", tenant_id=tenant.id, project_id=project.id, device_id=device.id, channel="V0", value={"raw": 29.4}, unit="C", observed_at=datetime(2026, 7, 15, 8, 1, tzinfo=UTC), server_at=datetime(2026, 7, 15, 8, 1, 1, tzinfo=UTC)),
+        Telemetry(id="history-other", tenant_id=other_tenant.id, project_id=other_project.id, device_id=other_device.id, channel="V5", value={"raw": {"lat": 1.0, "lng": 2.0}}, unit=None, observed_at=datetime(2026, 7, 15, 8, 2, tzinfo=UTC), server_at=datetime(2026, 7, 15, 8, 2, 1, tzinfo=UTC)),
+    ])
+    db.commit()
+
+    response = history_csv(device.id, channel="V5", user=user, db=db)
+    body = response.body.decode("utf-8")
+
+    assert response.media_type == "text/csv; charset=utf-8"
+    assert response.headers["content-disposition"] == 'attachment; filename="spark-iot-device-history-V5-history.csv"'
+    assert "observed_at,server_at,device_id,channel,value,unit" in body
+    assert "device-history,V5," in body
+    assert '""lat"":3.139' in body
+    assert "device-history-other" not in body
+    assert "history-other" not in body
+
+    try:
+        history_csv(device.id, channel="V5", user=other_user, db=db)
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 404
+    else:
+        raise AssertionError("expected cross-tenant account CSV export to fail")
 
 
 def test_threshold_alert_creates_notification_once_per_cooldown(monkeypatch):

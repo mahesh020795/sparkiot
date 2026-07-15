@@ -1,16 +1,27 @@
 # SparkIoT Arduino Library
 
-SparkIoT Arduino Library v1 is the beginner-friendly board SDK for Spark IoT. It gives ESP32, ESP8266, and Arduino `Client`-compatible network boards a Blynk-style virtual pin API while keeping the production MQTT protocol hidden inside the library.
+SparkIoT Arduino Library v1.0.0 is the beginner-friendly board SDK for Spark IoT. It gives ESP32, ESP8266, and Arduino `Client`-compatible network boards a Blynk-style virtual pin API while keeping the production MQTT protocol hidden inside the library.
 
 ## Supported boards in v1
 
 - ESP32
 - ESP8266 / NodeMCU
+- Arduino Uno R4 WiFi through WiFiS3 Client adapter mode
+- Arduino Ethernet and Ethernet shield boards through EthernetClient adapter mode
 - Ethernet, WiFiNINA, WiFiS3, MKR GSM/NB, and similar Arduino boards when used through Client adapter mode
 
 Standard Arduino Uno/Nano boards do not have network access by themselves. They need a network shield/module/library first. If that networking stack exposes an Arduino `Client` object, SparkIoT can use it through Client adapter mode.
 
 ## Install in Arduino IDE
+
+### Install from ZIP
+
+1. Zip the `arduino/SparkIoT` folder as `SparkIoT.zip`.
+2. In Arduino IDE, open `Sketch -> Include Library -> Add .ZIP Library...`.
+3. Select `SparkIoT.zip`.
+4. Install `PubSubClient` by Nick O'Leary from Library Manager.
+
+### Manual install
 
 1. Open this repository folder.
 2. Copy `arduino/SparkIoT` into your Arduino libraries folder:
@@ -122,6 +133,7 @@ The library publishes to the same Spark IoT MQTT topics as the backend:
 
 ```text
 spark/v1/{tenant_id}/{device_id}/telemetry/{channel}
+spark/v1/{tenant_id}/{device_id}/command/{channel}
 spark/v1/{tenant_id}/{device_id}/ack/{channel}
 ```
 

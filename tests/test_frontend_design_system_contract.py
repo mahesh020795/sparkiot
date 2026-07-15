@@ -23,6 +23,30 @@ def test_dashboard_shell_is_owned_by_design_system_v2():
     assert DISABLED_LEGACY_MARKER in app_css
 
 
+def test_product_ui_standard_v3_controls_dashboard_and_widget_rhythm():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+
+    for expected in [
+        "Spark IoT Product UI Standard v3",
+        "--spark-font-page-title",
+        "--spark-font-widget-title",
+        "--spark-widget-min-h",
+        "--spark-dashboard-metric-max",
+        ".spark-ui .product-header-grid",
+        ".spark-ui .spark-widget-card",
+        ".spark-ui .spark-widget-card .widget-header",
+        ".spark-ui .spark-widget-card .channel-badge",
+        ".spark-ui .spark-widget-card .value-display strong",
+        ".spark-ui .project-stat-row span",
+        "grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr))",
+        "overflow: clip",
+        "text-overflow: clip",
+        "white-space: normal",
+        "@media (max-width: 1180px)",
+    ]:
+        assert expected in design_system
+
+
 def test_app_css_does_not_reintroduce_final_dashboard_header_override_layer():
     app_css = active_app_css_without_disabled_legacy_block()
 

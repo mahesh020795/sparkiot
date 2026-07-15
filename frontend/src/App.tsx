@@ -269,7 +269,7 @@ export function App() {
       </aside>
       <main className={view === "dashboard" ? "dashboard-main" : undefined}>
         <header className={view === "dashboard" ? "topbar app-page-header cockpit-header" : "topbar app-page-header"} data-testid="cockpit-header">
-          <div className={view === "dashboard" ? "dashboard-header-grid spark-page-header-grid" : "standard-header-grid"} data-testid={view === "dashboard" ? "dashboard-header-grid" : undefined}>
+          <div className={view === "dashboard" ? "dashboard-header-grid spark-page-header-grid product-header-grid" : "standard-header-grid product-header-grid"} data-testid={view === "dashboard" ? "dashboard-header-grid" : undefined}>
           <div className={view === "dashboard" ? "cockpit-title-block spark-page-header-primary" : "cockpit-title-block"} data-testid={view === "dashboard" ? "dashboard-header-primary" : undefined}>
             <div className="cockpit-kicker-row"><span className="eyebrow">{view === "dashboard" ? "Live control cockpit" : "Control Center"}</span>{view === "dashboard" && <span className="cockpit-badge">Premium industrial widgets</span>}</div>
             <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
@@ -344,7 +344,7 @@ export function App() {
             onCreateSchedule={createAccountSchedule}
           />
         )}
-        {view === "history" && <HistoryPage devices={activeDevices} initialLatest={activeLatest} />}
+        {view === "history" && <HistoryPage devices={activeDevices} initialLatest={activeLatest} accountMode={isAccountMode} />}
         {view === "notifications" && <NotificationsPage initialItems={isAccountMode ? accountNotifications : demoNotifications} accountMode={isAccountMode} />}
         {view === "settings" && <SettingsPage />}
       </main>

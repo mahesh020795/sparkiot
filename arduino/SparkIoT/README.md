@@ -1,8 +1,17 @@
 # SparkIoT Arduino Library
 
-SparkIoT Arduino Library v1 is the Arduino IDE package for connecting ESP32, ESP8266, and Arduino `Client`-compatible network boards to Spark IoT with a Blynk-style virtual pin API.
+SparkIoT Arduino Library v1.0.0 is the Arduino IDE package for connecting ESP32, ESP8266, and Arduino `Client`-compatible network boards to Spark IoT with a Blynk-style virtual pin API.
 
 ## Install
+
+### Install from ZIP
+
+1. Zip this `SparkIoT` folder as `SparkIoT.zip`.
+2. In Arduino IDE, open `Sketch -> Include Library -> Add .ZIP Library...`.
+3. Select `SparkIoT.zip`.
+4. Install `PubSubClient` by Nick O'Leary from Library Manager.
+
+### Manual install
 
 1. Copy this `SparkIoT` folder into `Documents/Arduino/libraries/SparkIoT`.
 2. Restart Arduino IDE.
@@ -42,6 +51,8 @@ String telemetry, camera URLs, and ACK messages are JSON-safe for quotes, backsl
 
 ESP32 and ESP8266 users can call the WiFi helper version of `SparkIoT.begin(...)`.
 
+SparkIoT v1.0.0 supports ESP32, ESP8266, Arduino Uno R4 WiFi through WiFiS3 Client adapter mode, Arduino Ethernet boards through EthernetClient adapter mode, and any similar board whose networking stack exposes an Arduino `Client`.
+
 Boards with their own networking stack should connect to the network first, then pass the connected client into Spark IoT:
 
 ```cpp
@@ -65,3 +76,11 @@ The same pattern works with WiFiNINA, WiFiS3, MKR GSM/NB, and other Arduino libr
 - `GPS_Tracker`
 - `Camera_URL`
 - `Generic_Client_Adapter`
+
+## Protocol mapping
+
+```text
+spark/v1/{tenant_id}/{device_id}/telemetry/{channel}
+spark/v1/{tenant_id}/{device_id}/command/{channel}
+spark/v1/{tenant_id}/{device_id}/ack/{channel}
+```

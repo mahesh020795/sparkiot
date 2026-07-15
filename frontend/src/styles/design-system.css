@@ -3353,3 +3353,231 @@ body {
 .spark-ui .browser-push-card.unsupported .push-state-row strong {
   color: #be123c;
 }
+
+/*
+  Spark IoT Product UI Standard v3
+  Final authoritative layer for sale-ready screens. Keep global rhythm here:
+  typography, dashboard header sizing, KPI containment, project card metrics,
+  and shared premium widget anatomy.
+*/
+
+:root {
+  --spark-font-page-title: clamp(1.55rem, 1.65vw + 0.7rem, 2.35rem);
+  --spark-font-page-subtitle: clamp(0.92rem, 0.45vw + 0.75rem, 1.05rem);
+  --spark-font-widget-title: clamp(0.95rem, 0.25vw + 0.82rem, 1.08rem);
+  --spark-font-widget-label: 0.68rem;
+  --spark-font-widget-value: clamp(2rem, 2.8vw, 3.2rem);
+  --spark-widget-min-h: 15rem;
+  --spark-dashboard-metric-max: 34rem;
+  --spark-dashboard-selector-max: 19rem;
+  --spark-product-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 18px 40px rgba(15, 23, 42, 0.055);
+}
+
+.spark-ui .product-header-grid {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: clip;
+  box-sizing: border-box;
+}
+
+.spark-ui .product-header-grid.dashboard-header-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, var(--spark-dashboard-selector-max)) minmax(22rem, var(--spark-dashboard-metric-max));
+  grid-template-areas: "primary selector metrics";
+  align-items: start;
+  column-gap: clamp(0.8rem, 1.5vw, 1.35rem);
+  row-gap: 0.9rem;
+}
+
+.spark-ui .product-header-grid .spark-page-header-primary {
+  max-width: 42rem;
+}
+
+.spark-ui .product-header-grid .spark-page-header-primary h1 {
+  max-width: 100%;
+  font-size: var(--spark-font-page-title);
+  line-height: 1.03;
+  letter-spacing: -0.045em;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+.spark-ui .product-header-grid .spark-page-header-primary p {
+  max-width: 38rem;
+  font-size: var(--spark-font-page-subtitle);
+}
+
+.spark-ui .product-header-grid .spark-page-header-selector,
+.spark-ui .product-header-grid .spark-page-header-selector select {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.spark-ui .product-header-grid .spark-page-header-metrics {
+  max-width: var(--spark-dashboard-metric-max);
+  justify-self: end;
+}
+
+.spark-ui.dashboard-shell .cockpit-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.spark-ui.dashboard-shell .cockpit-metrics span,
+.spark-ui .project-stat-row span {
+  overflow: clip;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.spark-ui.dashboard-shell .cockpit-metrics strong,
+.spark-ui.dashboard-shell .cockpit-metrics small,
+.spark-ui .project-stat-row strong,
+.spark-ui .project-stat-row small {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .project-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: clamp(1rem, 1.6vw, 1.35rem);
+  overflow: clip;
+}
+
+.spark-ui .project-card {
+  display: grid;
+  align-content: start;
+  gap: 0.95rem;
+}
+
+.spark-ui .project-stat-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.spark-ui .project-stat-row span {
+  min-height: 4.8rem;
+  justify-items: start;
+  align-content: center;
+  padding: 0.65rem;
+}
+
+.spark-ui .project-stat-row strong {
+  font-size: clamp(0.88rem, 0.6vw + 0.7rem, 1rem);
+}
+
+.spark-ui .project-stat-row small {
+  font-size: 0.62rem;
+  letter-spacing: 0.055em;
+}
+
+.spark-ui .spark-widget-card {
+  position: relative;
+  min-height: var(--spark-widget-min-h);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  align-content: stretch;
+  gap: 0.9rem;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #e5edf6;
+  box-shadow: var(--spark-product-card-shadow);
+  overflow: clip;
+}
+
+.spark-ui .spark-widget-card::before {
+  display: none;
+}
+
+.spark-ui .spark-widget-card::after {
+  height: 2px;
+  background: #2563eb;
+  opacity: 0.76;
+}
+
+.spark-ui .spark-widget-card .widget-header {
+  min-height: 2.9rem;
+  display: grid;
+  grid-template-columns: 2.7rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spark-ui .spark-widget-card .widget-icon {
+  width: 2.7rem;
+  height: 2.7rem;
+  border-radius: 0.95rem;
+  background: #eff6ff;
+  color: #2563eb;
+  box-shadow: inset 0 0 0 1px #dbeafe;
+}
+
+.spark-ui .spark-widget-card .widget-title-wrap > span {
+  font-size: var(--spark-font-widget-title);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .spark-widget-card .widget-title-wrap small,
+.spark-ui .spark-widget-card .widget-live-value span,
+.spark-ui .spark-widget-card .value-display span,
+.spark-ui .spark-widget-card .widget-footer {
+  font-size: var(--spark-font-widget-label);
+  letter-spacing: 0.08em;
+}
+
+.spark-ui .spark-widget-card .channel-badge {
+  max-width: 8.8rem;
+  min-height: 2rem;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spark-ui .spark-widget-card .value-display strong {
+  font-size: var(--spark-font-widget-value);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+
+.spark-ui .spark-widget-card .chart,
+.spark-ui .spark-widget-card .gauge-chart,
+.spark-ui .spark-widget-card .media-frame {
+  min-height: 11rem;
+}
+
+.spark-ui .spark-widget-card .widget-footer {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.spark-ui .spark-widget-card .widget-footer small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+@media (max-width: 1180px) {
+  .spark-ui .product-header-grid.dashboard-header-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "primary"
+      "selector"
+      "metrics";
+  }
+
+  .spark-ui .product-header-grid .spark-page-header-metrics,
+  .spark-ui .product-header-grid .spark-page-header-selector {
+    justify-self: stretch;
+    width: 100%;
+    max-width: 100%;
+  }
+}

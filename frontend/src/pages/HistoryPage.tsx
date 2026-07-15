@@ -13,7 +13,7 @@ function formatTime(value: string) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
-export function HistoryPage({ devices, initialLatest }: { devices: Device[]; initialLatest: Record<string, Telemetry> }) {
+export function HistoryPage({ devices, initialLatest, accountMode = false }: { devices: Device[]; initialLatest: Record<string, Telemetry>; accountMode?: boolean }) {
   const [selectedDeviceId, setSelectedDeviceId] = useState(devices[0]?.id ?? "");
   const [selectedChannel, setSelectedChannel] = useState("all");
   const [historyByDevice, setHistoryByDevice] = useState<Record<string, Telemetry[]>>({});
@@ -27,13 +27,15 @@ export function HistoryPage({ devices, initialLatest }: { devices: Device[]; ini
   const rows = historyByDevice[selectedDevice?.id ?? ""] ?? fallbackRows;
   const channels = Array.from(new Set([...fallbackRows, ...rows].map((reading) => reading.channel))).sort();
   const filteredRows = selectedChannel === "all" ? rows : rows.filter((reading) => reading.channel === selectedChannel);
-  const csvUrl = selectedDevice ? api.demoHistoryCsvUrl(selectedDevice.id, selectedChannel === "all" ? undefined : selectedChannel) : "#";
+  const historyChannel = selectedChannel === "all" ? undefined : selectedChannel;
+  const csvUrl = selectedDevice ? (accountMode ? api.historyCsvUrl(selectedDevice.id, historyChannel) : api.demoHistoryCsvUrl(selectedDevice.id, historyChannel)) : "#";
 
   useEffect(() => {
     if (!selectedDevice) return;
     let mounted = true;
     setStatus("loading");
-    api.demoHistory(selectedDevice.id, selectedChannel === "all" ? undefined : selectedChannel)
+    const historyRequest = accountMode ? api.history(selectedDevice.id, historyChannel) : api.demoHistory(selectedDevice.id, historyChannel);
+    historyRequest
       .then((historyRows) => {
         if (!mounted) return;
         setHistoryByDevice((current) => ({ ...current, [selectedDevice.id]: historyRows.length ? historyRows : fallbackRows }));
@@ -47,7 +49,7 @@ export function HistoryPage({ devices, initialLatest }: { devices: Device[]; ini
     return () => {
       mounted = false;
     };
-  }, [selectedDevice?.id, selectedChannel]);
+  }, [accountMode, selectedDevice?.id, selectedChannel]);
 
   return (
     <section className="panel data-history-panel" data-testid="data-history-page">
@@ -73,7 +75,7 @@ export function HistoryPage({ devices, initialLatest }: { devices: Device[]; ini
       <div className="history-summary-grid">
         {devices.map((device) => {
           const deviceRows = historyByDevice[device.id] ?? Object.values(initialLatest).filter((reading) => reading.device_id === device.id);
-          return <article key={device.id} className="history-device-card"><span className="status-dot" /><strong>{device.name}</strong><small>{device.board}</small><b>{deviceRows.length}</b><span>latest readings</span><a href={api.demoHistoryCsvUrl(device.id)} download>CSV</a></article>;
+          return <article key={device.id} className="history-device-card"><span className="status-dot" /><strong>{device.name}</strong><small>{device.board}</small><b>{deviceRows.length}</b><span>latest readings</span><a href={accountMode ? api.historyCsvUrl(device.id) : api.demoHistoryCsvUrl(device.id)} download>CSV</a></article>;
         })}
       </div>
 

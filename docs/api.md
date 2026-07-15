@@ -18,6 +18,7 @@ Main resources:
 - `/telemetry/ingest`
 - `/telemetry/projects/{project_id}/latest`
 - `/telemetry/devices/{device_id}/history`
+- `/telemetry/devices/{device_id}/history.csv`
 - `/notifications`
 - `/notifications/push-public-key`
 - `/notifications/push-subscriptions`
@@ -61,6 +62,16 @@ The no-login dashboard uses demo history endpoints so board telemetry can be ins
 - `GET /api/v1/demo/devices/{device_id}/history.csv` downloads the same data as CSV for reports, FYP logs, and board debugging.
 
 CSV columns are `observed_at`, `server_at`, `device_id`, `channel`, `value`, and `unit`. Object values such as GPS coordinates are JSON-encoded inside the value column.
+
+## Account History and CSV Export
+
+Signed-in customer workspaces use tenant-scoped history endpoints:
+
+- `GET /api/v1/telemetry/devices/{device_id}/history` returns the latest 1,000 readings for one authenticated tenant device.
+- `GET /api/v1/telemetry/devices/{device_id}/history?channel=V0` filters by virtual pin or channel.
+- `GET /api/v1/telemetry/devices/{device_id}/history.csv` downloads the same tenant-scoped data as CSV.
+
+The API verifies the requested device belongs to the authenticated user's tenant before returning JSON or CSV. Cross-tenant device IDs return `404`.
 
 ## Web Push
 

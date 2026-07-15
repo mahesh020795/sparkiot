@@ -14,6 +14,7 @@ def test_sparkiot_arduino_library_has_installable_package_shape():
 
     manifest = (LIBRARY / "library.properties").read_text(encoding="utf-8")
     assert "name=SparkIoT" in manifest
+    assert "version=1.0.0" in manifest
     assert "architectures=*" in manifest
     assert "depends=PubSubClient" in manifest
 
@@ -69,6 +70,24 @@ def test_sparkiot_library_documents_json_safe_payloads_vps_hosting_and_external_
         assert "EthernetClient" in content
         assert "WiFiNINA" in content
         assert "SparkIoT.begin(networkClient" in content
+
+
+def test_sparkiot_v1_release_contract_documents_supported_boards_and_protocol():
+    manifest = (LIBRARY / "library.properties").read_text(encoding="utf-8")
+    docs = (ROOT / "docs" / "arduino-library.md").read_text(encoding="utf-8")
+    library_readme = (LIBRARY / "README.md").read_text(encoding="utf-8")
+
+    assert "sentence=Official Spark IoT Arduino Library v1" in manifest
+    for content in [docs, library_readme]:
+        assert "SparkIoT Arduino Library v1.0.0" in content
+        assert "ESP32" in content
+        assert "ESP8266" in content
+        assert "Arduino Uno R4 WiFi" in content
+        assert "Arduino Ethernet" in content
+        assert "spark/v1/{tenant_id}/{device_id}/telemetry/{channel}" in content
+        assert "spark/v1/{tenant_id}/{device_id}/command/{channel}" in content
+        assert "spark/v1/{tenant_id}/{device_id}/ack/{channel}" in content
+        assert "Install from ZIP" in content
 
 
 def test_sparkiot_library_ships_beginner_friendly_examples():

@@ -93,6 +93,15 @@ GET /api/v1/demo/devices/{device_id}/history
 GET /api/v1/demo/devices/{device_id}/history.csv
 ```
 
+Signed-in customer workspaces use protected tenant-scoped history and export routes:
+
+```text
+GET /api/v1/telemetry/devices/{device_id}/history
+GET /api/v1/telemetry/devices/{device_id}/history.csv
+```
+
+The account CSV route verifies the device belongs to the authenticated tenant before returning data.
+
 Example:
 
 ```bash
