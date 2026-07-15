@@ -19,6 +19,7 @@ Main resources:
 - `/notifications`
 - `/notifications/push-public-key`
 - `/notifications/push-subscriptions`
+- `/schedules`
 - `/realtime/ws`
 
 ## Demo Template Studio Persistence
@@ -53,3 +54,27 @@ Spark IoT stores browser Web Push subscriptions and dispatches push payloads whe
 - `DELETE /api/v1/notifications/push-subscriptions` removes the authenticated user's subscription endpoint.
 
 Push delivery is enabled only when `VAPID_PRIVATE_KEY`, `VAPID_PUBLIC_KEY`, and `VAPID_SUBJECT` are configured. If VAPID keys are empty, Spark IoT still stores in-app notifications and skips browser delivery safely.
+
+## Schedules
+
+Spark IoT schedule rules provide the Blynk Timer-style automation foundation for time input, day input, and scheduled commands.
+
+- `GET /api/v1/schedules` lists the authenticated tenant's schedules.
+- `POST /api/v1/schedules` creates a schedule for one project device channel.
+
+Create payload:
+
+```json
+{
+  "project_id": "project-irrigation",
+  "device_id": "device-irrigation",
+  "channel": "V3",
+  "value": true,
+  "time_of_day": "06:30",
+  "recurrence": "mon,wed,fri",
+  "timezone": "Asia/Kuala_Lumpur",
+  "is_active": true
+}
+```
+
+`recurrence` accepts `daily`, `weekdays`, `weekends`, or comma-separated day codes: `mon,tue,wed,thu,fri,sat,sun`. The worker checks schedules once per minute, publishes the command to the MQTT command topic, and writes a command log with an idempotency key so the same occurrence is not sent twice.

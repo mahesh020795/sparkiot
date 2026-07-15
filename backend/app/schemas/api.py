@@ -194,6 +194,49 @@ class CommandRequest(BaseModel):
     value: Any
 
 
+class ScheduleCreate(BaseModel):
+    project_id: str
+    device_id: str
+    channel: str = Field(min_length=1, max_length=120)
+    value: Any
+    time_of_day: str = Field(pattern=r"^\d{2}:\d{2}$")
+    recurrence: str = Field(default="daily", max_length=20)
+    timezone: str = Field(default="Asia/Kuala_Lumpur", max_length=80)
+    is_active: bool = True
+
+    @field_validator("time_of_day")
+    @classmethod
+    def validate_time_of_day(cls, value: str) -> str:
+        hour, minute = [int(part) for part in value.split(":")]
+        if hour > 23 or minute > 59:
+            raise ValueError("time_of_day must be a valid HH:MM value")
+        return value
+
+    @field_validator("recurrence")
+    @classmethod
+    def validate_recurrence(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        allowed = {"daily", "weekdays", "weekends", "mon", "tue", "wed", "thu", "fri", "sat", "sun"}
+        parts = normalized.split(",")
+        if not parts or any(part not in allowed for part in parts):
+            raise ValueError("recurrence must be daily, weekdays, weekends, or comma-separated mon/tue/wed/thu/fri/sat/sun")
+        if len(parts) > 1 and any(part in {"daily", "weekdays", "weekends"} for part in parts):
+            raise ValueError("daily, weekdays, and weekends cannot be combined with specific days")
+        return normalized
+
+
+class ScheduleResponse(BaseModel):
+    id: str
+    project_id: str
+    device_id: str
+    channel: str
+    value: Any
+    time_of_day: str
+    recurrence: str
+    timezone: str
+    is_active: bool
+
+
 class NotificationCreate(BaseModel):
     title: str = Field(min_length=2, max_length=160)
     body: str = Field(min_length=2)

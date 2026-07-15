@@ -4,6 +4,8 @@ export type Dashboard = { id: string; project_id: string; name: string; revision
 export type Telemetry = { id: string; device_id: string; channel: string; value: unknown; unit?: string | null; observed_at: string; server_at: string };
 export type NotificationItem = { id: string; title: string; body: string; read: boolean; created_at: string };
 export type CommandLogItem = { id: string; device_id: string; channel: string; value: unknown; status: string; created_at: string };
+export type ScheduleItem = { id: string; project_id: string; device_id: string; channel: string; value: unknown; time_of_day: string; recurrence: string; timezone: string; is_active: boolean };
+export type ScheduleCreate = Omit<ScheduleItem, "id">;
 export type LiveBoardTestPayload = {
   tenant_id: string;
   project_id: string;

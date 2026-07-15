@@ -1,12 +1,14 @@
 from app.services.mqtt import command_topic, parse_topic, telemetry_topic
 from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request, is_successful_connect, telemetry_event_payload
 from app.services.telemetry import evaluate_alerts, normalize_value
+from app.services.schedules import due_occurrence_key, run_due_schedules_once
 from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
-from app.schemas.api import TemplateStudioUpdate
+from app.schemas.api import ScheduleCreate, TemplateStudioUpdate
 from app.core.database import Base, make_engine
 from app.core.security import hash_secret
-from app.models.domain import AlertRule, Device, Notification, Project, Tenant, User
+from app.models.domain import AlertRule, CommandLog, Device, Notification, Project, Schedule, Tenant, User
 from sqlalchemy.orm import sessionmaker
+from datetime import UTC, datetime
 
 
 def test_topic_helpers_create_spark_namespace():
@@ -239,6 +241,82 @@ def test_threshold_alert_creates_notification_once_per_cooldown(monkeypatch):
     assert notifications[0].body == "V0 is 82 > 80"
     assert delivered == ["Alert triggered"]
     assert db.get(AlertRule, rule.id).last_triggered_at is not None
+
+
+def test_schedule_create_accepts_day_time_command_shape():
+    payload = ScheduleCreate(
+        project_id="project-irrigation",
+        device_id="device-irrigation",
+        channel="V3",
+        value=True,
+        time_of_day="06:30",
+        recurrence="mon,wed,fri",
+        timezone="Asia/Kuala_Lumpur",
+    )
+
+    assert payload.time_of_day == "06:30"
+    assert payload.recurrence == "mon,wed,fri"
+
+
+def test_schedule_create_rejects_invalid_time_or_day():
+    for update in [{"time_of_day": "25:99"}, {"recurrence": "monday"}]:
+        payload = {
+            "project_id": "project-irrigation",
+            "device_id": "device-irrigation",
+            "channel": "V3",
+            "value": True,
+            "time_of_day": "06:30",
+            "recurrence": "daily",
+            **update,
+        }
+        try:
+            ScheduleCreate(**payload)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("expected invalid schedule payload to fail")
+
+
+def test_due_schedule_worker_publishes_once_per_occurrence(monkeypatch):
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    db = Session()
+    published = []
+
+    def fake_publish(tenant_id, device_id, channel, value):
+        published.append((tenant_id, device_id, channel, value))
+
+    monkeypatch.setattr("app.services.schedules.publish_command", fake_publish)
+
+    tenant = Tenant(id="tenant-schedule", name="Schedule Tenant")
+    project = Project(id="project-schedule", tenant_id=tenant.id, name="Schedule Project")
+    device = Device(id="device-schedule", tenant_id=tenant.id, project_id=project.id, name="Schedule Device", board="ESP32", secret_hash=hash_secret("device-token"))
+    schedule = Schedule(
+        id="schedule-pump",
+        tenant_id=tenant.id,
+        project_id=project.id,
+        device_id=device.id,
+        channel="V3",
+        command_value={"raw": True},
+        time_of_day="06:30",
+        recurrence="mon,wed,fri",
+        timezone="Asia/Kuala_Lumpur",
+    )
+    db.add_all([tenant, project, device, schedule])
+    db.commit()
+
+    now = datetime(2026, 7, 14, 22, 30, tzinfo=UTC)  # Wednesday 06:30 in Asia/Kuala_Lumpur
+    assert due_occurrence_key(schedule, now) == "sched:schedule:202607150630"
+
+    assert run_due_schedules_once(db, now) == 1
+    assert run_due_schedules_once(db, now) == 0
+
+    logs = db.query(CommandLog).all()
+    assert published == [(tenant.id, device.id, "V3", True)]
+    assert len(logs) == 1
+    assert logs[0].status == "sched:schedule:202607150630"
+    assert logs[0].value == {"raw": True}
 
 def test_demo_history_payload_and_csv_unwrap_values_for_export():
     class Reading:

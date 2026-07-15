@@ -146,6 +146,8 @@ VAPID_SUBJECT=mailto:admin@yourdomain.com
 
 Without VAPID keys, Spark IoT still creates in-app notifications and alert history, but skips browser push delivery safely.
 
+Schedule automation is available through `/api/v1/schedules`. A schedule targets one project device channel, uses a local `time_of_day`, supports `daily`, `weekdays`, `weekends`, or day-code recurrence such as `mon,wed,fri`, and the worker publishes the command once per occurrence with an idempotent command-log key.
+
 ## Development Workflow
 
 Use these commands for repeatable local work:

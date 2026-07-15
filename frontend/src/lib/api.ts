@@ -1,4 +1,4 @@
-import type { CommandLogItem, Dashboard, Device, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, Telemetry } from "./types";
+import type { CommandLogItem, Dashboard, Device, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ScheduleCreate, ScheduleItem, Telemetry } from "./types";
 
 function defaultApiBase() {
   return "/api/v1";
@@ -61,6 +61,8 @@ export const api = {
   command: (deviceId: string, channel: string, value: unknown) => request(`/devices/${deviceId}/commands`, { method: "POST", body: JSON.stringify({ channel, value }) }),
   notifications: () => request<NotificationItem[]>("/notifications"),
   createNotification: (title: string, body: string) => request<NotificationItem>("/notifications", { method: "POST", body: JSON.stringify({ title, body }) }),
+  schedules: () => request<ScheduleItem[]>("/schedules"),
+  createSchedule: (schedule: ScheduleCreate) => request<ScheduleItem>("/schedules", { method: "POST", body: JSON.stringify(schedule) }),
   pushPublicKey: () => request<{ public_key: string }>("/notifications/push-public-key"),
   savePushSubscription: (subscription: PushSubscriptionJSON) => request<{ status: string }>("/notifications/push-subscriptions", { method: "POST", body: JSON.stringify(subscription) }),
   removePushSubscription: (subscription: PushSubscriptionJSON) => request<void>("/notifications/push-subscriptions", { method: "DELETE", body: JSON.stringify(subscription) })
