@@ -11,6 +11,8 @@ Main resources:
 - `/dashboards/project/{project_id}`
 - `/demo/templates`
 - `/demo/templates/{template_id}`
+- `/demo/devices/{device_id}/history`
+- `/demo/devices/{device_id}/history.csv`
 - `/telemetry/ingest`
 - `/telemetry/projects/{project_id}/latest`
 - `/telemetry/devices/{device_id}/history`
@@ -30,6 +32,17 @@ The no-login MVP uses demo endpoints so the web dashboard can be tested before f
 The save payload includes `revision`. If the server revision has changed, the API returns `409` with `stale_template_revision`; the frontend should refresh before saving again.
 
 Errors use HTTP status codes and stable detail codes for plan limits, stale dashboard revisions, and stale template revisions.
+
+
+## Demo History and CSV Export
+
+The no-login dashboard uses demo history endpoints so board telemetry can be inspected without creating an account:
+
+- `GET /api/v1/demo/devices/{device_id}/history` returns the latest 1,000 readings for one demo device.
+- `GET /api/v1/demo/devices/{device_id}/history?channel=V0` filters history by virtual pin or channel.
+- `GET /api/v1/demo/devices/{device_id}/history.csv` downloads the same data as CSV for reports, FYP logs, and board debugging.
+
+CSV columns are `observed_at`, `server_at`, `device_id`, `channel`, `value`, and `unit`. Object values such as GPS coordinates are JSON-encoded inside the value column.
 
 ## Web Push
 

@@ -87,7 +87,7 @@ export function App() {
         <div className="workspace-card">
           <span className="section-kicker">Workspace health</span>
           <div><CheckCircle2 size={16} /><strong>Demo realtime active</strong></div>
-          <small>3 projects · 3 devices · 30-day data window</small>
+          <small>3 projects Â· 3 devices Â· 30-day data window</small>
         </div>
         {view !== "dashboard" && (
           <>
@@ -129,7 +129,7 @@ export function App() {
                 <span><Bell size={19} /><strong>Active</strong><small>Flow safety</small></span>
               </div>
             )}
-            {view !== "dashboard" && <div className="preview-status"><RadioTower size={16} /><div><strong>Production preview</strong><small>Local MVP · no login mode</small></div></div>}
+            {view !== "dashboard" && <div className="preview-status"><RadioTower size={16} /><div><strong>Production preview</strong><small>Local MVP Â· no login mode</small></div></div>}
             {view !== "dashboard" && <select aria-label="Project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{demoProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>}
           </div>
           </div>
@@ -160,7 +160,7 @@ export function App() {
         )}
         {view === "devices" && <DevicesPage devices={demoDevices} templates={templates} />}
         {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : demoDevices} latest={demoLatest} />}
-        {view === "history" && <HistoryPage devices={demoDevices} />}
+        {view === "history" && <HistoryPage devices={demoDevices} initialLatest={demoLatest} />}
         {view === "notifications" && <NotificationsPage initialItems={demoNotifications} />}
         {view === "settings" && <SettingsPage />}
       </main>

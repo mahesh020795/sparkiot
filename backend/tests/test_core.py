@@ -1,7 +1,7 @@
 from app.services.mqtt import command_topic, parse_topic, telemetry_topic
 from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request, is_successful_connect, telemetry_event_payload
 from app.services.telemetry import evaluate_alerts, normalize_value
-from app.services.demo_live import build_board_test_payload, build_demo_command_response
+from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
 from app.schemas.api import TemplateStudioUpdate
 from app.core.database import Base, make_engine
 from app.core.security import hash_secret
@@ -239,3 +239,21 @@ def test_threshold_alert_creates_notification_once_per_cooldown(monkeypatch):
     assert notifications[0].body == "V0 is 82 > 80"
     assert delivered == ["Alert triggered"]
     assert db.get(AlertRule, rule.id).last_triggered_at is not None
+
+def test_demo_history_payload_and_csv_unwrap_values_for_export():
+    class Reading:
+        id = "telemetry-1"
+        device_id = "device-irrigation"
+        channel = "V7"
+        value = {"raw": {"lat": 3.139, "lng": 101.6869, "speed": 14}}
+        unit = None
+        observed_at = "2026-07-15T03:10:00Z"
+        server_at = "2026-07-15T03:10:01Z"
+
+    row = history_row_payload(Reading())
+    csv_body = build_history_csv([Reading()])
+
+    assert row["value"] == {"lat": 3.139, "lng": 101.6869, "speed": 14}
+    assert "observed_at,server_at,device_id,channel,value,unit" in csv_body
+    assert "device-irrigation,V7" in csv_body
+    assert '"{""lat"":3.139,""lng"":101.6869,""speed"":14}"' in csv_body

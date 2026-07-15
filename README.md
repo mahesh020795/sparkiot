@@ -73,6 +73,22 @@ The no-login web MVP now loads and saves Template Studio data through the backen
 
 Saved data includes template name, board, description, virtual pins/datastreams, notification rules, and dashboard widget layout/config. The API uses optimistic `revision` checks so stale browser tabs cannot silently overwrite newer template changes.
 
+
+## Data History and CSV Export
+
+The Data History page now works in the no-login demo flow. It shows recent telemetry for the selected device, filters by datastream/channel, and exports CSV from:
+
+```text
+GET /api/v1/demo/devices/{device_id}/history
+GET /api/v1/demo/devices/{device_id}/history.csv
+```
+
+Example:
+
+```bash
+curl "http://localhost:8000/api/v1/demo/devices/device-irrigation/history.csv?channel=V0" -o irrigation-v0-history.csv
+```
+
 ## Test With ESP32 / NodeMCU ESP8266
 
 Open `Templates -> Code` in the web app to generate a board-specific Arduino IDE sketch for the selected template and device. The generated sketch now uses the reusable `SparkIoT` Arduino library:

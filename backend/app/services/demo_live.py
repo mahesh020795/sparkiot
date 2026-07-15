@@ -1,3 +1,6 @@
+import csv
+import io
+import json
 from typing import Any, Iterable
 
 from app.services.mqtt import command_topic, telemetry_topic
@@ -77,3 +80,27 @@ def build_demo_command_response(
         "topic": command_topic(tenant_id, device_id, channel),
         "payload": {"value": value},
     }
+
+def history_row_payload(record: Any) -> dict[str, Any]:
+    return {
+        "id": getattr(record, "id", reading_key(record)),
+        "device_id": record.device_id,
+        "channel": record.channel,
+        "value": unwrap_telemetry_value(record.value),
+        "unit": record.unit,
+        "observed_at": record.observed_at,
+        "server_at": record.server_at,
+    }
+
+
+def build_history_csv(records: Iterable[Any]) -> str:
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["observed_at", "server_at", "device_id", "channel", "value", "unit"])
+    for record in records:
+        row = history_row_payload(record)
+        value = row["value"]
+        if isinstance(value, (dict, list)):
+            value = json.dumps(value, separators=(",", ":"), sort_keys=True)
+        writer.writerow([row["observed_at"], row["server_at"], row["device_id"], row["channel"], value, row["unit"] or ""])
+    return output.getvalue()

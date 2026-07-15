@@ -1,18 +1,31 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.database import get_db
-from app.models.domain import CommandLog, Dashboard, Device, DeviceTemplateRecord
+from app.models.domain import CommandLog, Dashboard, Device, DeviceTemplateRecord, Telemetry
 from app.schemas.api import CommandRequest, TemplateStudioUpdate
-from app.services.demo_live import DEMO_TENANT_ID, build_board_test_payload, build_demo_command_response, build_latest_map
+from app.services.demo_live import DEMO_TENANT_ID, build_board_test_payload, build_demo_command_response, build_history_csv, build_latest_map, history_row_payload
 from app.services.mqtt import publish_command
 from app.services.telemetry import latest_for_project
 
 router = APIRouter(prefix="/demo", tags=["demo"])
+
+def _demo_device_or_404(db: Session, device_id: str) -> Device:
+    device = db.get(Device, device_id)
+    if not device or device.tenant_id != DEMO_TENANT_ID or not device.is_active:
+        raise HTTPException(status_code=404, detail="Demo device not found")
+    return device
+
+
+def _demo_history_query(device_id: str, channel: str | None = None):
+    stmt = select(Telemetry).where(Telemetry.tenant_id == DEMO_TENANT_ID, Telemetry.device_id == device_id)
+    if channel:
+        stmt = stmt.where(Telemetry.channel == channel)
+    return stmt.order_by(desc(Telemetry.observed_at)).limit(1000)
 
 
 def _public_host(request: Request) -> str:
@@ -161,3 +174,22 @@ def demo_command_logs(device_id: str, db: Session = Depends(get_db)):
         }
         for item in logs
     ]
+
+@router.get("/devices/{device_id}/history")
+def demo_device_history(device_id: str, channel: str | None = None, db: Session = Depends(get_db)):
+    _demo_device_or_404(db, device_id)
+    records = db.scalars(_demo_history_query(device_id, channel)).all()
+    return [history_row_payload(record) for record in records]
+
+
+@router.get("/devices/{device_id}/history.csv")
+def demo_device_history_csv(device_id: str, channel: str | None = None, db: Session = Depends(get_db)):
+    device = _demo_device_or_404(db, device_id)
+    records = db.scalars(_demo_history_query(device_id, channel)).all()
+    csv_body = build_history_csv(records)
+    filename = f"spark-iot-{device.id}-{channel or 'all'}-history.csv"
+    return Response(
+        content=csv_body,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

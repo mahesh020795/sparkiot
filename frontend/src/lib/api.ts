@@ -8,6 +8,10 @@ function defaultApiBase() {
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? defaultApiBase();
 
+export function apiUrl(path: string) {
+  return `${API_BASE}${path}`;
+}
+
 export type Session = { access_token: string; refresh_token: string };
 
 export function getSession(): Session | null {
@@ -53,6 +57,8 @@ export const api = {
   saveDemoTemplate: (template: DeviceTemplate) => request<DeviceTemplate>(`/demo/templates/${template.id}`, { method: "PUT", body: JSON.stringify(template) }),
   demoCommand: (deviceId: string, channel: string, value: unknown) => request<{ status: string; topic: string; payload: { value: unknown } }>(`/demo/devices/${deviceId}/commands`, { method: "POST", body: JSON.stringify({ channel, value }) }),
   demoCommandLogs: (deviceId: string) => request<CommandLogItem[]>(`/demo/devices/${deviceId}/command-logs`),
+  demoHistory: (deviceId: string, channel?: string) => request<Telemetry[]>(`/demo/devices/${deviceId}/history${channel ? `?channel=${encodeURIComponent(channel)}` : ""}`),
+  demoHistoryCsvUrl: (deviceId: string, channel?: string) => apiUrl(`/demo/devices/${deviceId}/history.csv${channel ? `?channel=${encodeURIComponent(channel)}` : ""}`),
   history: (deviceId: string, channel: string) => request<Telemetry[]>(`/telemetry/devices/${deviceId}/history?channel=${encodeURIComponent(channel)}`),
   command: (deviceId: string, channel: string, value: unknown) => request(`/devices/${deviceId}/commands`, { method: "POST", body: JSON.stringify({ channel, value }) }),
   notifications: () => request<NotificationItem[]>("/notifications"),

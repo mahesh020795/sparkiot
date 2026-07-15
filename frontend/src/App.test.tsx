@@ -146,6 +146,23 @@ describe("App", () => {
     expect(screen.getByText("Starter plan capacity")).toBeInTheDocument();
   });
 
+
+  it("shows demo data history with real CSV export links", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Data History"));
+
+    expect(screen.getByTestId("data-history-page")).toHaveClass("data-history-panel");
+    expect(screen.getByText("30-day data history")).toBeInTheDocument();
+    expect(screen.getByText("readings ready")).toBeInTheDocument();
+    expect(screen.getByLabelText("Device")).toHaveValue("device-irrigation");
+    expect(screen.getByLabelText("Datastream")).toHaveValue("all");
+    expect(screen.getAllByText("ESP32 Irrigation Node").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("V0").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("29.4").length).toBeGreaterThan(0);
+    const exportLink = screen.getByRole("link", { name: /Export CSV/i });
+    expect(exportLink).toHaveAttribute("href", expect.stringContaining("/api/v1/demo/devices/device-irrigation/history.csv"));
+  });
+
   it("shows device provisioning with template binding, tokens and starter limit", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Devices"));
