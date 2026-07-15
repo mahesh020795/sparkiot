@@ -12,7 +12,7 @@ import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates
 import { api, clearSession, getSession, type Session } from "./lib/api";
 import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ProjectCreate, ScheduleCreate, ScheduleItem, Telemetry } from "./lib/types";
 
-type View = "dashboard" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
+type View = "dashboard" | "setup" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
 type SaveState = "saved" | "unsaved" | "saving" | "error";
 type TemplatePreset = "Smart Irrigation" | "Smart Home" | "Energy Monitor" | "Blank";
 type StudioLaunchStep = "Setup" | "Migrate" | "Datastreams" | "Dashboard" | "Notifications" | "Code" | "Simulator";
@@ -49,6 +49,7 @@ export function App() {
 
   const nav = [
     ["dashboard", LayoutDashboard, "Overview"],
+    ["setup", Workflow, "Setup Flow"],
     ["projects", MapPinned, "Projects"],
     ["templates", Workflow, "Templates"],
     ["devices", Cpu, "Devices"],
@@ -327,7 +328,6 @@ export function App() {
             <div className="cockpit-kicker-row"><span className="eyebrow">{view === "dashboard" ? "Live control cockpit" : "Control Center"}</span>{view === "dashboard" && <span className="cockpit-badge">Premium industrial widgets</span>}</div>
             <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
             {view === "dashboard" && <p>Elevated radial scale sensors, interactive video streams, GIS field coordinate tracking</p>}
-            {view === "dashboard" && <div className="cockpit-simulation-strip"><RadioTower size={16} /><strong>Interactive live simulation</strong><span>Solenoid outputs synchronized with maps & video stream</span></div>}
           </div>
           <div className="top-actions">
             {view === "dashboard" && (
@@ -350,6 +350,18 @@ export function App() {
           </div>
         </header>
         {view === "dashboard" && (
+          <SetupSummaryCard
+            projectCount={activeProjects.length}
+            templateCount={activeTemplates.length}
+            deviceCount={activeDevices.length}
+            datastreamCount={selectedTemplate?.datastreams.length ?? 0}
+            selectedProjectName={selectedProject?.name ?? "Spark IoT project"}
+            selectedDeviceName={selectedDevice?.name ?? activeDevices[0]?.name ?? "ESP board"}
+            onOpenSetup={() => setView("setup")}
+            onOpenLiveTest={() => setView("live")}
+          />
+        )}
+        {view === "setup" && (
           <LaunchWizardPanel
             projectCount={activeProjects.length}
             templateCount={activeTemplates.length}
@@ -368,6 +380,13 @@ export function App() {
           />
         )}
         {view === "dashboard" && (isAccountMode ? <DashboardPage key={selectedProjectId} projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} /> : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />)}
+        {view === "setup" && (
+          <section className="setup-flow-note panel">
+            <span className="section-kicker">Setup lives here now</span>
+            <h2>Keep Overview clean, open the full builder only when needed</h2>
+            <p>The Overview stays focused on live telemetry. This setup page keeps the professional Blynk-style onboarding flow available for projects, templates, V-pins, devices, Arduino code and board testing.</p>
+          </section>
+        )}
         {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : undefined} />}
         {view === "templates" && (
           templateStudioId ? (
@@ -423,6 +442,55 @@ export function App() {
         {view === "settings" && <SettingsPage />}
       </main>
     </div>
+  );
+}
+
+function SetupSummaryCard({
+  projectCount,
+  templateCount,
+  deviceCount,
+  datastreamCount,
+  selectedProjectName,
+  selectedDeviceName,
+  onOpenSetup,
+  onOpenLiveTest
+}: {
+  projectCount: number;
+  templateCount: number;
+  deviceCount: number;
+  datastreamCount: number;
+  selectedProjectName: string;
+  selectedDeviceName: string;
+  onOpenSetup: () => void;
+  onOpenLiveTest: () => void;
+}) {
+  const readyItems = [
+    `${projectCount}/3 projects`,
+    `${templateCount}/3 templates`,
+    `${deviceCount}/3 devices`,
+    `${datastreamCount} V-pins`,
+    selectedDeviceName,
+    "Live test ready"
+  ];
+
+  return (
+    <section className="setup-summary-card" data-testid="setup-summary-card" aria-label="Spark IoT setup summary">
+      <div className="setup-summary-main">
+        <span className="section-kicker">Customer setup flow</span>
+        <div>
+          <h2>Setup ready</h2>
+          <p>{selectedProjectName} is ready for ESP32 / NodeMCU testing. Open the full flow only when you need to edit projects, templates, V-pins, device tokens or Arduino code.</p>
+        </div>
+      </div>
+      <div className="setup-summary-status">
+        <span><CheckCircle2 size={16} /><strong>6/6 ready</strong></span>
+        <small>{readyItems.join(" · ")}</small>
+      </div>
+      <div className="setup-summary-actions">
+        <button type="button" className="secondary" onClick={onOpenLiveTest}><PlugZap size={16} />Live test</button>
+        <button type="button" className="primary" onClick={onOpenSetup}>Open setup flow<ArrowRight size={16} /></button>
+      </div>
+    </section>
   );
 }
 

@@ -50,6 +50,9 @@ describe("App", () => {
   it("guides first-time users from project setup to live board testing", async () => {
     render(<App />);
 
+    expect(await screen.findByTestId("setup-summary-card")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Open setup flow/i }));
+
     expect(await screen.findByText("Spark IoT Launch Wizard")).toBeInTheDocument();
     expect(screen.getByText("Create project")).toBeInTheDocument();
     expect(screen.getByText("Choose template")).toBeInTheDocument();
@@ -62,18 +65,45 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Open project setup/i }));
     expect(screen.getByText("Project command center")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Overview"));
+    fireEvent.click(screen.getByText("Setup Flow"));
     fireEvent.click(screen.getByRole("button", { name: /Open template studio/i }));
     expect(screen.getByText("Spark IoT Template Studio")).toBeInTheDocument();
     expect(screen.getAllByText("Smart Irrigation").length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByText("Overview"));
+    fireEvent.click(screen.getByText("Setup Flow"));
     fireEvent.click(screen.getByRole("button", { name: /Open devices/i }));
     expect(screen.getByText("Bind boards to templates and ship firmware-ready credentials")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Overview"));
+    fireEvent.click(screen.getByText("Setup Flow"));
     fireEvent.click(screen.getByRole("button", { name: /Open live test/i }));
     expect(await screen.findByText("Connect ESP32 or NodeMCU and watch real telemetry land here")).toBeInTheDocument();
+  });
+
+  it("keeps the overview minimal and moves the full wizard behind a setup action", async () => {
+    render(<App />);
+
+    expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();
+    expect(screen.queryByText("Interactive live simulation")).not.toBeInTheDocument();
+    expect(screen.getByTestId("setup-summary-card")).toHaveTextContent("Setup ready");
+    expect(screen.getByTestId("setup-summary-card")).toHaveTextContent("6/6 ready");
+    expect(screen.getByRole("button", { name: /Open setup flow/i })).toBeInTheDocument();
+    expect(screen.queryByText("Spark IoT Launch Wizard")).not.toBeInTheDocument();
+    expect(screen.queryByText("Create project")).not.toBeInTheDocument();
+  });
+
+  it("opens the full setup flow from the compact overview setup card", async () => {
+    render(<App />);
+
+    expect(await screen.findByTestId("setup-summary-card")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Open setup flow/i }));
+
+    expect(await screen.findByText("Spark IoT Launch Wizard")).toBeInTheDocument();
+    expect(screen.getByText("Create project")).toBeInTheDocument();
+    expect(screen.getByText("Choose template")).toBeInTheDocument();
+    expect(screen.getByText("Add datastreams")).toBeInTheDocument();
+    expect(screen.getByText("Add device")).toBeInTheDocument();
+    expect(screen.getByText("Generate Arduino code")).toBeInTheDocument();
+    expect(screen.getByText("Live board test")).toBeInTheDocument();
   });
 
   it("creates an account project template and device from the launch wizard quick start", async () => {
@@ -137,6 +167,9 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
+
+    expect(await screen.findByTestId("setup-summary-card")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Open setup flow/i }));
 
     expect(await screen.findByText("Account Quick Start Builder")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Quick start project name"), { target: { value: "Aquaponics Lab" } });
