@@ -9,7 +9,7 @@ from app.api.deps import current_user
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.security import create_access_token, hash_secret, issue_refresh_token, refresh_token_digest, verify_secret
-from app.models.domain import RefreshToken, Tenant, User
+from app.models.domain import Notification, RefreshToken, Tenant, User
 from app.schemas.api import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -34,6 +34,13 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=409, detail={"code": "plan_user_limit", "message": "Starter plan allows 1 active user"})
     user = User(tenant_id=tenant.id, email=payload.email.lower(), full_name=payload.full_name, password_hash=hash_secret(payload.password))
     db.add(user)
+    db.flush()
+    db.add(Notification(
+        tenant_id=tenant.id,
+        user_id=user.id,
+        title="Welcome to Spark IoT",
+        body="Starter workspace is ready. Create a project, choose a template, add your first board, then generate Arduino code.",
+    ))
     db.commit()
     db.refresh(user)
     return _token_pair(db, user)

@@ -3,17 +3,18 @@ from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request
 from app.services.telemetry import evaluate_alerts, ingest, normalize_value
 from app.services.schedules import due_occurrence_key, run_due_schedules_once
 from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
-from app.schemas.api import ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
+from app.schemas.api import RegisterRequest, ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
 from app.core.database import Base, ensure_runtime_indexes, make_engine
 from app.core.security import create_access_token, hash_secret
-from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, Schedule, Telemetry, Tenant, User
+from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, Project, RefreshToken, Schedule, Telemetry, Tenant, User
+from app.api.routes.auth import register
 from app.api.routes.templates import create_template, list_templates, update_template
 from app.api.routes.devices import command_logs
 from app.api.routes.notifications import mark_notification_read
 from app.api.routes.realtime import realtime_subscription_scope
 from app.api.routes.telemetry import history_csv
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import text
+from sqlalchemy import select, text
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -21,8 +22,75 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def memory_session():
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    return Session()
+
+
 def test_topic_helpers_create_spark_namespace():
     assert telemetry_topic("tenant-1", "device-1", "temperature") == "spark/v1/tenant-1/device-1/telemetry/temperature"
+
+
+def test_register_creates_starter_tenant_user_refresh_token_and_welcome_notification():
+    db = memory_session()
+
+    response = register(
+        RegisterRequest(
+            tenant_name="Rectronx Lab",
+            full_name="Mahesh Rajagopal",
+            email="MAHESH@EXAMPLE.COM",
+            password="SparkDemo123!",
+        ),
+        db,
+    )
+
+    tenant = db.scalar(select(Tenant).where(Tenant.name == "Rectronx Lab"))
+    assert tenant is not None
+    assert tenant.plan_code == "starter"
+    user = db.scalar(select(User).where(User.email == "mahesh@example.com"))
+    assert user is not None
+    assert user.tenant_id == tenant.id
+    assert user.full_name == "Mahesh Rajagopal"
+    assert user.password_hash != "SparkDemo123!"
+    assert response.access_token
+    assert response.refresh_token
+    assert db.scalar(select(RefreshToken).where(RefreshToken.user_id == user.id)) is not None
+    notification = db.scalar(select(Notification).where(Notification.tenant_id == tenant.id, Notification.user_id == user.id))
+    assert notification is not None
+    assert notification.title == "Welcome to Spark IoT"
+    assert "Starter workspace is ready" in notification.body
+
+
+def test_register_rejects_duplicate_email_without_creating_extra_tenant():
+    db = memory_session()
+    payload = RegisterRequest(
+        tenant_name="First Lab",
+        full_name="First User",
+        email="customer@example.com",
+        password="SparkDemo123!",
+    )
+    register(payload, db)
+
+    try:
+        register(
+            RegisterRequest(
+                tenant_name="Duplicate Lab",
+                full_name="Second User",
+                email="CUSTOMER@example.com",
+                password="SparkDemo123!",
+            ),
+            db,
+        )
+    except Exception as exc:
+        assert getattr(exc, "status_code") == 409
+        assert exc.detail["code"] == "duplicate_email"
+    else:
+        raise AssertionError("expected duplicate signup email to fail")
+
+    assert db.query(Tenant).count() == 1
+    assert db.query(User).count() == 1
 
 
 def test_parse_topic_accepts_valid_telemetry_topic():

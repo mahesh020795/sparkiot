@@ -532,6 +532,10 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
 .login-panel form { display: grid; gap: 14px; }
 .login-panel label { display: grid; gap: 8px; color: #536173; font-weight: 700; }
 .login-panel input { border: 1px solid #d8dee9; border-radius: 8px; padding: 12px; }
+.login-panel .auth-intro { margin: -12px 0 18px; line-height: 1.55; }
+.auth-mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 6px; margin-bottom: 18px; border: 1px solid #dbe7f6; border-radius: 14px; background: #f7fbff; }
+.auth-mode-tabs button { border: 0; border-radius: 10px; background: transparent; color: #64748b; box-shadow: none; font-weight: 800; }
+.auth-mode-tabs button.active { background: #ffffff; color: #0f172a; box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08); }
 .error { color: #b42318; margin: 0; }
 .muted-text { color: #667085; font-size: 13px; }
 

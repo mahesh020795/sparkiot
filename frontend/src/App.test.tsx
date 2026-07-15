@@ -952,6 +952,42 @@ describe("App", () => {
     expect(localStorage.getItem("spark_iot_session")).toBeNull();
   });
 
+  it("lets a new customer create a Starter account from the auth screen", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/register")) {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toEqual({
+          tenant_name: "Rectronx Customer Lab",
+          full_name: "Mahesh Rajagopal",
+          email: "mahesh@example.com",
+          password: "SparkDemo123!"
+        });
+        return new Response(JSON.stringify({ access_token: "new-account-token", refresh_token: "new-refresh-token", token_type: "bearer" }), { status: 201, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Sign in to account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Create Starter account/i }));
+    fireEvent.change(screen.getByLabelText("Company or workspace name"), { target: { value: "Rectronx Customer Lab" } });
+    fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Mahesh Rajagopal" } });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "mahesh@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "SparkDemo123!" } });
+    fireEvent.click(screen.getByRole("button", { name: /Create account/i }));
+
+    expect(await screen.findByText("Account mode active")).toBeInTheDocument();
+    expect(screen.getByText("Authenticated workspace")).toBeInTheDocument();
+    expect(localStorage.getItem("spark_iot_session")).toContain("new-account-token");
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/auth/register"), expect.objectContaining({ method: "POST" }));
+  });
+
   it("loads protected workspace data after account sign in while preserving demo mode before login", async () => {
     const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Real tenant project", is_active: true };
     const accountDevice = {

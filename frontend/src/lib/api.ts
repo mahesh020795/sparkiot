@@ -41,6 +41,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const api = {
   login: (email: string, password: string) => request<Session>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  register: (payload: { tenant_name: string; full_name: string; email: string; password: string }) => request<Session>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
   me: () => request<{ full_name: string; email: string; tenant_id: string; plan_code: string }>("/auth/me"),
   usage: () => request<{ users: number; max_users: number; devices: number; max_devices: number; projects: number; max_projects: number; retention_days: number }>("/tenant/usage"),
   projects: () => request<Project[]>("/projects"),
