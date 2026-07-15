@@ -2372,7 +2372,7 @@ body {
   --spark-card-border: #e5edf6;
   --spark-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 16px 34px rgba(15, 23, 42, 0.04);
   --spark-metric-min: 10.5rem;
-  --spark-compact-metric-min: 5.6rem;
+  --spark-compact-metric-min: 7.25rem;
 }
 
 .spark-ui {
@@ -2394,6 +2394,10 @@ body {
   overflow: hidden;
 }
 
+.spark-ui .app-page-header {
+  container: spark-page-header / inline-size;
+}
+
 .spark-ui .spark-page-header-primary {
   grid-area: primary;
   min-width: 0;
@@ -2412,6 +2416,7 @@ body {
   min-width: 0;
   max-width: 100%;
   contain: inline-size;
+  container-type: inline-size;
 }
 
 .spark-ui.dashboard-shell .dashboard-main .topbar.cockpit-header,
@@ -2550,6 +2555,7 @@ body {
   min-width: 0;
   max-width: 100%;
   contain: inline-size;
+  container: spark-metric-row / inline-size;
 }
 
 .spark-ui .project-stat-row span {
@@ -2570,9 +2576,36 @@ body {
   min-width: 0;
   max-width: 100%;
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.spark-ui .project-card,
+.spark-ui .template-library-card {
+  container: spark-project-card / inline-size;
+}
+
+@container spark-page-header (max-width: 58rem) {
+  .spark-ui .spark-page-header-grid.dashboard-header-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "primary"
+      "selector"
+      "metrics";
+  }
+}
+
+@container spark-metric-row (max-width: 25rem) {
+  .spark-ui .project-stat-row {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  }
+}
+
+@container spark-project-card (max-width: 23rem) {
+  .spark-ui .project-stat-row {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  }
 }
 
 .spark-ui.dashboard-shell .cockpit-simulation-strip,
