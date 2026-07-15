@@ -29,6 +29,10 @@ def test_frontend_nginx_supports_spa_routing_and_api_proxy():
         "location /api/",
         "proxy_pass http://api:8000/api/",
         "location /health/frontend",
+        "location = /health/live",
+        "location = /health/ready",
+        "proxy_pass http://api:8000/health/live;",
+        "proxy_pass http://api:8000/health/ready;",
     ]:
         assert expected in nginx
 
