@@ -1023,6 +1023,21 @@ body {
   justify-content: center;
 }
 
+.spark-ui .token-rotation-state {
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.spark-ui .token-rotation-state.saved {
+  color: var(--spark-success);
+}
+
+.spark-ui .token-rotation-state.error {
+  color: var(--spark-danger);
+}
+
 .spark-ui .provisioning-safety-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

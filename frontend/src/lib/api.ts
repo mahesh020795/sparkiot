@@ -59,6 +59,7 @@ export const api = {
   demoHistoryCsvUrl: (deviceId: string, channel?: string) => apiUrl(`/demo/devices/${deviceId}/history.csv${channel ? `?channel=${encodeURIComponent(channel)}` : ""}`),
   history: (deviceId: string, channel: string) => request<Telemetry[]>(`/telemetry/devices/${deviceId}/history?channel=${encodeURIComponent(channel)}`),
   command: (deviceId: string, channel: string, value: unknown) => request(`/devices/${deviceId}/commands`, { method: "POST", body: JSON.stringify({ channel, value }) }),
+  regenerateDeviceToken: (deviceId: string) => request<Device>(`/devices/${deviceId}/regenerate-token`, { method: "POST" }),
   notifications: () => request<NotificationItem[]>("/notifications"),
   createNotification: (title: string, body: string) => request<NotificationItem>("/notifications", { method: "POST", body: JSON.stringify({ title, body }) }),
   schedules: () => request<ScheduleItem[]>("/schedules"),

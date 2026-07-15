@@ -122,6 +122,8 @@ Included examples:
 
 Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Google Cloud VPS test, use `34.73.29.12`.
 
+For authenticated customer workspaces, open `Devices`, click `Regenerate token`, copy the one-time token immediately, and paste it into the Arduino sketch or Code tab output. Spark IoT stores only the token hash, so the raw token is hidden again after refresh and the old board credential stops working.
+
 See:
 
 - `docs/arduino-library.md`

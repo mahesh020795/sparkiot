@@ -178,6 +178,12 @@ export function App() {
     return created;
   }
 
+  async function regenerateAccountDeviceToken(deviceId: string) {
+    const updated = await api.regenerateDeviceToken(deviceId);
+    setAccountDevices((current) => current.map((device) => device.id === updated.id ? updated : device));
+    return updated;
+  }
+
   if (authScreenOpen) {
     return <LoginPage onLogin={handleLogin} onCancel={() => setAuthScreenOpen(false)} />;
   }
@@ -271,7 +277,7 @@ export function App() {
             />
           )
         )}
-        {view === "devices" && <DevicesPage devices={activeDevices} templates={activeTemplates} />}
+        {view === "devices" && <DevicesPage devices={activeDevices} templates={activeTemplates} accountMode={isAccountMode} onRegenerateToken={isAccountMode ? regenerateAccountDeviceToken : undefined} />}
         {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} latest={activeLatest} />}
         {view === "schedules" && (
           <SchedulesPage

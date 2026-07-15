@@ -220,6 +220,63 @@ describe("App", () => {
     expect(within(irrigationDevice).getByText("Arduino bind")).toBeInTheDocument();
   });
 
+  it("regenerates account device tokens and updates the Arduino bind block", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Live protected tenant workspace", is_active: true };
+    const accountDevice = {
+      id: "account-device",
+      project_id: "account-project",
+      name: "Customer ESP32",
+      board: "ESP32",
+      is_online: true,
+      token: null,
+      telemetry_topic: "spark/v1/account-tenant/account-device/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/account-device/command/{channel}"
+    };
+    const rotatedDevice = { ...accountDevice, token: "spk_dev_rotated_once_1234" };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.endsWith("/projects")) {
+        return new Response(JSON.stringify([accountProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.endsWith("/devices") && init?.method !== "POST") {
+        return new Response(JSON.stringify([accountDevice]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.endsWith("/devices/account-device/regenerate-token")) {
+        expect(init?.method).toBe("POST");
+        expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        return new Response(JSON.stringify(rotatedDevice), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/notifications") || url.includes("/schedules")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/tenant/usage")) {
+        return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 1, max_devices: 3, projects: 1, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/dashboards/project/account-project")) {
+        return new Response(JSON.stringify({ id: "account-dashboard", project_id: "account-project", name: "Customer Greenhouse Dashboard", revision: 1, widgets: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/telemetry/projects/account-project/latest")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Devices"));
+
+    const deviceCard = await screen.findByRole("article", { name: /Customer ESP32 provisioning card/i });
+    expect(within(deviceCard).getByText("Token hidden after first issue")).toBeInTheDocument();
+    fireEvent.click(within(deviceCard).getByRole("button", { name: /Regenerate token/i }));
+
+    expect(await within(deviceCard).findByText("spk_dev_rotated_once_1234")).toBeInTheDocument();
+    expect(within(deviceCard).getByText(/#define SPARK_TOKEN "spk_dev_rotated_once_1234"/)).toBeInTheDocument();
+  });
+
   it("shows a live board test panel with MQTT connection details", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Live Test"));

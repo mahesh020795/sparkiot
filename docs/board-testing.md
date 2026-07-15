@@ -25,6 +25,8 @@ http://YOUR_VPS_IP:5173
 
 Then open the `Live Test` tab. It shows the MQTT broker host, port, tenant ID, device ID, device token, telemetry topic, command topic, and latest received virtual pin values.
 
+For signed-in account testing, open `Devices` and use `Regenerate token` when you need a fresh board credential. Copy the token as soon as it appears and update your Arduino sketch. The backend stores only the token hash, so the visible value is a one-time credential and old sketches should be reflashed after rotation.
+
 Mosquitto MQTT is exposed on:
 
 ```text
