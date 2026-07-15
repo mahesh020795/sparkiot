@@ -45,9 +45,11 @@ def test_dashboard_and_project_summary_cards_are_overflow_safe():
         "--spark-metric-min",
         "--spark-compact-metric-min",
         "--spark-metric-min: 7.25rem",
-        "--spark-compact-metric-min: 6.35rem",
+        "--spark-compact-metric-min: 4.75rem",
+        "--spark-header-metric-max: 39rem",
+        '"primary selector metrics"',
         "repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))",
-        "repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))",
+        "repeat(3, minmax(0, 1fr))",
         "grid-row: 1 / span 2",
         "grid-column: 2",
         "contain: inline-size",
@@ -59,5 +61,8 @@ def test_dashboard_and_project_summary_cards_are_overflow_safe():
         ".spark-ui .project-stat-row small",
         "text-overflow: ellipsis;",
         "white-space: normal;",
+        "@container spark-page-header (max-width: 84rem)",
+        "@container spark-page-header (max-width: 58rem)",
+        "@container spark-project-card (max-width: 20rem)",
     ]:
         assert expected in design_system

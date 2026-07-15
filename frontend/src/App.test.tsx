@@ -81,16 +81,16 @@ describe("App", () => {
     expect(css).toContain(".spark-ui .spark-page-header-grid > .top-actions");
     expect(css).toContain("display: contents");
     expect(css).toContain("--spark-metric-min: 7.25rem");
-    expect(css).toContain("--spark-compact-metric-min: 6.35rem");
+    expect(css).toContain("--spark-compact-metric-min: 4.75rem");
+    expect(css).toContain("--spark-header-metric-max: 39rem");
     expect(css).toContain("--spark-title-xl: clamp(1.55rem, 1.8vw, 2.05rem)");
     expect(css).toContain('"primary"');
     expect(css).toContain('"selector"');
     expect(css).toContain('"metrics"');
+    expect(css).toContain('"primary selector metrics"');
     expect(css).toContain("box-sizing: border-box");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
-    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))");
-    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
-    expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-compact-metric-min)), 1fr))");
+    expect(css).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
     expect(css).toContain(".spark-ui .project-grid");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr))");
     expect(css).toContain("overflow: clip");
@@ -107,8 +107,10 @@ describe("App", () => {
     expect(css).toContain("container-type: inline-size");
     expect(css).toContain(".spark-ui .project-card::after");
     expect(css).toContain("display: none");
-    expect(css).toContain("@container spark-page-header (max-width: 72rem)");
+    expect(css).toContain("@container spark-page-header (max-width: 84rem)");
+    expect(css).toContain("@container spark-page-header (max-width: 58rem)");
     expect(css).toContain("@container spark-metric-row (max-width: 25rem)");
+    expect(css).toContain("@container spark-project-card (max-width: 20rem)");
   });
 
   it("builds same-origin websocket URLs when the production API base is relative", () => {
