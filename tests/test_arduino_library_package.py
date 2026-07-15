@@ -14,7 +14,7 @@ def test_sparkiot_arduino_library_has_installable_package_shape():
 
     manifest = (LIBRARY / "library.properties").read_text(encoding="utf-8")
     assert "name=SparkIoT" in manifest
-    assert "architectures=esp32,esp8266" in manifest
+    assert "architectures=*" in manifest
     assert "depends=PubSubClient" in manifest
 
     keywords = (LIBRARY / "keywords.txt").read_text(encoding="utf-8")
@@ -28,6 +28,7 @@ def test_sparkiot_library_exposes_clean_blynk_style_api():
 
     for expected in [
         "bool begin(",
+        "bool begin(Client& networkClient,",
         "void run()",
         "bool virtualWrite(const char* channel, float value",
         "bool virtualWrite(const char* channel, bool value",
@@ -50,11 +51,13 @@ def test_sparkiot_library_exposes_clean_blynk_style_api():
         "\\\\\"",
         "PubSubClient",
         "SparkIoTClient SparkIoT;",
+        "_networkClient",
+        "_managedWiFi",
     ]:
         assert expected in implementation
 
 
-def test_sparkiot_library_documents_json_safe_payloads_and_vps_hosting():
+def test_sparkiot_library_documents_json_safe_payloads_vps_hosting_and_external_clients():
     docs = (ROOT / "docs" / "arduino-library.md").read_text(encoding="utf-8")
     library_readme = (LIBRARY / "README.md").read_text(encoding="utf-8")
 
@@ -62,6 +65,10 @@ def test_sparkiot_library_documents_json_safe_payloads_and_vps_hosting():
         assert "quotes, backslashes, and newlines" in content
         assert "Do not use `localhost` from a real board" in content
         assert "34.73.29.12" in content
+        assert "Client adapter mode" in content
+        assert "EthernetClient" in content
+        assert "WiFiNINA" in content
+        assert "SparkIoT.begin(networkClient" in content
 
 
 def test_sparkiot_library_ships_beginner_friendly_examples():
@@ -70,6 +77,7 @@ def test_sparkiot_library_ships_beginner_friendly_examples():
         "ESP8266_Home_Relay/ESP8266_Home_Relay.ino": ["#include <SparkIoT.h>", "SparkIoT.virtualWrite(\"V1\"", "SparkIoT.onCommand(\"V0\""],
         "GPS_Tracker/GPS_Tracker.ino": ["#include <SparkIoT.h>", "SparkIoT.setLocation(\"V0\""],
         "Camera_URL/Camera_URL.ino": ["#include <SparkIoT.h>", "SparkIoT.setCameraUrl(\"V0\""],
+        "Generic_Client_Adapter/Generic_Client_Adapter.ino": ["#include <SparkIoT.h>", "EthernetClient networkClient", "SparkIoT.begin(networkClient", "SparkIoT.virtualWrite(\"V0\""],
     }
 
     for relative_path, expected_snippets in examples.items():

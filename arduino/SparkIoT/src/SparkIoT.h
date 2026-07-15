@@ -1,15 +1,18 @@
 #pragma once
 
 #include <Arduino.h>
-#include <WiFiClient.h>
+#include <Client.h>
 #include <PubSubClient.h>
 
 #if defined(ESP8266)
   #include <ESP8266WiFi.h>
+  #define SPARKIOT_HAS_MANAGED_WIFI 1
 #elif defined(ESP32)
   #include <WiFi.h>
+  #define SPARKIOT_HAS_MANAGED_WIFI 1
 #else
-  #warning "SparkIoT v1 officially supports ESP32 and ESP8266. Other boards need a compatible WiFiClient adapter."
+  #define SPARKIOT_HAS_MANAGED_WIFI 0
+  #warning "SparkIoT WiFi helper supports ESP32/ESP8266. Other boards should use SparkIoT.begin(Client& networkClient, ...)."
 #endif
 
 typedef void (*SparkIoTCommandCallback)(const char* channel, bool value, const char* payload);
@@ -27,6 +30,8 @@ public:
     const char* deviceId,
     const char* token
   );
+
+  bool begin(Client& networkClient, const char* mqttHost, uint16_t mqttPort, const char* tenantId, const char* deviceId, const char* token);
 
   void run();
   bool connected();
@@ -50,10 +55,14 @@ private:
 
   static const uint8_t MAX_HANDLERS = 16;
 
+  #if SPARKIOT_HAS_MANAGED_WIFI
   WiFiClient _wifiClient;
+  #endif
+  Client* _networkClient;
   PubSubClient _mqtt;
   CommandHandler _handlers[MAX_HANDLERS];
   uint8_t _handlerCount;
+  bool _managedWiFi;
 
   const char* _wifiSsid;
   const char* _wifiPassword;

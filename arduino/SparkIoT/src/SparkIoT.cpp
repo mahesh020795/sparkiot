@@ -9,8 +9,10 @@ SparkIoTClient* SparkIoTClient::_activeClient = nullptr;
 SparkIoTClient SparkIoT;
 
 SparkIoTClient::SparkIoTClient()
-  : _mqtt(_wifiClient),
+  : _networkClient(nullptr),
+    _mqtt(),
     _handlerCount(0),
+    _managedWiFi(true),
     _wifiSsid(nullptr),
     _wifiPassword(nullptr),
     _mqttHost(nullptr),
@@ -20,6 +22,7 @@ SparkIoTClient::SparkIoTClient()
     _token(nullptr),
     _lastReconnectAttempt(0) {}
 
+#if SPARKIOT_HAS_MANAGED_WIFI
 bool SparkIoTClient::begin(
   const char* wifiSsid,
   const char* wifiPassword,
@@ -36,9 +39,39 @@ bool SparkIoTClient::begin(
   _tenantId = tenantId;
   _deviceId = deviceId;
   _token = token;
+  _managedWiFi = true;
+  _networkClient = &_wifiClient;
   _activeClient = this;
 
   connectWiFi();
+  _mqtt.setClient(*_networkClient);
+  _mqtt.setServer(_mqttHost, _mqttPort);
+  _mqtt.setCallback(SparkIoTClient::mqttCallback);
+  _mqtt.setBufferSize(512);
+  return connectMqtt();
+}
+#endif
+
+bool SparkIoTClient::begin(
+  Client& networkClient,
+  const char* mqttHost,
+  uint16_t mqttPort,
+  const char* tenantId,
+  const char* deviceId,
+  const char* token
+) {
+  _wifiSsid = nullptr;
+  _wifiPassword = nullptr;
+  _mqttHost = mqttHost;
+  _mqttPort = mqttPort;
+  _tenantId = tenantId;
+  _deviceId = deviceId;
+  _token = token;
+  _managedWiFi = false;
+  _networkClient = &networkClient;
+  _activeClient = this;
+
+  _mqtt.setClient(*_networkClient);
   _mqtt.setServer(_mqttHost, _mqttPort);
   _mqtt.setCallback(SparkIoTClient::mqttCallback);
   _mqtt.setBufferSize(512);
@@ -46,9 +79,11 @@ bool SparkIoTClient::begin(
 }
 
 void SparkIoTClient::run() {
-  if (WiFi.status() != WL_CONNECTED) {
+#if SPARKIOT_HAS_MANAGED_WIFI
+  if (_managedWiFi && WiFi.status() != WL_CONNECTED) {
     connectWiFi();
   }
+#endif
 
   if (!_mqtt.connected()) {
     const unsigned long now = millis();
@@ -62,7 +97,11 @@ void SparkIoTClient::run() {
 }
 
 bool SparkIoTClient::connected() {
-  return WiFi.status() == WL_CONNECTED && _mqtt.connected();
+#if SPARKIOT_HAS_MANAGED_WIFI
+  return (!_managedWiFi || WiFi.status() == WL_CONNECTED) && _mqtt.connected();
+#else
+  return _mqtt.connected();
+#endif
 }
 
 bool SparkIoTClient::virtualWrite(const char* channel, float value, const char* unit) {
@@ -141,6 +180,7 @@ bool SparkIoTClient::ack(const char* channel, bool value, const char* message) {
 }
 
 void SparkIoTClient::connectWiFi() {
+#if SPARKIOT_HAS_MANAGED_WIFI
   if (WiFi.status() == WL_CONNECTED) {
     return;
   }
@@ -158,6 +198,7 @@ void SparkIoTClient::connectWiFi() {
   Serial.println();
   Serial.print("SparkIoT WiFi connected. IP: ");
   Serial.println(WiFi.localIP());
+#endif
 }
 
 bool SparkIoTClient::connectMqtt() {

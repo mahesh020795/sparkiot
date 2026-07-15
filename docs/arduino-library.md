@@ -1,13 +1,14 @@
 # SparkIoT Arduino Library
 
-SparkIoT Arduino Library v1 is the beginner-friendly board SDK for Spark IoT. It gives ESP32 and ESP8266 users a Blynk-style virtual pin API while keeping the production MQTT protocol hidden inside the library.
+SparkIoT Arduino Library v1 is the beginner-friendly board SDK for Spark IoT. It gives ESP32, ESP8266, and Arduino `Client`-compatible network boards a Blynk-style virtual pin API while keeping the production MQTT protocol hidden inside the library.
 
 ## Supported boards in v1
 
 - ESP32
 - ESP8266 / NodeMCU
+- Ethernet, WiFiNINA, WiFiS3, MKR GSM/NB, and similar Arduino boards when used through Client adapter mode
 
-Standard Arduino Uno/Nano boards do not have network access by themselves. They can be supported later through WiFiNINA, Ethernet, GSM/LTE, ESP-01, or serial bridge adapters.
+Standard Arduino Uno/Nano boards do not have network access by themselves. They need a network shield/module/library first. If that networking stack exposes an Arduino `Client` object, SparkIoT can use it through Client adapter mode.
 
 ## Install in Arduino IDE
 
@@ -21,11 +22,13 @@ Standard Arduino Uno/Nano boards do not have network access by themselves. They 
 5. Install the board package:
    - ESP32 by Espressif Systems, or
    - ESP8266 by ESP8266 Community
+   - For other boards, install the board/network library that provides `EthernetClient`, `WiFiClient`, `WiFiSSLClient`, `WiFiNINA`, `WiFiS3`, or another `Client` implementation.
 6. Open one of:
    - `File -> Examples -> SparkIoT -> ESP32_Smart_Irrigation`
    - `File -> Examples -> SparkIoT -> ESP8266_Home_Relay`
    - `File -> Examples -> SparkIoT -> GPS_Tracker`
    - `File -> Examples -> SparkIoT -> Camera_URL`
+   - `File -> Examples -> SparkIoT -> Generic_Client_Adapter`
 
 ## Minimal example
 
@@ -65,6 +68,7 @@ void loop() {
 
 ```cpp
 SparkIoT.begin(wifiSsid, wifiPassword, mqttHost, mqttPort, tenantId, deviceId, token);
+SparkIoT.begin(networkClient, mqttHost, mqttPort, tenantId, deviceId, token);
 SparkIoT.run();
 SparkIoT.connected();
 
@@ -81,6 +85,36 @@ SparkIoT.ack("V3", true, "Command applied");
 ```
 
 String telemetry, camera URLs, and ACK messages are escaped before publishing, so quotes, backslashes, and newlines do not break MQTT JSON payloads.
+
+## Client adapter mode
+
+Use Client adapter mode when the board is not an ESP32/ESP8266 or when you want to manage the network connection yourself.
+
+SparkIoT does not care whether the transport comes from Ethernet, WiFiNINA, WiFiS3, GSM/LTE, or another Arduino library. The requirement is that your network object inherits from Arduino `Client` and is already connected to the network before SparkIoT starts MQTT.
+
+Ethernet-style example:
+
+```cpp
+#include <SPI.h>
+#include <Ethernet.h>
+#include <SparkIoT.h>
+
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+EthernetClient networkClient;
+
+void setup() {
+  Serial.begin(115200);
+  Ethernet.begin(mac);
+  SparkIoT.begin(networkClient, BROKER_HOST, BROKER_PORT, SPARK_TENANT_ID, SPARK_DEVICE_ID, SPARK_DEVICE_TOKEN);
+}
+```
+
+WiFiNINA-style boards use the same SparkIoT call after their own WiFi connection succeeds:
+
+```cpp
+// WiFiNINA connection code first...
+SparkIoT.begin(networkClient, BROKER_HOST, BROKER_PORT, SPARK_TENANT_ID, SPARK_DEVICE_ID, SPARK_DEVICE_TOKEN);
+```
 
 ## Protocol mapping
 

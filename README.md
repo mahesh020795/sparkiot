@@ -2,7 +2,7 @@
 
 Spark IoT is a Rectronx IoT SaaS starter for a lower-cost Blynk-style product. The current web-first build opens directly to the dashboard with local demo data, so customers can see the core control experience before login, project creation, templates and billing are added.
 
-The repository also includes the FastAPI modular monolith, PostgreSQL, Valkey, Mosquitto MQTT, WebSocket realtime foundation, seed data, MQTT ingestion bridge, persisted Template Studio data, and an installable SparkIoT Arduino IDE library for real ESP32/ESP8266 testing.
+The repository also includes the FastAPI modular monolith, PostgreSQL, Valkey, Mosquitto MQTT, WebSocket realtime foundation, seed data, MQTT ingestion bridge, persisted Template Studio data, and an installable SparkIoT Arduino IDE library for real ESP32/ESP8266 testing plus Arduino `Client` adapter boards such as Ethernet and WiFiNINA.
 
 ## Starter Plan
 
@@ -99,7 +99,7 @@ Example:
 curl "http://localhost:8000/api/v1/demo/devices/device-irrigation/history.csv?channel=V0" -o irrigation-v0-history.csv
 ```
 
-## Test With ESP32 / NodeMCU ESP8266
+## Test With ESP32 / NodeMCU ESP8266 / Arduino Client Boards
 
 Open `Templates -> Code` in the web app to generate a board-specific Arduino IDE sketch for the selected template and device. The generated sketch now uses the reusable `SparkIoT` Arduino library:
 
@@ -110,6 +110,13 @@ SparkIoT.begin(WIFI_SSID, WIFI_PASSWORD, BROKER_HOST, BROKER_PORT, SPARK_TENANT_
 SparkIoT.virtualWrite("V0", 29.4, "C");
 SparkIoT.onCommand("V3", onPumpCommand);
 SparkIoT.ack("V3", true, "Pump command applied");
+```
+
+For Ethernet, WiFiNINA, WiFiS3, MKR GSM/NB, and similar boards, connect the network first and pass the board's `Client` object into Spark IoT:
+
+```cpp
+EthernetClient networkClient;
+SparkIoT.begin(networkClient, BROKER_HOST, BROKER_PORT, SPARK_TENANT_ID, SPARK_DEVICE_ID, SPARK_DEVICE_TOKEN);
 ```
 
 Installable Arduino library:
@@ -124,6 +131,7 @@ Included examples:
 - `arduino/SparkIoT/examples/ESP8266_Home_Relay/ESP8266_Home_Relay.ino`
 - `arduino/SparkIoT/examples/GPS_Tracker/GPS_Tracker.ino`
 - `arduino/SparkIoT/examples/Camera_URL/Camera_URL.ino`
+- `arduino/SparkIoT/examples/Generic_Client_Adapter/Generic_Client_Adapter.ino`
 - `examples/arduino/SparkIoT_ESP32/SparkIoT_ESP32.ino`
 - `examples/arduino/SparkIoT_ESP8266/SparkIoT_ESP8266.ino`
 
