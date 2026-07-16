@@ -289,6 +289,14 @@ describe("App", () => {
     expect(dashboardSelector).toHaveValue("project-irrigation");
     const navigation = screen.getByRole("navigation", { name: "Main navigation" });
     expect(navigation).toHaveTextContent("Settings");
+    expect(navigation).toHaveTextContent("Dashboard");
+    expect(navigation).not.toHaveTextContent("Overview");
+    expect(navigation.textContent?.indexOf("Templates")).toBeLessThan(navigation.textContent?.indexOf("Projects") ?? 999);
+    expect(navigation.textContent?.indexOf("Projects")).toBeLessThan(navigation.textContent?.indexOf("Devices") ?? 999);
+    expect(within(navigation).getByRole("button", { name: "Dashboard" })).toBeInTheDocument();
+    const navButtons = within(navigation).getAllByRole("button").map((button) => button.textContent?.trim());
+    expect(navButtons.slice(0, 4)).toEqual(["Dashboard", "Templates", "Projects", "Devices"]);
+    expect(within(navigation).queryByRole("button", { name: "Overview" })).not.toBeInTheDocument();
     expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
     expect(screen.queryByText("Launch checklist")).not.toBeInTheDocument();
     expect(screen.queryByText("Project → Template → Device → Code → Live Test")).not.toBeInTheDocument();
@@ -329,6 +337,39 @@ describe("App", () => {
 
     const refreshedZoneTwo = (await screen.findByText("Zone 2 Solenoid")).closest("article")!;
     expect(within(refreshedZoneTwo).getByText("OPEN (FLOW ENABLED)")).toBeInTheDocument();
+  });
+
+  it("keeps dashboard schedule time-cycle input state after a refresh", async () => {
+    const firstRender = render(<App />);
+
+    const schedule = (await screen.findByText("Irrigation Schedule")).closest("article")!;
+    fireEvent.click(within(schedule).getByRole("button", { name: /Edit 06:00 AM cycle/i }));
+    fireEvent.change(within(schedule).getByLabelText("Selected cycle time"), { target: { value: "07:45" } });
+    expect(within(schedule).getByRole("button", { name: /Edit 07:45 AM cycle/i })).toBeInTheDocument();
+
+    firstRender.unmount();
+    render(<App />);
+
+    const refreshedSchedule = (await screen.findByText("Irrigation Schedule")).closest("article")!;
+    expect(within(refreshedSchedule).getByRole("button", { name: /Edit 07:45 AM cycle/i })).toBeInTheDocument();
+  });
+
+  it("keeps dashboard schedule day and time input state after a refresh", async () => {
+    const firstRender = render(<App />);
+
+    const scheduleCard = (await screen.findByText("Irrigation Schedule")).closest("article")!;
+    fireEvent.click(within(scheduleCard).getByRole("button", { name: /Enable Tuesday/i }));
+    fireEvent.click(within(scheduleCard).getByRole("button", { name: /Edit 12:00 PM cycle/i }));
+    fireEvent.change(within(scheduleCard).getByLabelText("Selected cycle time"), { target: { value: "13:45" } });
+    expect(within(scheduleCard).getByRole("button", { name: /Disable Tuesday/i })).toBeInTheDocument();
+    expect(within(scheduleCard).getByRole("button", { name: /Edit 01:45 PM cycle/i })).toBeInTheDocument();
+
+    firstRender.unmount();
+    render(<App />);
+
+    const refreshedScheduleCard = (await screen.findByText("Irrigation Schedule")).closest("article")!;
+    expect(within(refreshedScheduleCard).getByRole("button", { name: /Disable Tuesday/i })).toBeInTheDocument();
+    expect(within(refreshedScheduleCard).getByRole("button", { name: /Edit 01:45 PM cycle/i })).toBeInTheDocument();
   });
 
   it("uses the standardized design-system shell and non-overlapping dashboard header", async () => {
@@ -455,7 +496,7 @@ describe("App", () => {
     expect(screen.getAllByDisplayValue("Energy Monitor").length).toBeGreaterThan(0);
     expect(screen.getByText("Migrate")).toBeInTheDocument();
     expect(screen.getByText("Datastreams")).toBeInTheDocument();
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
     expect(screen.getByText("Code")).toBeInTheDocument();
     expect(screen.getByText("Product model studio")).toBeInTheDocument();
     expect(screen.getByText("Template accelerators")).toBeInTheDocument();
@@ -469,11 +510,19 @@ describe("App", () => {
     expect(screen.getByTestId("datastream-editor")).toHaveClass("studio-system-datastreams");
     expect(screen.getByDisplayValue("V0")).toBeInTheDocument();
     expect(screen.getAllByDisplayValue("Voltage").length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByText("Dashboard"));
+    fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
     expect(screen.getByText("Dashboard layout lab")).toBeInTheDocument();
     expect(screen.getByText("Professional widget canvas")).toBeInTheDocument();
     expect(screen.getByTestId("dashboard-builder-workbench")).toHaveClass("studio-system-workbench");
     expect(screen.getByText("Widget Library")).toBeInTheDocument();
+    expect(screen.getByText("Input widgets")).toBeInTheDocument();
+    expect(screen.getByText("Output widgets")).toBeInTheDocument();
+    expect(screen.getByText("switch")).toBeInTheDocument();
+    expect(screen.getAllByText("gauge").length).toBeGreaterThan(0);
+    expect(screen.getByText("Input widgets")).toBeInTheDocument();
+    expect(screen.getByText("Output widgets")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /time Input widget/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /camera Output widget/i })).toBeInTheDocument();
     fireEvent.click(screen.getAllByText("Notifications")[1]);
     expect(screen.getByText("Alert operations center")).toBeInTheDocument();
     expect(screen.getByText("Push-safe rule engine")).toBeInTheDocument();
@@ -523,9 +572,9 @@ describe("App", () => {
     expect(screen.getByDisplayValue("Datastream V3")).toBeInTheDocument();
     expect(screen.getByDisplayValue("V3")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Dashboard"));
+    fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
     expect(screen.queryByText("Camera Snapshot")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /cameraBind to V pin/i }));
+    fireEvent.click(screen.getByRole("button", { name: /camera.*Output widget/i }));
     expect(screen.getAllByText("Camera Snapshot").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getAllByText("Notifications")[1]);
@@ -557,14 +606,32 @@ describe("App", () => {
     expect(screen.getAllByText("V0").length).toBeGreaterThan(0);
     expect(screen.getAllByText("29.4").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /Export CSV/i }));
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/demo/devices/device-irrigation/history.csv"), expect.anything()));
     await vi.waitFor(() => expect(click).toHaveBeenCalled());
+    expect(await screen.findByText("Downloaded visible table data.")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/demo/devices/device-irrigation/history.csv"), expect.anything());
 
     const homeHistoryCard = screen.getAllByText("ESP8266 Home Node").map((item) => item.closest("article")).find(Boolean);
     expect(homeHistoryCard).toBeDefined();
     fireEvent.click(within(homeHistoryCard as HTMLElement).getByRole("button", { name: "CSV" }));
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/demo/devices/device-home/history.csv"), expect.anything()));
     await vi.waitFor(() => expect(click).toHaveBeenCalledTimes(2));
+  });
+
+  it("keeps demo CSV downloads browser-native even when fetch is unavailable", async () => {
+    const { click } = stubCsvDownload();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/history.csv")) return new Response("csv unavailable", { status: 503 });
+      return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Data History"));
+    fireEvent.click(screen.getByRole("button", { name: /Export CSV/i }));
+
+    await vi.waitFor(() => expect(click).toHaveBeenCalled());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/history.csv"), expect.anything());
+    await vi.waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Downloaded visible table data/i));
   });
 
   it("shows device provisioning with template binding, tokens and starter limit", async () => {

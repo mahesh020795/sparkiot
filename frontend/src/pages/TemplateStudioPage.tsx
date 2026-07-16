@@ -29,7 +29,10 @@ import { Widget } from "../components/widgets/Widget";
 import type { Telemetry } from "../lib/types";
 
 const GridLayout = WidthProvider(BaseGridLayout);
-const widgetTypes = ["gauge", "meter", "value", "switch", "push_button", "led", "chart", "gps", "camera", "serial_lcd", "time", "date", "day", "battery", "signal"];
+const widgetLibraryGroups = [
+  { title: "Input widgets", kind: "Input", caption: "Send values or commands to the board", types: ["switch", "push_button", "time", "date", "day"] },
+  { title: "Output widgets", kind: "Output", caption: "Display telemetry, media and board status", types: ["gauge", "meter", "value", "led", "chart", "gps", "camera", "serial_lcd", "battery", "signal"] }
+] as const;
 const dataTypes: Datastream["dataType"][] = ["integer", "float", "string", "boolean", "gps", "image", "time", "date"];
 const boards: DeviceTemplate["board"][] = ["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"];
 const stepConfig = [
@@ -268,7 +271,7 @@ export function TemplateStudioPage({
           const activeIndex = stepConfig.findIndex((item) => item.id === activeStep);
           const state = index < activeIndex ? "complete" : index === activeIndex ? "active" : "pending";
           return (
-            <button key={step.id} className={`wizard-step ${state}`} onClick={() => setActiveStep(step.id)}>
+            <button key={step.id} className={`wizard-step ${state}`} aria-label={`${step.label} ${step.caption}`} onClick={() => setActiveStep(step.id)}>
               <span className="step-icon"><Icon size={17} /></span>
               <span className="step-copy"><strong>{step.label}</strong><small>{step.caption}</small></span>
             </button>
@@ -547,7 +550,19 @@ function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, 
               <h2>Widget Library</h2>
             </div>
           </div>
-          <div className="widget-library">{widgetTypes.map((type) => <button className="widget-tile" type="button" key={type} onClick={() => onAddWidget(type)}><Grid2X2Plus size={15} /><span>{type.replace("_", " ")}</span><small>Bind to V pin</small></button>)}</div>
+          <div className="widget-library grouped-widget-library">
+            {widgetLibraryGroups.map((group) => (
+              <section className="widget-library-group" key={group.title}>
+                <div className="widget-library-group-title">
+                  <strong>{group.title}</strong>
+                  <small>{group.caption}</small>
+                </div>
+                <div className="widget-library-grid">
+                  {group.types.map((type) => <button className="widget-tile" type="button" key={type} aria-label={`${type.replace("_", " ")} ${group.kind} widget`} onClick={() => onAddWidget(type)}><Grid2X2Plus size={15} /><span>{type.replace("_", " ")}</span><small>{group.kind} widget</small></button>)}
+                </div>
+              </section>
+            ))}
+          </div>
         </div>
         <div className="studio-section">
           <div className="section-title"><div><span className="section-kicker">Properties</span><h2>Inspector</h2></div><SlidersHorizontal size={18} /></div>

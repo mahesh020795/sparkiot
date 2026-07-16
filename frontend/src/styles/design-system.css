@@ -2213,6 +2213,40 @@ body {
   gap: var(--spark-space-3);
 }
 
+.spark-ui .grouped-widget-library {
+  grid-template-columns: 1fr;
+}
+
+.spark-ui .widget-library-group {
+  display: grid;
+  gap: var(--spark-space-2);
+  min-width: 0;
+}
+
+.spark-ui .widget-library-group-title {
+  display: grid;
+  gap: 2px;
+}
+
+.spark-ui .widget-library-group-title strong {
+  color: var(--spark-text);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.spark-ui .widget-library-group-title small {
+  color: var(--spark-muted);
+  font-size: 0.74rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.spark-ui .widget-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spark-space-2);
+}
+
 .spark-ui .simulator-event-preview {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

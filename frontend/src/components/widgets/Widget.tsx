@@ -14,7 +14,7 @@ export function Widget({ config, reading, devices, onCommand }: { config: Widget
   if (config.type === "chart") return <ChartWidget config={config} value={Number(raw ?? 0)} />;
   if (config.type === "gps") return <MapWidget config={config} value={value} />;
   if (config.type === "camera") return <CameraWidget config={config} value={value} />;
-  if (config.type === "schedule") return <ScheduleWidget config={config} value={value} />;
+  if (config.type === "schedule") return <ScheduleWidget config={config} value={value} onCommand={onCommand} />;
   if (config.type === "power_hub") return <PowerHubWidget config={config} value={Number(raw ?? 12.4)} />;
   if (config.type === "event_monitor") return <EventMonitorWidget config={config} value={String(raw ?? "")} />;
   if (config.type === "switch") return <ControlWidget icon={<ToggleLeft />} config={config} device={device} value={Boolean(raw)} onCommand={onCommand} />;
@@ -141,7 +141,7 @@ function CameraWidget({ config, value }: { config: WidgetConfig; value: any }) {
   return <article className="widget spark-widget-card widget-camera cockpit-media-widget"><WidgetHeader config={config} icon={<Camera size={16} />} /><div className="media-frame camera-frame"><img className="camera" src={value?.url ?? "https://placehold.co/640x360?text=ESP32-CAM"} alt="Camera snapshot" /><span className="camera-live-badge">Video out</span></div><WidgetFooter config={config} value="Use PTZ overlays to shift simulated camera horizon" label="VIDEO OUT" /></article>;
 }
 
-function ScheduleWidget({ config, value }: { config: WidgetConfig; value: any }) {
+function ScheduleWidget({ config, value, onCommand }: { config: WidgetConfig; value: any; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
   const defaultDays = useMemo(() => normalizeScheduleDays(value?.days), [value?.days]);
   const defaultTimes = useMemo(() => normalizeScheduleTimes(value?.times), [value?.times]);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(() => new Set(defaultDays));
@@ -157,17 +157,31 @@ function ScheduleWidget({ config, value }: { config: WidgetConfig; value: any })
     { key: "sun", short: "S", label: "Sunday" }
   ];
 
+  useEffect(() => {
+    setSelectedDays(new Set(defaultDays));
+    setTimes(defaultTimes);
+  }, [defaultDays, defaultTimes]);
+
+  function commitSchedule(nextDays: Set<string>, nextTimes: string[]) {
+    onCommand?.(config, { days: Array.from(nextDays), times: nextTimes });
+  }
+
   function toggleDay(day: string) {
     setSelectedDays((current) => {
       const next = new Set(current);
       if (next.has(day)) next.delete(day);
       else next.add(day);
+      commitSchedule(next, times);
       return next;
     });
   }
 
   function updateSelectedTime(nextTime: string) {
-    setTimes((current) => current.map((time, index) => index === selectedTimeIndex ? nextTime : time));
+    setTimes((current) => {
+      const next = current.map((time, index) => index === selectedTimeIndex ? nextTime : time);
+      commitSchedule(selectedDays, next);
+      return next;
+    });
   }
 
   return (

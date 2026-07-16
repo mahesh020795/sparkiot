@@ -19,7 +19,8 @@ const scheduleConfig: WidgetConfig = {
 
 describe("Schedule dashboard widget", () => {
   it("lets users edit days and time cycles inside the dashboard card", () => {
-    render(<Widget config={scheduleConfig} devices={[]} />);
+    const onCommand = vi.fn();
+    render(<Widget config={scheduleConfig} devices={[]} onCommand={onCommand} />);
 
     const widget = screen.getByText("Irrigation Schedule").closest("article")!;
     const tuesday = within(widget).getByRole("button", { name: "Enable Tuesday" });
@@ -32,6 +33,8 @@ describe("Schedule dashboard widget", () => {
     expect(timeInput).toHaveValue("06:00");
     fireEvent.change(timeInput, { target: { value: "07:15" } });
     expect(within(widget).getByRole("button", { name: /Edit 07:15 AM cycle/i })).toBeInTheDocument();
+    expect(onCommand).toHaveBeenCalledWith(scheduleConfig, { days: ["mon", "wed", "fri", "tue"], times: ["06:00", "12:00", "18:00"] });
+    expect(onCommand).toHaveBeenCalledWith(scheduleConfig, { days: ["mon", "wed", "fri", "tue"], times: ["07:15", "12:00", "18:00"] });
 
     expect(within(widget).queryByLabelText("Cycle duration minutes")).not.toBeInTheDocument();
     expect(within(widget).queryByText(/Cycle duration/i)).not.toBeInTheDocument();

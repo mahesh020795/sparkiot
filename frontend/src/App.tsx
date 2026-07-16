@@ -56,9 +56,9 @@ export function App() {
   const selectedTemplate = useMemo(() => activeTemplates.find((template) => template.dashboard.project_id === selectedProjectId) ?? activeTemplates[0] ?? templates[0], [activeTemplates, selectedProjectId, templates]);
 
   const nav = [
-    ["dashboard", LayoutDashboard, "Overview"],
-    ["projects", MapPinned, "Projects"],
+    ["dashboard", LayoutDashboard, "Dashboard"],
     ["templates", Workflow, "Templates"],
+    ["projects", MapPinned, "Projects"],
     ["devices", Cpu, "Devices"],
     ["live", PlugZap, "Live Test"],
     ["schedules", CalendarClock, "Schedules"],

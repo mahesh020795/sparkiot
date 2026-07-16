@@ -18,6 +18,7 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
   const [selectedChannel, setSelectedChannel] = useState("all");
   const [historyByDevice, setHistoryByDevice] = useState<Record<string, Telemetry[]>>({});
   const [status, setStatus] = useState<"loading" | "live" | "fallback">("loading");
+  const [exportStatus, setExportStatus] = useState("");
 
   const selectedDevice = devices.find((device) => device.id === selectedDeviceId) ?? devices[0];
   const fallbackRows = useMemo(
@@ -32,21 +33,29 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
   async function exportCsv(deviceOverride = selectedDevice, channelOverride = selectedChannel) {
     if (!deviceOverride) return;
     const exportChannel = channelOverride === "all" ? undefined : channelOverride;
-    const csvUrl = accountMode ? api.historyCsvUrl(deviceOverride.id, exportChannel) : api.demoHistoryCsvUrl(deviceOverride.id, exportChannel);
+    const sourceRows = channelOverride === selectedChannel && deviceOverride.id === selectedDevice?.id
+      ? filteredRows
+      : (historyByDevice[deviceOverride.id] ?? Object.values(initialLatest).filter((reading) => reading.device_id === deviceOverride.id));
+    const localRows = channelOverride === "all" ? sourceRows : sourceRows.filter((reading) => reading.channel === channelOverride);
+    if (!accountMode) {
+      downloadBlob(new Blob([buildCsv(localRows)], { type: "text/csv;charset=utf-8" }), csvFileName(deviceOverride.id, channelOverride));
+      setExportStatus("Downloaded visible table data.");
+      return;
+    }
+    const csvUrl = api.historyCsvUrl(deviceOverride.id, exportChannel);
     const session = getSession();
-    const response = await fetch(csvUrl, {
-      headers: accountMode && session ? { Authorization: `Bearer ${session.access_token}` } : undefined
-    });
-    if (!response.ok) throw new Error(await response.text());
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `spark-iot-${deviceOverride.id}-${channelOverride}-history.csv`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+    try {
+      const response = await fetch(csvUrl, {
+        headers: accountMode && session ? { Authorization: `Bearer ${session.access_token}` } : undefined
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const blob = await response.blob();
+      downloadBlob(blob, csvFileName(deviceOverride.id, channelOverride));
+      setExportStatus("Downloaded backend CSV export.");
+    } catch {
+      downloadBlob(new Blob([buildCsv(localRows)], { type: "text/csv;charset=utf-8" }), csvFileName(deviceOverride.id, channelOverride));
+      setExportStatus("Downloaded visible table data because backend CSV is unavailable.");
+    }
   }
 
   useEffect(() => {
@@ -90,6 +99,7 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
         <label>Datastream<select value={selectedChannel} onChange={(event) => setSelectedChannel(event.target.value)}><option value="all">All channels</option>{channels.map((channel) => <option key={channel} value={channel}>{channel}</option>)}</select></label>
         <button className="action-button primary" type="button" onClick={() => void exportCsv()}><Download size={16} />Export CSV</button>
       </div>
+      {exportStatus && <p className="history-export-status" role="status">{exportStatus}</p>}
 
       <div className="history-summary-grid">
         {devices.map((device) => {
@@ -110,4 +120,47 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
       <p className="history-footnote">Status: {status === "live" ? "backend history loaded" : status === "fallback" ? "showing local demo latest while API is offline" : "loading history"}</p>
     </section>
   );
+}
+
+function csvFileName(deviceId: string, channel: string) {
+  return `spark-iot-${deviceId}-${channel}-history.csv`;
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  downloadUrl(url, fileName);
+  URL.revokeObjectURL(url);
+}
+
+function downloadUrl(url: string, fileName: string) {
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
+function buildCsv(rows: Telemetry[]) {
+  const header = ["observed_at", "device_id", "channel", "value", "unit"];
+  return [
+    header.join(","),
+    ...rows.map((reading) => [
+      reading.observed_at,
+      reading.device_id,
+      reading.channel,
+      formatCsvValue(reading.value),
+      reading.unit ?? ""
+    ].map(escapeCsvCell).join(","))
+  ].join("\n") + "\n";
+}
+
+function formatCsvValue(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return typeof value === "object" ? JSON.stringify(value) : String(value);
+}
+
+function escapeCsvCell(value: string) {
+  return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
