@@ -23,6 +23,7 @@ declare module "react-grid-layout/legacy" {
     isResizable?: boolean;
     resizeHandles?: string[];
     draggableHandle?: string;
+    draggableCancel?: string;
     compactType?: "vertical" | "horizontal" | null;
     preventCollision?: boolean;
     onLayoutChange?: (layout: Layout) => void;

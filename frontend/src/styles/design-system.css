@@ -2670,8 +2670,35 @@ body {
 }
 
 .spark-ui .builder-cell {
+  position: relative;
   border-radius: var(--spark-radius-lg);
   overflow: hidden;
+  cursor: grab;
+}
+
+.spark-ui .builder-cell:active {
+  cursor: grabbing;
+}
+
+.spark-ui .builder-drag-grip {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 25;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--spark-border-strong);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--spark-primary);
+  box-shadow: var(--spark-shadow-soft);
+  cursor: grab;
+}
+
+.spark-ui .builder-drag-grip:active {
+  cursor: grabbing;
 }
 
 .spark-ui .builder-cell.selected {

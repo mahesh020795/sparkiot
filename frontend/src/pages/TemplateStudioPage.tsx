@@ -10,6 +10,7 @@ import {
   Database,
   Download,
   Expand,
+  GripVertical,
   Grid2X2Plus,
   LayoutDashboard,
   MapPinned,
@@ -550,12 +551,29 @@ function DashboardBuilder({ template, device, latest, layout, widgetAddStatus, s
           <span className="pill online-pill">Actual dashboard canvas</span>
           <span className="pill">12-column grid</span>
           <span className="pill">{template.dashboard.widgets.length} widgets</span>
-          <span className="muted-text">Drag from widget header. Resize from orange edges/corner.</span>
+          <span className="muted-text">Drag from any blank area. Use the grip if the card has buttons or inputs.</span>
           <button className="primary small" onClick={onSave} disabled={saveState === "saving"}><Save size={16} />{saveState === "saving" ? "Saving" : "Save Template"}</button>
         </div>
-        <GridLayout className="rgl-layout" layout={layout} cols={12} rowHeight={72} margin={[14, 14]} isDraggable isResizable resizeHandles={["se", "e", "s", "n"]} draggableHandle=".widget-header" compactType={null} preventCollision={false} onLayoutChange={onLayout} onResizeStop={onLayout}>
+        <GridLayout
+          className="rgl-layout"
+          layout={layout}
+          cols={12}
+          rowHeight={72}
+          margin={[14, 14]}
+          isDraggable
+          isResizable
+          resizeHandles={["se", "e", "s", "n"]}
+          draggableCancel="button,input,select,textarea,a,.react-resizable-handle,.map,.leaflet-container,.camera"
+          compactType={null}
+          preventCollision={false}
+          onLayoutChange={onLayout}
+          onResizeStop={onLayout}
+        >
           {template.dashboard.widgets.map((widget) => (
             <div key={widget.id} className={selectedWidgetId === widget.id ? "builder-cell selected" : "builder-cell"} onClick={() => onSelect(widget.id)}>
+              <span className="builder-drag-grip" title={`Drag ${widget.title} widget`} aria-label={`Drag ${widget.title} widget`}>
+                <GripVertical size={16} />
+              </span>
               <Widget config={widget} reading={latest[`${device?.id}:${widget.channel}`]} devices={device ? [device] : []} />
             </div>
           ))}

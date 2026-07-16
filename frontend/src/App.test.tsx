@@ -537,6 +537,9 @@ describe("App", () => {
     expect(screen.getByText("Dashboard layout lab")).toBeInTheDocument();
     expect(screen.getByText("Professional widget canvas")).toBeInTheDocument();
     expect(screen.getByTestId("dashboard-builder-workbench")).toHaveClass("studio-system-workbench");
+    expect(screen.getByText("Drag from any blank area. Use the grip if the card has buttons or inputs.")).toBeInTheDocument();
+    expect(screen.queryByText("Drag from widget header. Resize from orange edges/corner.")).not.toBeInTheDocument();
+    expect(screen.getAllByTitle(/Drag .* widget/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Widget Library")).toBeInTheDocument();
     expect(screen.getByText("Input widgets")).toBeInTheDocument();
     expect(screen.getByText("Output widgets")).toBeInTheDocument();
