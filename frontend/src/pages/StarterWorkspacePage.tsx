@@ -52,7 +52,7 @@ export function StarterWorkspacePage({
               </li>
             ))}
           </ol>
-          <button type="button" className="starter-link-button" onClick={onOpenSetupFlow}>Open setup flow <ArrowRight size={16} /></button>
+          <button type="button" className="starter-link-button" onClick={onOpenSetupFlow}>Open project builder <ArrowRight size={16} /></button>
         </article>
         <article className="starter-panel compact">
           <div className="starter-panel-heading"><ShieldCheck size={18} /><span>Starter limits</span></div>

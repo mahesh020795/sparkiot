@@ -517,55 +517,6 @@ export function App() {
   );
 }
 
-function SetupSummaryCard({
-  projectCount,
-  templateCount,
-  deviceCount,
-  datastreamCount,
-  selectedProjectName,
-  selectedDeviceName,
-  onOpenSetup,
-  onOpenLiveTest
-}: {
-  projectCount: number;
-  templateCount: number;
-  deviceCount: number;
-  datastreamCount: number;
-  selectedProjectName: string;
-  selectedDeviceName: string;
-  onOpenSetup: () => void;
-  onOpenLiveTest: () => void;
-}) {
-  const readyItems = [
-    `${projectCount}/3 projects`,
-    `${templateCount}/3 templates`,
-    `${deviceCount}/3 devices`,
-    `${datastreamCount} V-pins`,
-    selectedDeviceName,
-    "Live test ready"
-  ];
-
-  return (
-    <section className="setup-summary-card" data-testid="setup-summary-card" aria-label="Spark IoT setup summary">
-      <div className="setup-summary-main">
-        <span className="section-kicker">Customer setup flow</span>
-        <div>
-          <h2>Setup ready</h2>
-          <p>{selectedProjectName} is ready for ESP32 / NodeMCU testing. Open the full flow only when you need to edit projects, templates, V-pins, device tokens or Arduino code.</p>
-        </div>
-      </div>
-      <div className="setup-summary-status">
-        <span><CheckCircle2 size={16} /><strong>6/6 ready</strong></span>
-        <small>{readyItems.join(" · ")}</small>
-      </div>
-      <div className="setup-summary-actions">
-        <button type="button" className="secondary" onClick={onOpenLiveTest}><PlugZap size={16} />Live test</button>
-        <button type="button" className="primary" onClick={onOpenSetup}>Open setup flow<ArrowRight size={16} /></button>
-      </div>
-    </section>
-  );
-}
-
 function LaunchWizardPanel({
   projectCount,
   templateCount,
@@ -631,7 +582,7 @@ function LaunchWizardPanel({
   return (
     <section className="launch-wizard-panel" data-testid="launch-wizard-panel" aria-label="Spark IoT first-use launch wizard">
       <div className="launch-wizard-copy">
-        <span className="section-kicker">Customer setup flow</span>
+        <span className="section-kicker">Customer onboarding</span>
         <h2>Spark IoT Launch Wizard</h2>
         <p>Follow the same professional flow customers expect from Blynk, but faster for Rectronx boards: project, template, V-pins, device token, Arduino code and live proof.</p>
         <div className="launch-wizard-status">
