@@ -364,6 +364,8 @@ describe("App", () => {
     expect(css).toContain("background: #f8fbff");
     expect(css).toContain(".spark-ui .entity-card-actions button.entity-edit-button");
     expect(css).toContain("background: #0f172a");
+    expect(css).toContain(".spark-ui .spark-widget-card.cockpit-media-widget .media-frame");
+    expect(css).toContain("min-height: clamp(22rem, 28vw, 27rem)");
   });
 
   it("builds same-origin websocket URLs when the production API base is relative", () => {

@@ -3770,6 +3770,15 @@ body {
   min-height: 11rem;
 }
 
+.spark-ui .spark-widget-card.cockpit-media-widget .media-frame {
+  min-height: clamp(22rem, 28vw, 27rem);
+}
+
+.spark-ui .spark-widget-card.cockpit-media-widget .map,
+.spark-ui .spark-widget-card.cockpit-media-widget .camera {
+  min-height: 100%;
+}
+
 .spark-ui .spark-widget-card .widget-footer {
   min-width: 0;
   display: flex;
