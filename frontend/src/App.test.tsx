@@ -1101,6 +1101,35 @@ describe("App", () => {
     expect(localStorage.getItem("spark_iot_session")).toBeNull();
   });
 
+  it("uses one standardized premium auth layout across login, register and reset modes", async () => {
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Sign in to account/i }));
+
+    const authCard = screen.getByTestId("auth-card");
+    expect(authCard).toHaveClass("login-panel", "auth-card");
+    expect(screen.getByTestId("auth-brand")).toHaveClass("auth-brand");
+    expect(screen.getByTestId("auth-tabs")).toHaveClass("auth-mode-tabs");
+    expect(screen.getByTestId("auth-form")).toHaveClass("auth-form");
+    expect(screen.getByTestId("auth-primary-action")).toHaveClass("primary", "auth-primary-action");
+    expect(screen.getByRole("button", { name: /Continue demo mode/i })).toHaveClass("auth-secondary-action");
+    expect(screen.getAllByTestId("auth-field").length).toBeGreaterThanOrEqual(2);
+
+    fireEvent.click(screen.getByRole("button", { name: /Create Starter account/i }));
+    expect(screen.getByTestId("auth-card")).toHaveClass("auth-card");
+    expect(screen.getByTestId("auth-tabs")).toHaveClass("auth-mode-tabs");
+    expect(screen.getByTestId("auth-form")).toHaveClass("auth-form");
+    expect(screen.getAllByTestId("auth-field").length).toBeGreaterThanOrEqual(4);
+    expect(screen.getByTestId("auth-primary-action")).toHaveClass("primary", "auth-primary-action");
+
+    fireEvent.click(screen.getByRole("button", { name: /Reset password/i }));
+    expect(screen.getByTestId("auth-card")).toHaveClass("auth-card");
+    expect(screen.getByTestId("auth-tabs")).toHaveClass("auth-mode-tabs");
+    expect(screen.getByTestId("auth-form")).toHaveClass("auth-form");
+    expect(screen.getAllByTestId("auth-field").length).toBe(1);
+    expect(screen.getByTestId("auth-primary-action")).toHaveClass("primary", "auth-primary-action");
+  });
+
   it("lets a new customer create a Starter account from the auth screen", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
