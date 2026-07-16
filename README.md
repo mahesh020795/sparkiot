@@ -54,6 +54,12 @@ Password reset tokens are stored only as SHA-256 hashes and expire after 30 minu
 
 For MVP/VPS testing, `/api/v1/auth/password-reset/request` returns the one-time reset token directly so the flow can be tested before email is configured. Before selling to public customers, connect SMTP or a transactional email provider and stop exposing raw reset tokens in API responses.
 
+### First-login SaaS onboarding
+
+New accounts start in a guided Starter Workspace. Spark IoT creates the tenant, owner user, Starter plan and onboarding state, but it does not create a real project/device/dashboard until the user chooses a project and board.
+
+The demo dashboard remains available from the Starter Workspace as a clearly labelled preview using simulated telemetry. It is separate from customer-owned tenant data.
+
 ## Publish Demo Telemetry
 
 HTTP:

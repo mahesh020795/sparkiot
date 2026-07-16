@@ -246,6 +246,7 @@ export function App() {
     const created = await api.createProject(project);
     setAccountProjects((current) => [created, ...current]);
     setSelectedProjectId(created.id);
+    markFirstProjectCreated(created.id);
     return created;
   }
 
@@ -285,9 +286,35 @@ export function App() {
     setAccountDevices((current) => [device, ...current.filter((item) => item.id !== device.id)]);
     setTemplateSaveStates((current) => ({ ...current, [template.id]: "saved" }));
     setSelectedProjectId(project.id);
+    markFirstProjectCreated(project.id);
     setTemplateStudioInitialStep("Code");
     setTemplateStudioId(template.id);
     setView("templates");
+  }
+
+  async function openDemoPreview() {
+    setDemoPreviewMode(true);
+    if (onboarding) {
+      const updated = { ...onboarding, demo_viewed: true };
+      setOnboarding(updated);
+      try {
+        await api.updateOnboarding(updated);
+      } catch {
+        // Demo preview still works if the progress update fails.
+      }
+    }
+  }
+
+  function markFirstProjectCreated(projectId: string) {
+    if (!onboarding) return;
+    const updated = {
+      ...onboarding,
+      current_step: "project",
+      completed_steps: Array.from(new Set([...onboarding.completed_steps, "starter_workspace", "project"])),
+      first_project_id: projectId,
+    };
+    setOnboarding(updated);
+    void api.updateOnboarding(updated);
   }
 
   function openSelectedTemplateStudio(initialStep: StudioLaunchStep = "Setup") {
@@ -316,7 +343,7 @@ export function App() {
         onVerified={() => {
           void refreshAccountData();
         }}
-        onPreviewDemo={() => setDemoPreviewMode(true)}
+        onPreviewDemo={() => void openDemoPreview()}
         onLogout={signOut}
       />
     );
@@ -328,7 +355,7 @@ export function App() {
         user={userProfile}
         onCreateProject={() => setView("setup")}
         onOpenSetupFlow={() => setView("setup")}
-        onPreviewDemo={() => setDemoPreviewMode(true)}
+        onPreviewDemo={() => void openDemoPreview()}
       />
     );
   }

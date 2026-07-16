@@ -112,6 +112,105 @@ describe("App", () => {
     expect(screen.getByText("Temperature")).toBeInTheDocument();
   });
 
+  it("marks demo preview separately from customer workspace", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
+    vi.spyOn(api, "me").mockResolvedValue({
+      full_name: "Acme Owner",
+      email: "owner@acme.test",
+      tenant_id: "tenant-1",
+      plan_code: "starter",
+      email_verified: true,
+      onboarding_step: "starter_workspace",
+    });
+    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 0, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "projects").mockResolvedValue([]);
+    vi.spyOn(api, "devices").mockResolvedValue([]);
+    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "notifications").mockResolvedValue([]);
+    vi.spyOn(api, "schedules").mockResolvedValue([]);
+    vi.spyOn(api, "onboarding").mockResolvedValue({ current_step: "starter_workspace", completed_steps: ["verify_email"], demo_viewed: false, first_project_id: null });
+    const update = vi.spyOn(api, "updateOnboarding").mockResolvedValue({ current_step: "starter_workspace", completed_steps: ["verify_email"], demo_viewed: true, first_project_id: null });
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /View demo dashboard/i }));
+
+    expect(update).toHaveBeenCalledWith({ current_step: "starter_workspace", completed_steps: ["verify_email"], demo_viewed: true, first_project_id: null });
+    const demoBanner = await screen.findByRole("status");
+    expect(within(demoBanner).getByText(/Demo dashboard/i)).toBeInTheDocument();
+    expect(within(demoBanner).getByText(/Simulated telemetry/i)).toBeInTheDocument();
+  });
+
+  it("advances onboarding after account quick start creates the first project", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const createdProject = { id: "project-aquaponics", name: "Aquaponics Lab", description: "Fish tank and plant bed monitoring", is_active: true };
+    const createdDashboard = { id: "dashboard-aquaponics", project_id: "project-aquaponics", name: "Aquaponics Lab Dashboard", revision: 1, widgets: [] };
+    const createdTemplate = {
+      id: "template-aquaponics",
+      name: "Aquaponics Lab",
+      board: "ESP8266" as const,
+      description: "Smart Irrigation template for Aquaponics Lab",
+      revision: 1,
+      datastreams: [
+        { id: "ds-project-aquaponics-0", name: "Temperature", pin: "V0" as const, dataType: "float" as const, unit: "C", min: 0, max: 100, color: "#2563eb" }
+      ],
+      notifications: [],
+      dashboard: {
+        ...createdDashboard,
+        widgets: [{ id: "w-project-aquaponics-0", type: "gauge", title: "Temperature", x: 0, y: 0, w: 3, h: 2, deviceId: "", channel: "V0", datastreamId: "ds-project-aquaponics-0" }]
+      }
+    };
+    const createdDevice = {
+      id: "device-aquaponics",
+      project_id: "project-aquaponics",
+      name: "NodeMCU Tank Controller",
+      board: "ESP8266",
+      is_online: false,
+      token: "spk_dev_aquaponics_once_1234",
+      telemetry_topic: "spark/v1/account-tenant/device-aquaponics/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/device-aquaponics/command/{channel}"
+    };
+    vi.spyOn(api, "me").mockResolvedValue({
+      full_name: "Acme Owner",
+      email: "owner@acme.test",
+      tenant_id: "tenant-1",
+      plan_code: "starter",
+      email_verified: true,
+      onboarding_step: "starter_workspace",
+    });
+    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 0, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "projects").mockResolvedValue([]);
+    vi.spyOn(api, "devices").mockResolvedValue([]);
+    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "notifications").mockResolvedValue([]);
+    vi.spyOn(api, "schedules").mockResolvedValue([]);
+    vi.spyOn(api, "onboarding").mockResolvedValue({ current_step: "starter_workspace", completed_steps: ["verify_email"], demo_viewed: false, first_project_id: null });
+    vi.spyOn(api, "createProject").mockResolvedValue(createdProject);
+    vi.spyOn(api, "dashboard").mockResolvedValue(createdDashboard);
+    vi.spyOn(api, "createTemplate").mockResolvedValue(createdTemplate);
+    vi.spyOn(api, "createDevice").mockResolvedValue(createdDevice);
+    const update = vi.spyOn(api, "updateOnboarding").mockResolvedValue({
+      current_step: "project",
+      completed_steps: ["verify_email", "starter_workspace", "project"],
+      demo_viewed: false,
+      first_project_id: "project-aquaponics",
+    });
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /Create first project/i }));
+    fireEvent.change(await screen.findByLabelText("Quick start project name"), { target: { value: "Aquaponics Lab" } });
+    fireEvent.change(screen.getByLabelText("Quick start project description"), { target: { value: "Fish tank and plant bed monitoring" } });
+    fireEvent.change(screen.getByLabelText("Quick start board"), { target: { value: "ESP8266" } });
+    fireEvent.change(screen.getByLabelText("Quick start device name"), { target: { value: "NodeMCU Tank Controller" } });
+    fireEvent.click(screen.getByRole("button", { name: /Build workspace/i }));
+
+    await vi.waitFor(() => expect(update).toHaveBeenCalledWith({
+      current_step: "project",
+      completed_steps: ["verify_email", "starter_workspace", "project"],
+      demo_viewed: false,
+      first_project_id: "project-aquaponics",
+    }));
+  });
+
   it("opens directly on the Spark IoT dashboard without login", async () => {
     render(<App />);
     expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();
