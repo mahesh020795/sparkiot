@@ -3,11 +3,12 @@ from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request
 from app.services.telemetry import evaluate_alerts, ingest, normalize_value
 from app.services.schedules import due_occurrence_key, run_due_schedules_once
 from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
-from app.schemas.api import PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
+from app.schemas.api import EmailVerificationConfirmRequest, OnboardingUpdate, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
 from app.core.database import Base, ensure_runtime_indexes, make_engine
 from app.core.security import create_access_token, hash_secret, verify_secret
-from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, Notification, PasswordResetToken, Project, RefreshToken, Schedule, Telemetry, Tenant, User
-from app.api.routes.auth import confirm_password_reset, register, request_password_reset
+from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, EmailVerificationToken, Notification, OnboardingState, PasswordResetToken, Project, RefreshToken, Schedule, Telemetry, Tenant, User
+from app.api.routes.auth import confirm_email_verification, confirm_password_reset, me, register, request_password_reset, resend_email_verification
+from app.api.routes.onboarding import get_onboarding, update_onboarding
 from app.api.routes.templates import create_template, list_templates, update_template
 from app.api.routes.devices import command_logs
 from app.api.routes.notifications import mark_notification_read
@@ -27,6 +28,84 @@ def memory_session():
     Base.metadata.create_all(bind=engine)
     Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     return Session()
+
+
+def test_register_creates_unverified_user_email_token_and_onboarding_state():
+    db = memory_session()
+    response = register(RegisterRequest(
+        tenant_name="Acme Farm",
+        full_name="Acme Owner",
+        email="owner@acme.test",
+        password="SparkDemo123!",
+    ), db)
+    assert response.access_token
+
+    user = db.scalar(select(User).where(User.email == "owner@acme.test"))
+    assert user is not None
+    assert user.email_verified_at is None
+
+    token = db.scalar(select(EmailVerificationToken).where(EmailVerificationToken.user_id == user.id))
+    assert token is not None
+    assert token.used_at is None
+    assert len(token.token_hash) == 64
+
+    state = db.scalar(select(OnboardingState).where(OnboardingState.user_id == user.id))
+    assert state is not None
+    assert state.current_step == "verify_email"
+    assert state.completed_steps == []
+    assert state.demo_viewed is False
+    assert state.first_project_id is None
+
+
+def test_email_verification_confirms_user_and_advances_onboarding():
+    db = memory_session()
+    register_response = register(RegisterRequest(
+        tenant_name="Acme Farm",
+        full_name="Acme Owner",
+        email="verify@acme.test",
+        password="SparkDemo123!",
+    ), db)
+    user = db.scalar(select(User).where(User.email == "verify@acme.test"))
+    resend_response = resend_email_verification(user=user, db=db)
+
+    assert resend_response.verification_token
+    confirm_response = confirm_email_verification(EmailVerificationConfirmRequest(token=resend_response.verification_token), db=db)
+    assert confirm_response.status == "ok"
+
+    db.refresh(user)
+    state = db.scalar(select(OnboardingState).where(OnboardingState.user_id == user.id))
+    assert user.email_verified_at is not None
+    assert state.current_step == "starter_workspace"
+    assert "verify_email" in state.completed_steps
+
+    me_response = me(user=user, db=db)
+    assert me_response.email_verified is True
+    assert me_response.onboarding_step == "starter_workspace"
+    assert register_response.access_token
+
+
+def test_onboarding_state_can_mark_demo_viewed_and_first_project():
+    db = memory_session()
+    register(RegisterRequest(
+        tenant_name="Lab",
+        full_name="Lab Owner",
+        email="lab@example.test",
+        password="SparkDemo123!",
+    ), db)
+    user = db.scalar(select(User).where(User.email == "lab@example.test"))
+    confirm = resend_email_verification(user=user, db=db)
+    confirm_email_verification(EmailVerificationConfirmRequest(token=confirm.verification_token), db=db)
+
+    updated = update_onboarding(OnboardingUpdate(
+        current_step="project",
+        completed_steps=["verify_email", "starter_workspace"],
+        demo_viewed=True,
+        first_project_id="project-123",
+    ), user=user, db=db)
+
+    assert updated.current_step == "project"
+    assert updated.demo_viewed is True
+    assert updated.first_project_id == "project-123"
 
 
 def test_topic_helpers_create_spark_namespace():

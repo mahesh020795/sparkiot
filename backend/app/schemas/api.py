@@ -1,23 +1,48 @@
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, HttpUrl, field_validator
+
+
+def validate_email(value: str) -> str:
+    email = value.strip()
+    if "@" not in email or email.startswith("@") or email.endswith("@"):
+        raise ValueError("Invalid email address")
+    local, domain = email.rsplit("@", 1)
+    if not local or "." not in domain:
+        raise ValueError("Invalid email address")
+    return email
 
 
 class RegisterRequest(BaseModel):
     tenant_name: str = Field(min_length=2, max_length=160)
     full_name: str = Field(min_length=2, max_length=160)
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("email")
+    @classmethod
+    def validate_register_email(cls, email: str) -> str:
+        return validate_email(email)
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255)
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_login_email(cls, email: str) -> str:
+        return validate_email(email)
 
 
 class PasswordResetRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255)
+
+    @field_validator("email")
+    @classmethod
+    def validate_password_reset_email(cls, email: str) -> str:
+        return validate_email(email)
 
 
 class PasswordResetConfirmRequest(BaseModel):
@@ -25,16 +50,22 @@ class PasswordResetConfirmRequest(BaseModel):
     password: str = Field(min_length=8, max_length=128)
 
 
+class EmailVerificationConfirmRequest(BaseModel):
+    token: str = Field(min_length=24, max_length=256)
+
+
 class StatusResponse(BaseModel):
     status: str = "ok"
     message: str
     reset_token: str | None = None
+    verification_token: str | None = None
 
 
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    verification_token: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -43,6 +74,22 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     plan_code: str
+    email_verified: bool
+    onboarding_step: str
+
+
+class OnboardingResponse(BaseModel):
+    current_step: str
+    completed_steps: list[str]
+    demo_viewed: bool
+    first_project_id: str | None = None
+
+
+class OnboardingUpdate(BaseModel):
+    current_step: str = Field(min_length=2, max_length=80)
+    completed_steps: list[str] = Field(default_factory=list, max_length=20)
+    demo_viewed: bool = False
+    first_project_id: str | None = None
 
 
 class ProjectCreate(BaseModel):
