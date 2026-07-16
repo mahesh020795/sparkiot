@@ -102,7 +102,7 @@ Signed-in customer workspaces use real tenant-scoped template routes:
 - `GET /api/v1/templates/{template_id}`
 - `PUT /api/v1/templates/{template_id}`
 
-The recommended account flow is now `Projects -> Templates -> Devices -> Code -> Live Test`. Create the project first, create one template for that project, configure datastreams/dashboard/notifications in Template Studio, then provision the physical board. Saved data includes template name, board, description, virtual pins/datastreams, notification rules, and dashboard widget layout/config. The API uses optimistic `revision` checks so stale browser tabs cannot silently overwrite newer template changes.
+The recommended account flow is now `Projects -> Templates -> Devices -> Code -> Board Test`. Create the project first, create one template for that project, configure datastreams/dashboard/notifications in Template Studio, then provision the physical board. Saved data includes template name, board, description, virtual pins/datastreams, notification rules, and dashboard widget layout/config. The API uses optimistic `revision` checks so stale browser tabs cannot silently overwrite newer template changes.
 
 
 ## Data History and CSV Export

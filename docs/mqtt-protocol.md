@@ -111,4 +111,4 @@ Command acknowledgements are published by boards after receiving a command:
 }
 ```
 
-The backend stores ACK packets as command-log entries so the Live Test command monitor can show both the dashboard command and the board confirmation.
+The backend stores ACK packets as command-log entries so the Board Test command monitor can show both the dashboard command and the board confirmation.

@@ -1526,7 +1526,7 @@ main {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
 
-/* Goal dashboard top-nav Gemini shell pass: strict Spark IoT / Redronix cockpit architecture. */
+/* Goal dashboard top-nav Gemini shell pass: strict Spark IoT / Rectronx cockpit architecture. */
 html,
 body,
 #root {

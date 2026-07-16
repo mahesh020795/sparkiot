@@ -465,7 +465,7 @@ export function TemplateStudioPage({
                 <li><strong>Copy folder to Documents/Arduino/libraries/SparkIoT</strong><span>Use the repo folder at arduino/SparkIoT.</span></li>
                 <li><strong>Install PubSubClient</strong><span>Arduino IDE Library Manager, Nick O'Leary package.</span></li>
                 <li><strong>Set WiFi and broker</strong><span>Do not use localhost from ESP32/ESP8266.</span></li>
-                <li><strong>Upload and watch Live Test</strong><span>Confirm telemetry, switch command and ACK loop.</span></li>
+                <li><strong>Upload and open Board Test</strong><span>Confirm telemetry, switch command and ACK loop.</span></li>
               </ol>
             </div>
             <div className="protocol-card">

@@ -948,7 +948,7 @@ body {
   }
 }
 
-/* Devices + Live Test standardization: board testing and provisioning surfaces. */
+/* Devices + Board Test standardization: board testing and provisioning surfaces. */
 .spark-ui .device-system-page,
 .spark-ui .live-system-page {
   gap: var(--spark-space-6);
@@ -1480,8 +1480,31 @@ body {
 .spark-ui .live-topic-card,
 .spark-ui .live-values-panel,
 .spark-ui .board-quick-test,
+.spark-ui .live-test-advanced,
 .spark-ui .live-system-command-monitor {
   padding: var(--spark-space-5);
+}
+
+.spark-ui .live-test-advanced summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spark-space-2);
+  color: var(--spark-text);
+  font-weight: 900;
+  cursor: pointer;
+  list-style: none;
+}
+
+.spark-ui .live-test-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.spark-ui .live-test-advanced summary svg {
+  color: var(--spark-primary);
+}
+
+.spark-ui .live-test-advanced[open] summary {
+  margin-bottom: var(--spark-space-4);
 }
 
 .spark-ui .board-quick-test {

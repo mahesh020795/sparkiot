@@ -317,7 +317,7 @@ describe("App", () => {
     expect(within(navigation).queryByRole("button", { name: "Overview" })).not.toBeInTheDocument();
     expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
     expect(screen.queryByText("Launch checklist")).not.toBeInTheDocument();
-    expect(screen.queryByText("Project → Template → Device → Code → Live Test")).not.toBeInTheDocument();
+    expect(screen.queryByText("Project → Template → Device → Code → Board Test")).not.toBeInTheDocument();
     expect(navigation).not.toHaveTextContent("Setup Flow");
   });
 
@@ -399,9 +399,9 @@ describe("App", () => {
     expect(screen.getByTestId("dashboard-header-grid")).toHaveClass("dashboard-header-grid", "spark-page-header-grid");
     expect(screen.getByTestId("dashboard-header-primary")).toHaveClass("spark-page-header-primary");
     expect(screen.getByTestId("dashboard-header-selector")).toHaveClass("spark-page-header-selector");
-    expect(screen.getByText("Redronix Cloud")).toBeInTheDocument();
+    expect(screen.getByText("Rectronx Cloud")).toBeInTheDocument();
+    expect(screen.queryByText("Redronix Cloud")).not.toBeInTheDocument();
     expect(screen.getByText("edgesensor_high")).toHaveClass("material-symbols-outlined");
-    expect(screen.queryByText("Rectronx Cloud")).not.toBeInTheDocument();
     expect(screen.queryByText("Responsive readiness")).not.toBeInTheDocument();
     expect(screen.queryByText("Quality assurance console")).not.toBeInTheDocument();
     expect(screen.getByTestId("dashboard-header-primary")).toBeInTheDocument();
@@ -977,35 +977,36 @@ describe("App", () => {
     expect(screen.getByDisplayValue("Greenhouse Controller")).toBeInTheDocument();
   });
 
-  it("shows a live board test panel with MQTT connection details", async () => {
+  it("shows a focused Board Test panel with real connection proof and advanced MQTT details", async () => {
     render(<App />);
-    fireEvent.click(await screen.findByText("Live Test"));
+    fireEvent.click(await screen.findByText("Board Test"));
 
     expect(screen.getByTestId("live-test-page")).toHaveClass("live-system-page");
     expect(screen.getByTestId("live-test-hero")).toHaveClass("live-system-hero");
-    expect(screen.getByTestId("live-test-grid")).toHaveClass("live-system-grid");
     expect(screen.getByTestId("connection-proof-timeline")).toHaveClass("connection-proof-timeline");
     expect(screen.getByTestId("live-command-monitor")).toHaveClass("live-system-command-monitor");
-    expect(screen.getByText("Live board test")).toBeInTheDocument();
-    expect(screen.getByText("Connection proof timeline")).toBeInTheDocument();
-    expect(screen.getByText("1. Telemetry received")).toBeInTheDocument();
-    expect(screen.getByText("2. Command published")).toBeInTheDocument();
-    expect(screen.getByText("3. Board ACK")).toBeInTheDocument();
+    expect(screen.getAllByText("Board Test").length).toBeGreaterThan(0);
+    expect(screen.getByText("Verify your ESP32 / NodeMCU connection")).toBeInTheDocument();
+    expect(screen.queryByTestId("board-readiness-checklist")).not.toBeInTheDocument();
+    expect(screen.getByText("Connection proof")).toBeInTheDocument();
+    expect(screen.getByText("Telemetry received")).toBeInTheDocument();
+    expect(screen.getByText("Command published")).toBeInTheDocument();
+    expect(screen.getAllByText("Board ACK").length).toBeGreaterThan(0);
     expect(screen.getByText("Latest V-pin readings are landing from the selected board.")).toBeInTheDocument();
     expect(screen.getByText("Waiting for switch/button command activity.")).toBeInTheDocument();
     expect(screen.getByTestId("board-quick-test")).toHaveClass("board-quick-test");
-    expect(screen.getByText("Board Quick Test")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Publish test command/i })).toBeInTheDocument();
+    expect(screen.getByText("Send one test command")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Send test command/i })).toBeInTheDocument();
     expect(screen.getByText("Test command topic")).toBeInTheDocument();
     expect(screen.getAllByText("spark/v1/demo-tenant/device-irrigation/command/V3").length).toBeGreaterThan(0);
     expect(screen.getByText("Expected board ACK")).toBeInTheDocument();
     expect(screen.getByText("spark/v1/demo-tenant/device-irrigation/ack/V3")).toBeInTheDocument();
-    expect(screen.getByText("MQTT broker")).toBeInTheDocument();
+    expect(screen.getByText("Advanced MQTT details")).toBeInTheDocument();
     expect(screen.getByText("device-irrigation")).toBeInTheDocument();
     expect(screen.getByText("spark/v1/demo-tenant/device-irrigation/telemetry/{channel}")).toBeInTheDocument();
     expect(screen.getByText("spk_dev_irrigation_demo_9f3a")).toBeInTheDocument();
     expect(screen.getByText("Command monitor")).toBeInTheDocument();
-    expect(screen.getByText("Shows dashboard commands and board acknowledgements. This is how you prove the switch reached the ESP32/NodeMCU.")).toBeInTheDocument();
+    expect(screen.getByText("Shows commands sent by Spark IoT and ACK packets returned by the board.")).toBeInTheDocument();
   });
 
   it("shows a Blynk Timer-style schedule automation page in demo mode", async () => {
@@ -1689,7 +1690,7 @@ describe("App", () => {
     await vi.waitFor(() => expect(click).toHaveBeenCalled());
   });
 
-  it("uses account device APIs on Live Test after sign in instead of demo board-test endpoints", async () => {
+  it("uses account device APIs on Board Test after sign in instead of demo board-test endpoints", async () => {
     const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Real tenant project", is_active: true };
     const accountDevice = {
       id: "account-device",
@@ -1743,7 +1744,7 @@ describe("App", () => {
         return new Response(JSON.stringify(logs), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       if (url.includes("/demo/projects/account-project/board-test") || url.includes("/demo/devices/account-device")) {
-        throw new Error(`Account Live Test must not call demo endpoint ${url}`);
+        throw new Error(`Account Board Test must not call demo endpoint ${url}`);
       }
       return new Response("not found", { status: 404 });
     });
@@ -1754,33 +1755,30 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
 
     expect(await screen.findByText("Customer Greenhouse Dashboard")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Live Test"));
+    fireEvent.click(screen.getByText("Board Test"));
 
     expect(await screen.findByText("account-tenant")).toBeInTheDocument();
     expect(screen.getByText("account-device")).toBeInTheDocument();
     expect(screen.getByText("spk_once_visible")).toBeInTheDocument();
     expect(screen.getByText(/28\.6C/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Publish test command/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Send test command/i }));
 
     expect((await screen.findAllByText("published")).length).toBeGreaterThan(0);
-    expect(await screen.findByText("Board ACK")).toBeInTheDocument();
+    expect((await screen.findAllByText("Board ACK")).length).toBeGreaterThan(0);
     expect(await screen.findByText(/Pump command applied/)).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/demo/projects/account-project/board-test"), expect.anything());
   });
 
-  it("shows a real-board readiness checklist on Live Test", async () => {
+  it("keeps Board Test compact without the old readiness checklist", async () => {
     render(<App />);
-    fireEvent.click(await screen.findByText("Live Test"));
+    fireEvent.click(await screen.findByText("Board Test"));
 
-    expect(await screen.findByTestId("board-readiness-checklist")).toHaveClass("board-readiness-checklist");
-    expect(screen.getByText("Real board readiness")).toBeInTheDocument();
-    expect(screen.getByText("Install SparkIoT v1.0.0")).toBeInTheDocument();
-    expect(screen.getByText("Set broker host")).toBeInTheDocument();
-    expect(screen.getByText("Open Serial Monitor at 115200")).toBeInTheDocument();
-    expect(screen.getByText("Publish V0 telemetry")).toBeInTheDocument();
-    expect(screen.getByText("Confirm command ACK")).toBeInTheDocument();
-    expect(screen.getByText("34.73.29.12 or your LAN IP")).toBeInTheDocument();
+    expect(await screen.findByText("Verify your ESP32 / NodeMCU connection")).toBeInTheDocument();
+    expect(screen.queryByTestId("board-readiness-checklist")).not.toBeInTheDocument();
+    expect(screen.queryByText("Install SparkIoT v1.0.0")).not.toBeInTheDocument();
+    expect(screen.getByText("Latest received V pins")).toBeInTheDocument();
+    expect(screen.getByText("Advanced MQTT details")).toBeInTheDocument();
   });
 
   it("shows a production-ready firmware export workflow in the Code tab", async () => {
@@ -1797,7 +1795,7 @@ describe("App", () => {
     expect(screen.getByText("Copy folder to Documents/Arduino/libraries/SparkIoT")).toBeInTheDocument();
     expect(screen.getByText("Set WiFi and broker")).toBeInTheDocument();
     expect(screen.getByText(/Do not use localhost/)).toBeInTheDocument();
-    expect(screen.getByText("Upload and watch Live Test")).toBeInTheDocument();
+    expect(screen.getByText("Upload and open Board Test")).toBeInTheDocument();
     expect(screen.getByText("Download .ino")).toBeInTheDocument();
     expect(screen.getByText("Copy sketch")).toBeInTheDocument();
     expect(screen.getByText("Smart_Irrigation_SparkIoT.ino")).toBeInTheDocument();

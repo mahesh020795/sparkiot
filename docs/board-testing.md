@@ -23,7 +23,7 @@ http://YOUR_VPS_IP
 http://YOUR_VPS_IP:5173
 ```
 
-Then open the `Live Test` tab. It shows the MQTT broker host, port, tenant ID, device ID, device token, telemetry topic, command topic, and latest received virtual pin values.
+Then open the `Board Test` tab. It shows the MQTT broker host, port, tenant ID, device ID, device token, telemetry topic, command topic, and latest received virtual pin values.
 
 For signed-in account testing, use the real customer setup flow:
 
@@ -103,7 +103,7 @@ In Spark IoT:
    - `ROTATE_TOKEN_TO_REVEAL_ONCE` if the selected account device token is hidden
 7. Upload to the board.
 
-The generated sketch includes command acknowledgement support for boolean virtual pins. When a dashboard switch sends a command, the board echoes the updated telemetry value and publishes an ACK packet back to Spark IoT so the `Live Test` command monitor can prove the full loop.
+The generated sketch includes command acknowledgement support for boolean virtual pins. When a dashboard switch sends a command, the board echoes the updated telemetry value and publishes an ACK packet back to Spark IoT so the `Board Test` command monitor can prove the full loop.
 
 For complete library install and API details, see `docs/arduino-library.md`.
 
@@ -203,7 +203,7 @@ mosquitto_pub -h 127.0.0.1 -p 1883 -t spark/v1/demo-tenant/device-irrigation/tel
 
 The backend should accept the message and the dashboard can receive it through the realtime path.
 
-In the no-login MVP dashboard, widgets poll the demo latest endpoint every few seconds. After publishing telemetry, open `Live Test` or the dashboard and wait briefly for the value to refresh.
+In the no-login MVP dashboard, widgets poll the demo latest endpoint every few seconds. After publishing telemetry, open `Board Test` or the dashboard and wait briefly for the value to refresh.
 
 For GPS:
 
@@ -268,7 +268,7 @@ Then open the Spark IoT dashboard in your browser and click the Pump Control swi
 {"value":false}
 ```
 
-The `Live Test` tab also has a `Command monitor`. It should show:
+The `Board Test` tab also has a `Command monitor`. It should show:
 
 - `published` when the dashboard sends the command.
 - `Board ACK` when the ESP32/NodeMCU publishes its acknowledgement.
@@ -296,7 +296,7 @@ docker compose exec mosquitto mosquitto_pub \
   -m '{"status":"ok","value":true,"message":"Manual ACK test"}'
 ```
 
-Then open `Live Test` and check the `Command monitor`.
+Then open `Board Test` and check the `Command monitor`.
 
 ## 11. Troubleshooting
 

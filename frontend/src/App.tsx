@@ -60,7 +60,7 @@ export function App() {
     ["templates", Workflow, "Templates"],
     ["projects", MapPinned, "Projects"],
     ["devices", Cpu, "Devices"],
-    ["live", PlugZap, "Live Test"],
+    ["live", PlugZap, "Board Test"],
     ["schedules", CalendarClock, "Schedules"],
     ["history", Database, "Data History"],
     ["notifications", Bell, "Notifications"],
@@ -527,7 +527,7 @@ export function App() {
   return (
     <div className={view === "dashboard" ? "app-shell spark-ui dashboard-shell" : "app-shell spark-ui"} data-testid="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-icon"><span className="material-symbols-outlined" aria-hidden="true">edgesensor_high</span></span><div><strong>Spark IoT</strong><span>Redronix Cloud</span></div></div>
+        <div className="brand"><span className="brand-icon"><span className="material-symbols-outlined" aria-hidden="true">edgesensor_high</span></span><div><strong>Spark IoT</strong><span>Rectronx Cloud</span></div></div>
         <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
           <span className="section-kicker">{isAccountMode ? "Account mode active" : demoPreviewMode ? "Demo preview active" : "Demo mode active"}</span>
@@ -699,7 +699,7 @@ function LaunchWizardPanel({
     { title: "Add datastreams", detail: `${datastreamCount} virtual pins mapped`, action: "Edit datastreams", onClick: onOpenDatastreams, icon: Database },
     { title: "Add device", detail: `${deviceCount}/3 devices provisioned`, action: "Open devices", onClick: onOpenDevices, icon: Cpu },
     { title: "Generate Arduino code", detail: `Sketch targets ${selectedDeviceName}`, action: "Open code generator", onClick: onOpenCode, icon: TerminalSquare },
-    { title: "Live board test", detail: "MQTT telemetry and command ACK", action: "Open live test", onClick: onOpenLiveTest, icon: PlugZap }
+    { title: "Board test", detail: "MQTT telemetry and command ACK", action: "Open board test", onClick: onOpenLiveTest, icon: PlugZap }
   ] as const;
 
   async function buildQuickStartWorkspace() {
@@ -918,85 +918,46 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
     <section className="support-page live-test-page live-system-page" data-testid="live-test-page">
       <div className="support-hero live-test-hero live-system-hero" data-testid="live-test-hero">
         <div>
-          <span className="section-kicker">Live board test</span>
-          <h2>Connect ESP32 or NodeMCU and watch real telemetry land here</h2>
-          <p>This screen is the practical test bench: MQTT broker, token, topics, latest V-pin values and board status in one place.</p>
+          <span className="section-kicker">Board Test</span>
+          <h2>Verify your ESP32 / NodeMCU connection</h2>
+          <p>A clean hardware proof screen for real telemetry, dashboard commands and board ACK packets.</p>
         </div>
         <div className="support-metrics">
-          <span><strong>{payload.mqtt.port}</strong><small>MQTT port</small></span>
+          <span><strong>{device?.board ?? "Board"}</strong><small>Selected device</small></span>
           <span><strong>{latestRows.length}</strong><small>Live values</small></span>
           <span><strong>{status}</strong><small>API state</small></span>
         </div>
       </div>
 
-      <section className="panel board-readiness-checklist" data-testid="board-readiness-checklist">
-        <div>
-          <span className="section-kicker">Real board readiness</span>
-          <h2>Before you upload the sketch</h2>
-          <p>Use this quick checklist when testing ESP32, NodeMCU ESP8266, Arduino Uno R4 WiFi or Ethernet boards.</p>
-        </div>
-        <div className="readiness-steps">
-          <span><CheckCircle2 size={16} /><strong>Install SparkIoT v1.0.0</strong><small>Arduino IDE library plus PubSubClient.</small></span>
-          <span><RadioTower size={16} /><strong>Set broker host</strong><small>34.73.29.12 or your LAN IP</small></span>
-          <span><TerminalSquare size={16} /><strong>Open Serial Monitor at 115200</strong><small>Watch WiFi, MQTT and command logs.</small></span>
-          <span><Database size={16} /><strong>Publish V0 telemetry</strong><small>Confirm a live value appears here.</small></span>
-          <span><PlugZap size={16} /><strong>Confirm command ACK</strong><small>Switch command must return board ACK.</small></span>
-        </div>
-      </section>
-
       <section className="connection-proof-timeline" data-testid="connection-proof-timeline">
         <div>
-          <span className="section-kicker">Connection proof timeline</span>
-          <h2>Prove the full ESP32 / NodeMCU loop</h2>
-          <p>Use this as your board test checklist: first telemetry arrives, then Spark IoT sends a dashboard command, then the board publishes an ACK.</p>
+          <span className="section-kicker">Connection proof</span>
+          <h2>Three checks before handover</h2>
+          <p>Telemetry must arrive, Spark IoT must publish a command, and the board should return an ACK.</p>
         </div>
         <div className="proof-steps">
           <ProofStep
             state={hasTelemetry ? "complete" : "waiting"}
-            title="1. Telemetry received"
+            title="Telemetry received"
             body={hasTelemetry ? "Latest V-pin readings are landing from the selected board." : "Waiting for MQTT or HTTP telemetry from the selected board."}
           />
           <ProofStep
             state={hasCommand ? "complete" : "waiting"}
-            title="2. Command published"
+            title="Command published"
             body={hasCommand ? "A dashboard switch/button command was published to the device topic." : "Waiting for switch/button command activity."}
           />
           <ProofStep
             state={hasAck ? "complete" : "waiting"}
-            title="3. Board ACK"
+            title="Board ACK"
             body={hasAck ? "The board confirmed it received and applied the command." : "Waiting for the board to publish an ACK packet."}
           />
         </div>
       </section>
 
-      <section className="live-test-grid live-system-grid" data-testid="live-test-grid">
-        <article className="panel live-connection-card">
-          <div className="panel-title"><RadioTower size={18} /><h2>MQTT broker</h2></div>
-          <div className="connection-stack">
-            <ConnectionLine label="Host" value={payload.mqtt.host} />
-            <ConnectionLine label="Port" value={String(payload.mqtt.port)} />
-            <ConnectionLine label="Tenant" value={payload.tenant_id} />
-            <ConnectionLine label="Device ID" value={device?.id ?? "No device"} />
-            <ConnectionLine label="Token" value={devices.find((item) => item.id === device?.id)?.token ?? "Use device token"} />
-          </div>
-        </article>
-
-        <article className="panel live-topic-card">
-          <div className="panel-title"><TerminalSquare size={18} /><h2>Board publish topics</h2></div>
-          <p>Use these exact patterns in Arduino IDE. Replace <strong>{"{channel}"}</strong> with V0, V1, V2 and so on.</p>
-          <code>{device?.telemetry_topic ?? "spark/v1/demo-tenant/device-irrigation/telemetry/{channel}"}</code>
-          <code>{device?.command_topic ?? "spark/v1/demo-tenant/device-irrigation/command/{channel}"}</code>
-          <div className="command-test-note">
-            <strong>Command test</strong>
-            <span>Click the dashboard switch. Spark IoT publishes <code>{(device?.command_topic ?? "spark/v1/demo-tenant/device-irrigation/command/{channel}").replace("{channel}", device?.id === "device-home" ? "V0" : "V3")}</code> with <code>{"{\"value\":true}"}</code> or <code>{"{\"value\":false}"}</code>.</span>
-          </div>
-        </article>
-      </section>
-
       <section className="panel board-quick-test" data-testid="board-quick-test">
         <div>
-          <span className="section-kicker">Board Quick Test</span>
-          <h2>Publish one command and confirm the board ACK</h2>
+          <span className="section-kicker">Command test</span>
+          <h2>Send one test command</h2>
           <p>This sends a real command to the selected device. Your sketch should receive it in `SparkIoT.onCommand`, apply the output, then call `SparkIoT.ack`.</p>
         </div>
         <div className="quick-test-command-grid">
@@ -1006,11 +967,34 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
         </div>
         <div className="quick-test-actions">
           <button className="primary" onClick={publishQuickTestCommand} disabled={quickTestStatus === "publishing"}>
-            <PlugZap size={16} />{quickTestStatus === "publishing" ? "Publishing..." : "Publish test command"}
+            <PlugZap size={16} />{quickTestStatus === "publishing" ? "Sending..." : "Send test command"}
           </button>
           <span className={`quick-test-status ${quickTestStatus}`}>{quickTestStatus === "idle" ? "Ready to test" : quickTestStatus}</span>
         </div>
       </section>
+
+      <details className="panel live-test-advanced">
+        <summary><RadioTower size={18} /> Advanced MQTT details</summary>
+        <div className="live-test-grid live-system-grid" data-testid="live-test-grid">
+          <article className="live-connection-card">
+            <div className="panel-title"><RadioTower size={18} /><h2>MQTT broker</h2></div>
+            <div className="connection-stack">
+              <ConnectionLine label="Host" value={payload.mqtt.host} />
+              <ConnectionLine label="Port" value={String(payload.mqtt.port)} />
+              <ConnectionLine label="Tenant" value={payload.tenant_id} />
+              <ConnectionLine label="Device ID" value={device?.id ?? "No device"} />
+              <ConnectionLine label="Token" value={devices.find((item) => item.id === device?.id)?.token ?? "Use device token"} />
+            </div>
+          </article>
+
+          <article className="live-topic-card">
+            <div className="panel-title"><TerminalSquare size={18} /><h2>Board publish topics</h2></div>
+            <p>Use these exact patterns in Arduino IDE. Replace <strong>{"{channel}"}</strong> with V0, V1, V2 and so on.</p>
+            <code>{device?.telemetry_topic ?? "spark/v1/demo-tenant/device-irrigation/telemetry/{channel}"}</code>
+            <code>{device?.command_topic ?? "spark/v1/demo-tenant/device-irrigation/command/{channel}"}</code>
+          </article>
+        </div>
+      </details>
 
       <section className="panel live-values-panel">
         <div className="panel-title"><Database size={18} /><h2>Latest received V pins</h2></div>
@@ -1027,7 +1011,7 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
 
       <section className="panel command-monitor-panel live-system-command-monitor" data-testid="live-command-monitor">
         <div className="panel-title"><TerminalSquare size={18} /><h2>Command monitor</h2></div>
-        <p>Shows dashboard commands and board acknowledgements. This is how you prove the switch reached the ESP32/NodeMCU.</p>
+        <p>Shows commands sent by Spark IoT and ACK packets returned by the board.</p>
         <div className="command-log-list">
           {commandLogs.length ? commandLogs.map((log) => (
             <article key={log.id} className={`command-log-row ${log.status}`}>
