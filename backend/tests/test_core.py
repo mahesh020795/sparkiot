@@ -721,6 +721,36 @@ def test_account_template_routes_create_list_and_update_persistent_template():
     assert db.get(DeviceTemplateRecord, created["id"]).datastreams[0]["pin"] == "V0"
 
 
+def test_account_template_route_saves_new_schedule_widget_and_time_datastream():
+    db, user, project, dashboard = template_route_db()
+    created = create_template(TemplateStudioUpdate(**account_template_payload(project.id, dashboard.id)), user=user, db=db)
+    payload = account_template_payload(project.id, dashboard.id, revision=1)
+    payload["datastreams"].append({"id": "ds-schedule", "name": "Board Schedule", "pin": "V2", "dataType": "time", "unit": "", "color": "#2563eb"})
+    payload["dashboard"]["widgets"].append({
+        "id": "w-schedule",
+        "type": "schedule",
+        "title": "Board Schedule",
+        "x": 3,
+        "y": 0,
+        "w": 3,
+        "h": 3,
+        "deviceId": "device-irrigation",
+        "channel": "V2",
+        "datastreamId": "ds-schedule",
+        "unit": "",
+        "days": ["mon", "wed", "fri"],
+        "timeSlots": ["06:00", "12:00", "18:00"],
+        "maxTimeSlots": 3,
+    })
+
+    updated = update_template(created["id"], TemplateStudioUpdate(**payload), user=user, db=db)
+
+    assert updated["revision"] == 2
+    assert updated["datastreams"][-1]["dataType"] == "time"
+    assert updated["dashboard"]["widgets"][-1]["type"] == "schedule"
+    assert updated["dashboard"]["widgets"][-1]["timeSlots"] == ["06:00", "12:00", "18:00"]
+
+
 def test_account_template_routes_reject_duplicate_project_template_and_stale_revision():
     db, user, project, dashboard = template_route_db()
     created = create_template(TemplateStudioUpdate(**account_template_payload(project.id, dashboard.id)), user=user, db=db)

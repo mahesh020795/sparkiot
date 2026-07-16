@@ -194,7 +194,11 @@ export function App() {
     setTemplateSaveStates((current) => ({ ...current, [templateId]: "saving" }));
     setTemplateSaveError("");
     try {
-      const saved = isAccountMode ? await api.saveTemplate(template) : await api.saveDemoTemplate(template);
+      const latestDashboard = isAccountMode ? accountDashboards[template.dashboard.project_id] : undefined;
+      const savePayload = latestDashboard && latestDashboard.revision > template.dashboard.revision
+        ? { ...template, dashboard: { ...template.dashboard, revision: latestDashboard.revision } }
+        : template;
+      const saved = isAccountMode ? await api.saveTemplate(savePayload) : await api.saveDemoTemplate(savePayload);
       if (isAccountMode) {
         setAccountTemplates((current) => current.map((item) => item.id === saved.id ? saved : item));
         setAccountDashboards((current) => ({ ...current, [saved.dashboard.project_id]: saved.dashboard }));
@@ -204,7 +208,7 @@ export function App() {
       setTemplateSaveStates((current) => ({ ...current, [templateId]: "saved" }));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Save failed";
-      setTemplateSaveError(message.includes("stale_template_revision") ? "Template changed on the server. Refresh, then apply your latest edits again." : "Save failed. Check the API connection and try again.");
+      setTemplateSaveError(templateSaveErrorMessage(message));
       setTemplateSaveStates((current) => ({ ...current, [templateId]: "error" }));
     }
   }
@@ -1120,6 +1124,45 @@ function buildStarterTemplateDraft(project: Project, dashboard: Dashboard, devic
       widgets
     }
   };
+}
+
+export function templateSaveErrorMessage(rawMessage: string) {
+  const code = extractApiErrorCode(rawMessage);
+  if (code === "stale_template_revision") return "Template changed on the server. Refresh, then apply your latest edits again.";
+  if (code === "stale_dashboard_revision") return "Dashboard changed on the server. Refresh, then apply your latest edits again.";
+  const detail = extractApiErrorDetail(rawMessage);
+  if (detail) return detail;
+  return "Save failed. Check the API connection and try again.";
+}
+
+function extractApiErrorCode(rawMessage: string) {
+  try {
+    const parsed = JSON.parse(rawMessage);
+    return parsed?.detail?.code;
+  } catch {
+    return rawMessage.includes("stale_dashboard_revision")
+      ? "stale_dashboard_revision"
+      : rawMessage.includes("stale_template_revision")
+        ? "stale_template_revision"
+        : "";
+  }
+}
+
+function extractApiErrorDetail(rawMessage: string) {
+  try {
+    const parsed = JSON.parse(rawMessage);
+    if (typeof parsed?.detail?.message === "string") return parsed.detail.message;
+    if (typeof parsed?.detail === "string") return parsed.detail;
+    if (Array.isArray(parsed?.detail)) {
+      const firstMessage = parsed.detail
+        .map((item: { msg?: string }) => item?.msg)
+        .find((message: unknown): message is string => typeof message === "string" && message.length > 0);
+      return firstMessage?.replace(/^Value error,\s*/i, "") ?? "";
+    }
+  } catch {
+    return "";
+  }
+  return "";
 }
 
 function cloneTemplateForProject(source: DeviceTemplate, project: Project, dashboard: Dashboard, device?: Device): DeviceTemplate {

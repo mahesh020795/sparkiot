@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { App } from "./App";
+import { App, templateSaveErrorMessage } from "./App";
 import { api, realtimeUrl } from "./lib/api";
 
 vi.mock("echarts", () => ({
@@ -462,6 +462,11 @@ describe("App", () => {
 
   it("builds same-origin websocket URLs when the production API base is relative", () => {
     expect(realtimeUrl("demo-token", "project-irrigation")).toBe("ws://localhost:3000/api/v1/realtime/ws?token=demo-token&project_id=project-irrigation");
+  });
+
+  it("shows actionable template save API errors instead of a generic connection failure", () => {
+    expect(templateSaveErrorMessage('{"detail":{"code":"stale_dashboard_revision","message":"Dashboard was updated elsewhere. Refresh before saving again."}}')).toBe("Dashboard changed on the server. Refresh, then apply your latest edits again.");
+    expect(templateSaveErrorMessage('{"detail":[{"msg":"Value error, Schedule widget timeSlots must be valid HH:MM values"}]}')).toBe("Schedule widget timeSlots must be valid HH:MM values");
   });
 
   it("toggles the demo solenoid switch immediately on the dashboard", async () => {
