@@ -84,7 +84,7 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
 
   return (
     <section className="support-page schedule-system-page" data-testid="schedules-page">
-      <section className="schedule-workbench">
+      <section className="schedule-workbench schedule-workbench-single" data-testid="schedule-workbench">
         <article className="panel schedule-form-card">
           <div className="panel-title">
             <CalendarClock size={18} />

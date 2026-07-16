@@ -735,6 +735,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByText("Schedules"));
 
     expect(screen.getByTestId("schedules-page")).toHaveClass("schedule-system-page");
+    expect(screen.getByTestId("schedule-workbench")).toHaveClass("schedule-workbench-single");
     expect(screen.queryByText("Schedule automation")).not.toBeInTheDocument();
     expect(screen.queryByText("Blynk Timer-style day and time control for boards, pumps, relays and status outputs.")).not.toBeInTheDocument();
     expect(screen.queryByText("Demo-only planner")).not.toBeInTheDocument();

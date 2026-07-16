@@ -3202,6 +3202,10 @@ body {
   align-items: start;
 }
 
+.spark-ui .schedule-workbench.schedule-workbench-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .spark-ui .schedule-form-card,
 .spark-ui .schedule-safety-card,
 .spark-ui .schedule-card {
