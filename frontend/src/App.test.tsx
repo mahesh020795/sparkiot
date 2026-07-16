@@ -273,148 +273,22 @@ describe("App", () => {
     expect(navigation.compareDocumentPosition(screen.getByText("Workspace health")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
     expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
-    expect(screen.getByText("Launch checklist")).toBeInTheDocument();
-    expect(screen.getByText("Project → Template → Device → Code → Live Test")).toBeInTheDocument();
-    expect(screen.getByText("Use this flow when connecting ESP32 or NodeMCU boards.")).toBeInTheDocument();
+    expect(screen.queryByText("Launch checklist")).not.toBeInTheDocument();
+    expect(screen.queryByText("Project → Template → Device → Code → Live Test")).not.toBeInTheDocument();
+    expect(navigation).not.toHaveTextContent("Setup Flow");
   });
 
-  it("guides first-time users from project setup to live board testing", async () => {
-    render(<App />);
-
-    expect(await screen.findByTestId("setup-summary-card")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Open setup flow/i }));
-
-    expect(await screen.findByText("Spark IoT Launch Wizard")).toBeInTheDocument();
-    expect(screen.getByText("Create project")).toBeInTheDocument();
-    expect(screen.getByText("Choose template")).toBeInTheDocument();
-    expect(screen.getByText("Add datastreams")).toBeInTheDocument();
-    expect(screen.getByText("Add device")).toBeInTheDocument();
-    expect(screen.getByText("Generate Arduino code")).toBeInTheDocument();
-    expect(screen.getByText("Live board test")).toBeInTheDocument();
-    expect(screen.getByText("6/6 ready")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /Open project setup/i }));
-    expect(screen.getByText("Project command center")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText("Setup Flow"));
-    fireEvent.click(screen.getByRole("button", { name: /Open template studio/i }));
-    expect(screen.getByText("Spark IoT Template Studio")).toBeInTheDocument();
-    expect(screen.getAllByText("Smart Irrigation").length).toBeGreaterThan(0);
-
-    fireEvent.click(screen.getByText("Setup Flow"));
-    fireEvent.click(screen.getByRole("button", { name: /Open devices/i }));
-    expect(screen.getByText("Bind boards to templates and ship firmware-ready credentials")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText("Setup Flow"));
-    fireEvent.click(screen.getByRole("button", { name: /Open live test/i }));
-    expect(await screen.findByText("Connect ESP32 or NodeMCU and watch real telemetry land here")).toBeInTheDocument();
-  });
-
-  it("keeps the overview minimal and moves the full wizard behind a setup action", async () => {
+  it("keeps the overview minimal without setup summary or launch checklist clutter", async () => {
     render(<App />);
 
     expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();
     expect(screen.queryByText("Interactive live simulation")).not.toBeInTheDocument();
-    expect(screen.getByTestId("setup-summary-card")).toHaveTextContent("Setup ready");
-    expect(screen.getByTestId("setup-summary-card")).toHaveTextContent("6/6 ready");
-    expect(screen.getByRole("button", { name: /Open setup flow/i })).toBeInTheDocument();
+    expect(screen.queryByTestId("setup-summary-card")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Open setup flow/i })).not.toBeInTheDocument();
     expect(screen.queryByText("Spark IoT Launch Wizard")).not.toBeInTheDocument();
     expect(screen.queryByText("Create project")).not.toBeInTheDocument();
-  });
-
-  it("opens the full setup flow from the compact overview setup card", async () => {
-    render(<App />);
-
-    expect(await screen.findByTestId("setup-summary-card")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Open setup flow/i }));
-
-    expect(await screen.findByText("Spark IoT Launch Wizard")).toBeInTheDocument();
-    expect(screen.getByText("Create project")).toBeInTheDocument();
-    expect(screen.getByText("Choose template")).toBeInTheDocument();
-    expect(screen.getByText("Add datastreams")).toBeInTheDocument();
-    expect(screen.getByText("Add device")).toBeInTheDocument();
-    expect(screen.getByText("Generate Arduino code")).toBeInTheDocument();
-    expect(screen.getByText("Live board test")).toBeInTheDocument();
-  });
-
-  it("creates an account project template and device from the launch wizard quick start", async () => {
-    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
-    const createdProject = { id: "project-aquaponics", name: "Aquaponics Lab", description: "Fish tank and plant bed monitoring", is_active: true };
-    const createdDashboard = { id: "dashboard-aquaponics", project_id: "project-aquaponics", name: "Aquaponics Lab Dashboard", revision: 1, widgets: [] };
-    const createdTemplate = {
-      id: "template-aquaponics",
-      name: "Aquaponics Lab",
-      board: "ESP8266",
-      description: "Smart Irrigation template for Aquaponics Lab",
-      revision: 1,
-      datastreams: [
-        { id: "ds-project-aquaponics-0", name: "Temperature", pin: "V0", dataType: "float", unit: "C", min: 0, max: 100, color: "#2563eb" },
-        { id: "ds-project-aquaponics-1", name: "Humidity", pin: "V1", dataType: "integer", unit: "%", min: 0, max: 100, color: "#0ea5e9" }
-      ],
-      notifications: [],
-      dashboard: {
-        ...createdDashboard,
-        widgets: [{ id: "w-project-aquaponics-0", type: "gauge", title: "Temperature", x: 0, y: 0, w: 3, h: 2, deviceId: "", channel: "V0", datastreamId: "ds-project-aquaponics-0" }]
-      }
-    };
-    const createdDevice = {
-      id: "device-aquaponics",
-      project_id: "project-aquaponics",
-      name: "NodeMCU Tank Controller",
-      board: "ESP8266",
-      is_online: false,
-      token: "spk_dev_aquaponics_once_1234",
-      telemetry_topic: "spark/v1/account-tenant/device-aquaponics/telemetry/{channel}",
-      command_topic: "spark/v1/account-tenant/device-aquaponics/command/{channel}"
-    };
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes("/demo/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
-      if (url.endsWith("/projects") && init?.method === "POST") {
-        expect((init.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
-        expect(JSON.parse(String(init.body))).toEqual({ name: "Aquaponics Lab", description: "Fish tank and plant bed monitoring" });
-        return new Response(JSON.stringify(createdProject), { status: 201, headers: { "Content-Type": "application/json" } });
-      }
-      if (url.endsWith("/projects")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
-      if (url.endsWith("/devices") && init?.method === "POST") {
-        expect(JSON.parse(String(init.body))).toEqual({ project_id: "project-aquaponics", name: "NodeMCU Tank Controller", board: "ESP8266" });
-        return new Response(JSON.stringify(createdDevice), { status: 201, headers: { "Content-Type": "application/json" } });
-      }
-      if (url.endsWith("/devices")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
-      if (url.endsWith("/templates") && init?.method === "POST") {
-        const payload = JSON.parse(String(init.body));
-        expect(payload.name).toBe("Aquaponics Lab");
-        expect(payload.board).toBe("ESP8266");
-        expect(payload.datastreams[0].pin).toBe("V0");
-        expect(payload.dashboard.project_id).toBe("project-aquaponics");
-        return new Response(JSON.stringify(createdTemplate), { status: 201, headers: { "Content-Type": "application/json" } });
-      }
-      if (url.endsWith("/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
-      if (url.includes("/dashboards/project/project-aquaponics")) return new Response(JSON.stringify(createdDashboard), { status: 200, headers: { "Content-Type": "application/json" } });
-      if (url.includes("/notifications") || url.includes("/schedules")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
-      if (url.includes("/tenant/usage")) return new Response(JSON.stringify({ users: 1, max_users: 1, devices: 0, max_devices: 3, projects: 0, max_projects: 3, retention_days: 30 }), { status: 200, headers: { "Content-Type": "application/json" } });
-      return new Response("not found", { status: 404 });
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(<App />);
-
-    expect(await screen.findByTestId("setup-summary-card")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Open setup flow/i }));
-
-    expect(await screen.findByText("Account Quick Start Builder")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Quick start project name"), { target: { value: "Aquaponics Lab" } });
-    fireEvent.change(screen.getByLabelText("Quick start project description"), { target: { value: "Fish tank and plant bed monitoring" } });
-    fireEvent.change(screen.getByLabelText("Quick start board"), { target: { value: "ESP8266" } });
-    fireEvent.change(screen.getByLabelText("Quick start device name"), { target: { value: "NodeMCU Tank Controller" } });
-    fireEvent.click(screen.getByRole("button", { name: /Build workspace/i }));
-
-    expect(await screen.findByText("Firmware command center")).toBeInTheDocument();
-    expect(screen.getByText("Arduino-ready sketch")).toBeInTheDocument();
-    expect(screen.getByText("spk_dev_aquaponics_once_1234")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/projects"), expect.objectContaining({ method: "POST" }));
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/templates"), expect.objectContaining({ method: "POST" }));
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/devices"), expect.objectContaining({ method: "POST" }));
+    expect(screen.queryByText("Customer setup flow")).not.toBeInTheDocument();
+    expect(screen.queryByText("Launch checklist")).not.toBeInTheDocument();
   });
 
   it("uses the standardized design-system shell and non-overlapping dashboard header", async () => {

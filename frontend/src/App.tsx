@@ -54,7 +54,6 @@ export function App() {
 
   const nav = [
     ["dashboard", LayoutDashboard, "Overview"],
-    ["setup", Workflow, "Setup Flow"],
     ["projects", MapPinned, "Projects"],
     ["templates", Workflow, "Templates"],
     ["devices", Cpu, "Devices"],
@@ -373,17 +372,6 @@ export function App() {
           <div><CheckCircle2 size={16} /><strong>Demo realtime active</strong></div>
           <small>3 projects Â· 3 devices Â· 30-day data window</small>
         </div>
-        <div className="launch-checklist-card" data-testid="launch-checklist-card">
-          <span className="section-kicker">Launch checklist</span>
-          <strong>Project → Template → Device → Code → Live Test</strong>
-          <small>Use this flow when connecting ESP32 or NodeMCU boards.</small>
-          <ol aria-label="Spark IoT launch flow">
-            <li><CheckCircle2 size={13} />Select project</li>
-            <li><CheckCircle2 size={13} />Open template</li>
-            <li><CheckCircle2 size={13} />Copy device token</li>
-            <li><CheckCircle2 size={13} />Upload Arduino sketch</li>
-          </ol>
-        </div>
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
           <span className="section-kicker">{isAccountMode ? "Account mode active" : demoPreviewMode ? "Demo preview active" : "Demo mode active"}</span>
           <div><UserCircle size={16} /><strong>{isAccountMode ? "Authenticated workspace" : demoPreviewMode ? "Simulated dashboard preview" : "No-login preview"}</strong></div>
@@ -444,18 +432,6 @@ export function App() {
             <span>Simulated telemetry. Create your first project to connect real hardware.</span>
             <button type="button" onClick={() => setDemoPreviewMode(false)}>Back to workspace</button>
           </div>
-        )}
-        {view === "dashboard" && (
-          <SetupSummaryCard
-            projectCount={activeProjects.length}
-            templateCount={activeTemplates.length}
-            deviceCount={activeDevices.length}
-            datastreamCount={selectedTemplate?.datastreams.length ?? 0}
-            selectedProjectName={selectedProject?.name ?? "Spark IoT project"}
-            selectedDeviceName={selectedDevice?.name ?? activeDevices[0]?.name ?? "ESP board"}
-            onOpenSetup={() => setView("setup")}
-            onOpenLiveTest={() => setView("live")}
-          />
         )}
         {view === "setup" && (
           <LaunchWizardPanel
