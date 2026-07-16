@@ -524,6 +524,37 @@ def test_template_studio_update_accepts_professional_template_shape():
     assert payload.dashboard.widgets[0]["type"] == "gauge"
 
 
+def test_template_studio_accepts_starter_professional_dashboard_size_and_widgets():
+    payload = valid_template_payload()
+    payload["datastreams"].extend(
+        [
+            {"id": "ds-schedule", "name": "Irrigation Schedule", "pin": "V2", "dataType": "time", "unit": "AUTO", "color": "#f59e0b"},
+            {"id": "ds-power", "name": "Power Hub", "pin": "V3", "dataType": "float", "unit": "V", "min": 0, "max": 15, "color": "#2563eb"},
+            {"id": "ds-event", "name": "Event Monitor", "pin": "V4", "dataType": "string", "unit": "", "color": "#e11d48"},
+        ]
+    )
+    payload["dashboard"]["widgets"] = [
+        {"id": f"w-{index}", "type": "value", "title": f"Value {index}", "x": index % 12, "y": index, "w": 3, "h": 2, "deviceId": "device-irrigation", "channel": "V0", "datastreamId": "ds-temp"}
+        for index in range(15)
+    ]
+    payload["dashboard"]["widgets"][12]["type"] = "schedule"
+    payload["dashboard"]["widgets"][12]["channel"] = "V2"
+    payload["dashboard"]["widgets"][12]["datastreamId"] = "ds-schedule"
+    payload["dashboard"]["widgets"][13]["type"] = "power_hub"
+    payload["dashboard"]["widgets"][13]["channel"] = "V3"
+    payload["dashboard"]["widgets"][13]["datastreamId"] = "ds-power"
+    payload["dashboard"]["widgets"][14]["type"] = "event_monitor"
+    payload["dashboard"]["widgets"][14]["channel"] = "V4"
+    payload["dashboard"]["widgets"][14]["datastreamId"] = "ds-event"
+
+    parsed = TemplateStudioUpdate(**payload)
+
+    assert len(parsed.dashboard.widgets) == 15
+    assert parsed.dashboard.widgets[12]["type"] == "schedule"
+    assert parsed.dashboard.widgets[13]["type"] == "power_hub"
+    assert parsed.dashboard.widgets[14]["type"] == "event_monitor"
+
+
 def test_template_studio_rejects_duplicate_virtual_pins():
     payload = valid_template_payload()
     payload["datastreams"][1]["pin"] = "V0"
@@ -548,17 +579,17 @@ def test_template_studio_rejects_rule_for_unknown_datastream():
         raise AssertionError("expected invalid notification target to fail")
 
 
-def test_template_studio_rejects_more_than_ten_widgets():
+def test_template_studio_rejects_more_than_starter_widget_limit():
     payload = valid_template_payload()
     payload["dashboard"]["widgets"] = [
         {"id": f"w-{index}", "type": "value", "title": f"Value {index}", "x": 0, "y": index, "w": 3, "h": 2, "deviceId": "device-irrigation", "channel": "V0"}
-        for index in range(11)
+        for index in range(19)
     ]
 
     try:
         TemplateStudioUpdate(**payload)
     except ValueError as exc:
-        assert "Starter plan allows 10 widgets" in str(exc)
+        assert "Starter plan allows 18 widgets" in str(exc)
     else:
         raise AssertionError("expected starter widget limit to fail")
 

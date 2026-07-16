@@ -612,6 +612,23 @@ describe("App", () => {
     }
   });
 
+  it("stops Template Studio widget additions at the Starter dashboard limit", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Templates"));
+    fireEvent.click(within(screen.getByRole("article", { name: /Smart Irrigation template/i })).getByRole("button", { name: /Edit template/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
+
+    const valueWidgetButton = screen.getByRole("button", { name: /value.*Output widget/i });
+    for (let index = 0; index < 6; index += 1) {
+      fireEvent.click(valueWidgetButton);
+    }
+    expect(screen.getByRole("status")).toHaveTextContent(/widget added to canvas/i);
+
+    fireEvent.click(valueWidgetButton);
+
+    expect(screen.getByRole("status")).toHaveTextContent(/Starter dashboard limit reached: 18 widgets/i);
+  });
+
 
   it("exports demo data history with a real CSV download action", async () => {
     const { click } = stubCsvDownload();

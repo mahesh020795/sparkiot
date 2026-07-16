@@ -33,6 +33,7 @@ const widgetLibraryGroups = [
   { title: "Input widgets", kind: "Input", caption: "Send values or commands to the board", types: ["switch", "push_button", "time", "date", "day"] },
   { title: "Output widgets", kind: "Output", caption: "Display telemetry, media and board status", types: ["gauge", "meter", "value", "led", "chart", "gps", "camera", "serial_lcd", "battery", "signal"] }
 ] as const;
+const STARTER_WIDGET_LIMIT = 18;
 const dataTypes: Datastream["dataType"][] = ["integer", "float", "string", "boolean", "gps", "image", "time", "date"];
 const boards: DeviceTemplate["board"][] = ["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"];
 const stepConfig = [
@@ -132,6 +133,10 @@ export function TemplateStudioPage({
   }
 
   function addWidget(type: string, datastreamId?: string) {
+    if (template.dashboard.widgets.length >= STARTER_WIDGET_LIMIT) {
+      setWidgetAddStatus(`Starter dashboard limit reached: ${STARTER_WIDGET_LIMIT} widgets. Remove a widget before adding another.`);
+      return;
+    }
     const preferredType = dataTypeForWidgetType(type);
     const existingStream =
       (datastreamId ? template.datastreams.find((item) => item.id === datastreamId) : undefined) ??

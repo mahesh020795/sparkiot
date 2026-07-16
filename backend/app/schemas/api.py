@@ -4,6 +4,8 @@ from typing import Any, Literal
 from email_validator import EmailNotValidError, validate_email as validate_email_address
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
+from app.core.config import get_settings
+
 
 def validate_email(value: str) -> str:
     email = value.strip()
@@ -141,9 +143,10 @@ class DashboardUpdate(BaseModel):
     @field_validator("widgets")
     @classmethod
     def validate_widgets(cls, widgets: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        allowed = {"gauge", "meter", "value", "led", "text", "push_button", "switch", "slider", "chart", "gps", "camera", "date", "time", "day", "serial_lcd", "battery", "signal"}
-        if len(widgets) > 10:
-            raise ValueError("Starter plan allows 10 widgets per dashboard")
+        allowed = {"gauge", "meter", "value", "led", "text", "push_button", "switch", "slider", "chart", "gps", "camera", "date", "time", "day", "serial_lcd", "battery", "signal", "schedule", "power_hub", "event_monitor"}
+        max_widgets = get_settings().starter_max_widgets
+        if len(widgets) > max_widgets:
+            raise ValueError(f"Starter plan allows {max_widgets} widgets per dashboard")
         for widget in widgets:
             if widget.get("type") not in allowed:
                 raise ValueError(f"Unsupported widget type: {widget.get('type')}")
