@@ -1,4 +1,4 @@
-import { ArrowRight, Bell, CalendarClock, CheckCircle2, Copy, Cpu, Database, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, PlugZap, Plus, RadioTower, Settings, TerminalSquare, UserCircle, Workflow } from "lucide-react";
+import { ArrowRight, Bell, CalendarClock, CheckCircle2, Copy, Cpu, Database, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, Pencil, PlugZap, Plus, RadioTower, Settings, TerminalSquare, Trash2, UserCircle, Workflow } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { DashboardPage, LocalDashboardPage } from "./pages/DashboardPage";
 import { DevicesPage } from "./pages/DevicesPage";
@@ -1106,7 +1106,6 @@ function TemplateLibrary({
           <article className="panel template-library-card" key={template.id} aria-label={`${template.name} template`}>
             <div className="template-card-topline">
               <span className="template-board-badge">{template.board}</span>
-              <span className="pill online-pill">Active</span>
             </div>
             <div>
               <h2>{template.name}</h2>
@@ -1121,9 +1120,14 @@ function TemplateLibrary({
               {template.datastreams.slice(0, 5).map((stream) => <span key={stream.id}>{stream.pin}</span>)}
               {template.datastreams.length > 5 && <span>+{template.datastreams.length - 5}</span>}
             </div>
-            <button className="template-open-button" onClick={() => onOpen(template)}>
-              Open studio <ArrowRight size={16} />
-            </button>
+            <div className="entity-card-actions">
+              <button className="template-open-button entity-edit-button" onClick={() => onOpen(template)} aria-label={`Open studio / Edit template ${template.name}`}>
+                <Pencil size={16} />Edit template
+              </button>
+              <button className="entity-delete-button" type="button" aria-label={`Delete template ${template.name}`}>
+                <Trash2 size={16} />Delete template
+              </button>
+            </div>
           </article>
         ))}
       </section>
@@ -1212,7 +1216,7 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
       <section className="content-grid project-grid">{projects.map((project) => {
         const template = templates.find((item) => item.dashboard.project_id === project.id);
         return (
-          <article className="panel project-card" key={project.id}>
+          <article className="panel project-card" key={project.id} aria-label={`${project.name} project`}>
             <div className="project-card-head"><span className="status-dot online" /><span className="pill online-pill">Active</span></div>
             <h2>{project.name}</h2>
             <p>{project.description}</p>
@@ -1220,6 +1224,10 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
               <span><strong>{template?.board}</strong><small>Board</small></span>
               <span><strong>{template?.datastreams.length ?? 0}</strong><small>V pins</small></span>
               <span><strong>{template?.dashboard.widgets.length ?? 0}</strong><small>Widgets</small></span>
+            </div>
+            <div className="entity-card-actions">
+              <button className="entity-edit-button" type="button" aria-label={`Edit project ${project.name}`}><Pencil size={16} />Edit project</button>
+              <button className="entity-delete-button" type="button" aria-label={`Delete project ${project.name}`}><Trash2 size={16} />Delete project</button>
             </div>
           </article>
         );

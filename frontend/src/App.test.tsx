@@ -403,7 +403,11 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /Create template/i })).toBeDisabled();
 
     const energyTemplateCard = screen.getByRole("article", { name: /Energy Monitor template/i });
-    fireEvent.click(within(energyTemplateCard).getByRole("button", { name: /Open studio/i }));
+    expect(within(energyTemplateCard).queryByText("Active")).not.toBeInTheDocument();
+    expect(within(energyTemplateCard).queryByText("", { selector: ".status-dot" })).not.toBeInTheDocument();
+    expect(within(energyTemplateCard).getByRole("button", { name: /Edit template/i })).toBeInTheDocument();
+    expect(within(energyTemplateCard).getByRole("button", { name: /Delete template/i })).toBeInTheDocument();
+    fireEvent.click(within(energyTemplateCard).getByRole("button", { name: /Edit template/i }));
 
     expect(screen.getByText("Spark IoT Template Studio")).toBeInTheDocument();
     expect(screen.getByTestId("template-studio")).toHaveClass("spark-studio");
@@ -445,6 +449,10 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Projects"));
     expect(screen.queryByText("Project command center")).not.toBeInTheDocument();
     expect(screen.getByText("Starter plan capacity")).toBeInTheDocument();
+    const irrigationProject = screen.getByRole("article", { name: /Smart Irrigation project/i });
+    expect(within(irrigationProject).getByText("Active")).toBeInTheDocument();
+    expect(within(irrigationProject).getByRole("button", { name: /Edit project/i })).toBeInTheDocument();
+    expect(within(irrigationProject).getByRole("button", { name: /Delete project/i })).toBeInTheDocument();
   });
 
 
@@ -487,6 +495,8 @@ describe("App", () => {
     expect(within(irrigationDevice).getByText("Telemetry topic")).toBeInTheDocument();
     expect(within(irrigationDevice).getByText("Command topic")).toBeInTheDocument();
     expect(within(irrigationDevice).getByText("Arduino bind")).toBeInTheDocument();
+    expect(within(irrigationDevice).getByRole("button", { name: /Edit device/i })).toBeInTheDocument();
+    expect(within(irrigationDevice).getByRole("button", { name: /Delete device/i })).toBeInTheDocument();
   });
 
   it("regenerates account device tokens and updates the Arduino bind block", async () => {

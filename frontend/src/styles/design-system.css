@@ -1172,6 +1172,45 @@ body {
   justify-content: center;
 }
 
+.spark-ui .entity-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spark-space-3);
+  margin-top: auto;
+}
+
+.spark-ui .entity-card-actions button,
+.spark-ui .entity-card-actions .template-open-button {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-width: 0;
+  box-shadow: none;
+}
+
+.spark-ui .entity-card-actions button:not(.template-open-button) {
+  border: 1px solid var(--spark-border-strong);
+  background: var(--spark-surface);
+  color: var(--spark-text);
+}
+
+.spark-ui .entity-card-actions .entity-edit-button {
+  border-color: #0f172a;
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.spark-ui .entity-card-actions .entity-delete-button {
+  color: #b42318;
+}
+
+.spark-ui .entity-card-actions .entity-delete-button:hover {
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
 .spark-ui .provisioning-create-card {
   display: grid;
   gap: var(--spark-space-4);

@@ -1,4 +1,4 @@
-import { Clipboard, Copy, KeyRound, Lock, Plus, RadioTower, Router, TerminalSquare } from "lucide-react";
+import { Clipboard, Copy, KeyRound, Lock, Pencil, Plus, RadioTower, Router, TerminalSquare, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import type { BoardType, Device, DeviceCreate, DeviceTemplate, Project } from "../lib/types";
@@ -171,6 +171,10 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
                 <button onClick={() => void regenerateToken(device.id)} disabled={!onRegenerateToken || tokenState === "saving"}>
                   <KeyRound size={16} />{tokenState === "saving" ? "Rotating..." : "Regenerate token"}
                 </button>
+              </div>
+              <div className="entity-card-actions">
+                <button className="entity-edit-button" type="button" aria-label={`Edit device ${device.name}`}><Pencil size={16} />Edit device</button>
+                <button className="entity-delete-button" type="button" aria-label={`Delete device ${device.name}`}><Trash2 size={16} />Delete device</button>
               </div>
               <span className={`token-rotation-state ${tokenState}`}>{formatTokenState(tokenState, accountMode)}</span>
             </article>
