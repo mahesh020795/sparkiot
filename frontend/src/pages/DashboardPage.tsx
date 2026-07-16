@@ -1,4 +1,3 @@
-import { Activity, Edit3, Play, Save } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { api, getSession, realtimeUrl } from "../lib/api";
@@ -8,8 +7,7 @@ import { Widget } from "../components/widgets/Widget";
 export function DashboardPage({ projectId, devices }: { projectId: string; devices: Device[] }) {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [latest, setLatest] = useState<Record<string, Telemetry>>({});
-  const [edit, setEdit] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const edit = false;
   const [draggingId, setDraggingId] = useState<string>("");
 
   useEffect(() => {
@@ -33,8 +31,6 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
     const token = getSession()?.access_token;
     if (!token || typeof WebSocket === "undefined") return;
     const ws = new WebSocket(realtimeUrl(token, projectId));
-    ws.onopen = () => setConnected(true);
-    ws.onclose = () => setConnected(false);
     ws.onmessage = (event) => {
       const parsed = JSON.parse(event.data);
       if (parsed.type === "telemetry") {
@@ -48,13 +44,6 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
   const sortedWidgets = useMemo(() => [...(dashboard?.widgets ?? [])].sort((a, b) => a.y - b.y || a.x - b.x), [dashboard]);
 
   if (!dashboard) return <div className="panel">Loading dashboard...</div>;
-
-  async function save() {
-    if (!dashboard) return;
-    const saved = await api.saveDashboard(dashboard);
-    setDashboard(saved);
-    setEdit(false);
-  }
 
   function moveWidget(targetId: string) {
     if (!dashboard || !draggingId || draggingId === targetId) return;
@@ -84,16 +73,6 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
 
   return (
     <section className="overview-page">
-      <div className="dashboard-toolbar gemini-action-strip" data-testid="dashboard-action-bar">
-        <div className={connected ? "command-status online" : "command-status"}>
-          <Activity size={16} />
-          <span><strong>{connected ? "Realtime connected" : "Realtime offline"}</strong><small>Live device stream</small></span>
-        </div>
-        <div className="command-actions">
-          <button className={edit ? "action-button active" : "action-button"} onClick={() => setEdit(!edit)}><Edit3 size={16} />{edit ? "Editing enabled" : "Edit labels"}</button>
-          <button className="primary action-button" onClick={save}><Save size={16} />Publish Changes</button>
-        </div>
-      </div>
       <div className={edit ? "layout edit-mode gemini-widget-canvas" : "layout gemini-widget-canvas"} data-testid="gemini-widget-canvas">
         {sortedWidgets.map((widget) => (
           <div
@@ -126,7 +105,7 @@ export function LocalDashboardPage({
 }) {
   const [dashboard, setDashboard] = useState<Dashboard>(initialDashboard);
   const [latest, setLatest] = useState<Record<string, Telemetry>>(initialLatest);
-  const [edit, setEdit] = useState(false);
+  const edit = false;
   const [draggingId, setDraggingId] = useState("");
   const sortedWidgets = useMemo(() => [...dashboard.widgets].sort((a, b) => a.y - b.y || a.x - b.x), [dashboard]);
 
@@ -164,19 +143,6 @@ export function LocalDashboardPage({
     setDashboard({ ...dashboard, widgets: widgets.map((widget, index) => ({ ...widget, x: (index % 4) * 3, y: Math.floor(index / 4) * 3 })) });
   }
 
-  function simulateTelemetry() {
-    const next = 24 + Math.round(Math.random() * 120) / 10;
-    setLatest((current) => ({
-      ...current,
-      "device-irrigation:temperature": {
-        ...current["device-irrigation:temperature"],
-        value: next,
-        observed_at: new Date().toISOString(),
-        server_at: new Date().toISOString()
-      }
-    }));
-  }
-
   function updateLocalCommandReading(widget: Dashboard["widgets"][number], value: unknown) {
     const key = `${widget.deviceId}:${widget.channel}`;
     setLatest((current) => ({
@@ -196,17 +162,6 @@ export function LocalDashboardPage({
 
   return (
     <section className="overview-page">
-      <div className="dashboard-toolbar gemini-action-strip" data-testid="dashboard-action-bar">
-        <div className="command-status online">
-          <Activity size={16} />
-          <span><strong>Virtual IoT Simulator Connected</strong><small>Water, pressure, flow models synced with scheduler output</small></span>
-        </div>
-        <div className="command-actions">
-          <button className="action-button" onClick={simulateTelemetry}><Play size={16} />Simulate data</button>
-          <button className={edit ? "action-button active" : "action-button"} onClick={() => setEdit(!edit)}><Edit3 size={16} />{edit ? "Editing enabled" : "Edit labels"}</button>
-          <button className="primary action-button" onClick={() => setEdit(false)}><Save size={16} />Publish Changes</button>
-        </div>
-      </div>
       <div className={edit ? "layout edit-mode gemini-widget-canvas" : "layout gemini-widget-canvas"} data-testid="gemini-widget-canvas">
         {sortedWidgets.map((widget) => (
           <div

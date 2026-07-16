@@ -17,7 +17,6 @@ const boardOptions: BoardType[] = ["ESP32", "ESP8266", "Arduino", "Raspberry Pi 
 export function DevicesPage({ devices, templates, projects = [], accountMode = false, onCreateDevice, onRegenerateToken }: Props) {
   const deviceLimit = 3;
   const isAtLimit = devices.length >= deviceLimit;
-  const onlineCount = devices.filter((device) => device.is_online).length;
   const [tokenStates, setTokenStates] = useState<Record<string, "idle" | "saving" | "saved" | "error">>({});
   const [provisionOpen, setProvisionOpen] = useState(false);
   const [provisionState, setProvisionState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -64,19 +63,6 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
 
   return (
     <section className="support-page device-provisioning-page device-system-page" data-testid="devices-page">
-      <div className="support-hero device-provisioning-hero device-system-hero" data-testid="device-provisioning-hero">
-        <div>
-          <span className="section-kicker">Provisioning center</span>
-          <h2>Bind boards to templates and ship firmware-ready credentials</h2>
-          <p>Each device receives a one-time token, MQTT topic namespace and Arduino binding block that matches its template virtual pins.</p>
-        </div>
-        <div className="support-metrics">
-          <span><strong>{devices.length}/3</strong><small>Devices</small></span>
-          <span><strong>{onlineCount}</strong><small>Online</small></span>
-          <span><strong>{templates.length}</strong><small>Templates</small></span>
-        </div>
-      </div>
-
       <div className="library-toolbar provisioning-toolbar">
         <div>
           <strong>{devices.length}/3 devices used</strong>

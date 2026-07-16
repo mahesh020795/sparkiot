@@ -1,4 +1,4 @@
-import { ArrowRight, Bell, CalendarClock, CheckCircle2, ClipboardCheck, Copy, Cpu, Database, Gauge, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, PlugZap, Plus, RadioTower, Settings, TerminalSquare, UserCircle, Workflow } from "lucide-react";
+import { ArrowRight, Bell, CalendarClock, CheckCircle2, Copy, Cpu, Database, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, PlugZap, Plus, RadioTower, Settings, TerminalSquare, UserCircle, Workflow } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { DashboardPage, LocalDashboardPage } from "./pages/DashboardPage";
 import { DevicesPage } from "./pages/DevicesPage";
@@ -367,11 +367,6 @@ export function App() {
       <aside className="sidebar">
         <div className="brand"><span className="brand-icon"><span className="material-symbols-outlined" aria-hidden="true">edgesensor_high</span></span><div><strong>Spark IoT</strong><span>Redronix Cloud</span></div></div>
         <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
-        <div className="workspace-card">
-          <span className="section-kicker">Workspace health</span>
-          <div><CheckCircle2 size={16} /><strong>Demo realtime active</strong></div>
-          <small>3 projects Â· 3 devices Â· 30-day data window</small>
-        </div>
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
           <span className="section-kicker">{isAccountMode ? "Account mode active" : demoPreviewMode ? "Demo preview active" : "Demo mode active"}</span>
           <div><UserCircle size={16} /><strong>{isAccountMode ? "Authenticated workspace" : demoPreviewMode ? "Simulated dashboard preview" : "No-login preview"}</strong></div>
@@ -382,36 +377,13 @@ export function App() {
             <button type="button" className="primary" onClick={() => setAuthScreenOpen(true)}><LogIn size={16} />Sign in to account</button>
           )}
         </div>
-        {view !== "dashboard" && (
-          <>
-            <div className="responsive-card">
-              <span className="section-kicker">Responsive readiness</span>
-              <strong>Mobile, tablet and desktop</strong>
-              <small>Overflow-safe panels, tables, code and dashboard cards</small>
-            </div>
-            <div className="qa-card">
-              <span className="section-kicker">Quality assurance console</span>
-              <div><ClipboardCheck size={16} /><strong>Keyboard, states and export checks</strong></div>
-              <small>Visible focus, empty states and readable production handoff surfaces</small>
-            </div>
-            <div className="plan-card"><Gauge size={18} /><strong>Starter RM25</strong><span>3 devices, 3 dashboards, 30-day GPS and camera access</span></div>
-          </>
-        )}
       </aside>
       <main className={view === "dashboard" ? "dashboard-main" : undefined}>
         <header className={view === "dashboard" ? "topbar app-page-header cockpit-header" : "topbar app-page-header"} data-testid="cockpit-header">
           <div className={view === "dashboard" ? "dashboard-header-grid spark-page-header-grid product-header-grid" : "standard-header-grid product-header-grid"} data-testid={view === "dashboard" ? "dashboard-header-grid" : undefined}>
           <div className={view === "dashboard" ? "cockpit-title-block spark-page-header-primary" : "cockpit-title-block"} data-testid={view === "dashboard" ? "dashboard-header-primary" : undefined}>
-            <div className="cockpit-kicker-row"><span className="eyebrow">{view === "dashboard" ? "Live control cockpit" : "Control Center"}</span>{view === "dashboard" && <span className="cockpit-badge">Premium industrial widgets</span>}</div>
+            {view !== "dashboard" && <div className="cockpit-kicker-row"><span className="eyebrow">Control Center</span></div>}
             <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
-            {view === "dashboard" && <p>Elevated radial scale sensors, interactive video streams, GIS field coordinate tracking</p>}
-            {view === "dashboard" && (
-              <div className="cockpit-simulation-strip" data-testid="dashboard-simulation-pill">
-                <RadioTower size={16} />
-                <strong>Interactive live simulation</strong>
-                <span>Solenoid outputs synchronized with maps & video stream</span>
-              </div>
-            )}
           </div>
           <div className="top-actions">
             {view === "dashboard" && (
@@ -420,15 +392,6 @@ export function App() {
                 <select aria-label="Dashboard project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{activeProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
               </label>
             )}
-            {view === "dashboard" && (
-              <div className="cockpit-metrics spark-page-header-metrics" data-testid="dashboard-header-metrics">
-                <span><PlugZap size={19} /><strong>{activeDevices.filter((device) => device.is_online).length}/{activeDevices.length}</strong><small>Nodes online</small></span>
-                <span><LayoutDashboard size={19} /><strong>{selectedTemplate?.dashboard.widgets.length ?? 0}</strong><small>Widgets active</small></span>
-                <span><RadioTower size={19} /><strong>{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</strong><small>Telemetry time</small></span>
-                <span><Bell size={19} /><strong>Active</strong><small>Flow safety</small></span>
-              </div>
-            )}
-            {view !== "dashboard" && <div className="preview-status"><RadioTower size={16} /><div><strong>Production preview</strong><small>Local MVP Â· no login mode</small></div></div>}
             {view !== "dashboard" && <select aria-label="Project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{activeProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>}
           </div>
           </div>
@@ -1083,19 +1046,6 @@ function TemplateLibrary({
 
   return (
     <section className="support-page template-library-page">
-      <div className="support-hero template-library-hero">
-        <div>
-          <span className="section-kicker">Template library</span>
-          <h2>Start from a product model, then build the dashboard</h2>
-          <p>Each Spark IoT template owns the board type, virtual pins, dashboard canvas, alert rules and Arduino-ready protocol for one customer project.</p>
-        </div>
-        <div className="support-metrics">
-          <span><strong>{templates.length}/3</strong><small>Templates</small></span>
-          <span><strong>{templates.reduce((total, template) => total + template.datastreams.length, 0)}</strong><small>V pins</small></span>
-          <span><strong>{templates.reduce((total, template) => total + template.notifications.length, 0)}</strong><small>Rules</small></span>
-        </div>
-      </div>
-
       <div className="library-toolbar">
         <div>
           <strong>{templates.length}/3 templates used</strong>
@@ -1214,19 +1164,6 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
 
   return (
     <section className="support-page">
-      <div className="support-hero">
-        <div>
-          <span className="section-kicker">Project command center</span>
-          <h2>Three production-ready project spaces</h2>
-          <p>Each project owns one template, one dashboard, one device group and the data rules needed for a low-cost Spark IoT starter plan.</p>
-        </div>
-        <div className="support-metrics">
-          <span><strong>{projects.length}/3</strong><small>Projects</small></span>
-          <span><strong>{templates.reduce((total, template) => total + template.datastreams.length, 0)}</strong><small>Virtual pins</small></span>
-          <span><strong>{templates.reduce((total, template) => total + template.dashboard.widgets.length, 0)}</strong><small>Widgets</small></span>
-        </div>
-      </div>
-
       <div className="library-toolbar project-create-toolbar">
         <div>
           <strong>{projects.length}/3 projects used</strong>

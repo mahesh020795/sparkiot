@@ -258,20 +258,19 @@ describe("App", () => {
 
   it("opens directly on the Spark IoT dashboard without login", async () => {
     render(<App />);
-    expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();
-    expect(screen.getByText("Premium industrial widgets")).toBeInTheDocument();
-    expect(screen.getByText("Elevated radial scale sensors, interactive video streams, GIS field coordinate tracking")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
+    expect(screen.queryByText("Live control cockpit")).not.toBeInTheDocument();
+    expect(screen.queryByText("Premium industrial widgets")).not.toBeInTheDocument();
+    expect(screen.queryByText("Elevated radial scale sensors, interactive video streams, GIS field coordinate tracking")).not.toBeInTheDocument();
     expect(screen.getAllByText("Live value").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Valve status").length).toBeGreaterThan(0);
-    expect(screen.getByText("Workspace health")).toBeInTheDocument();
+    expect(screen.queryByText("Workspace health")).not.toBeInTheDocument();
     expect(screen.queryByText("Production preview")).not.toBeInTheDocument();
     const dashboardSelector = screen.getByLabelText("Dashboard project selector");
     expect(dashboardSelector).toBeInTheDocument();
     expect(dashboardSelector).toHaveValue("project-irrigation");
     const navigation = screen.getByRole("navigation", { name: "Main navigation" });
     expect(navigation).toHaveTextContent("Settings");
-    expect(navigation.compareDocumentPosition(screen.getByText("Workspace health")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
     expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
     expect(screen.queryByText("Launch checklist")).not.toBeInTheDocument();
     expect(screen.queryByText("Project → Template → Device → Code → Live Test")).not.toBeInTheDocument();
@@ -281,10 +280,16 @@ describe("App", () => {
   it("keeps the overview minimal without setup summary or launch checklist clutter", async () => {
     render(<App />);
 
-    expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();
-    expect(screen.getByTestId("dashboard-simulation-pill")).toHaveClass("cockpit-simulation-strip");
-    expect(screen.getByText("Interactive live simulation")).toBeInTheDocument();
-    expect(screen.getByText("Solenoid outputs synchronized with maps & video stream")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-simulation-pill")).not.toBeInTheDocument();
+    expect(screen.queryByText("Interactive live simulation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Solenoid outputs synchronized with maps & video stream")).not.toBeInTheDocument();
+    expect(screen.queryByText("Nodes online")).not.toBeInTheDocument();
+    expect(screen.queryByText("Widgets active")).not.toBeInTheDocument();
+    expect(screen.queryByText("Telemetry time")).not.toBeInTheDocument();
+    expect(screen.queryByText("Flow safety")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-action-bar")).not.toBeInTheDocument();
+    expect(screen.queryByText("Virtual IoT Simulator Connected")).not.toBeInTheDocument();
     expect(screen.queryByTestId("setup-summary-card")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Open setup flow/i })).not.toBeInTheDocument();
     expect(screen.queryByText("Spark IoT Launch Wizard")).not.toBeInTheDocument();
@@ -302,7 +307,6 @@ describe("App", () => {
     expect(screen.getByTestId("dashboard-header-grid")).toHaveClass("dashboard-header-grid", "spark-page-header-grid");
     expect(screen.getByTestId("dashboard-header-primary")).toHaveClass("spark-page-header-primary");
     expect(screen.getByTestId("dashboard-header-selector")).toHaveClass("spark-page-header-selector");
-    expect(screen.getByTestId("dashboard-header-metrics")).toHaveClass("spark-page-header-metrics");
     expect(screen.getByText("Redronix Cloud")).toBeInTheDocument();
     expect(screen.getByText("edgesensor_high")).toHaveClass("material-symbols-outlined");
     expect(screen.queryByText("Rectronx Cloud")).not.toBeInTheDocument();
@@ -313,17 +317,17 @@ describe("App", () => {
     expect(screen.getByLabelText("Dashboard project selector")).toBeInTheDocument();
     expect(screen.getByText("Energy Monitor")).toBeInTheDocument();
     expect(screen.getByText("Smart Home")).toBeInTheDocument();
-    expect(screen.getByTestId("dashboard-simulation-pill")).toBeInTheDocument();
-
-    expect(screen.getByTestId("dashboard-action-bar")).toHaveClass("gemini-action-strip");
+    expect(screen.queryByTestId("dashboard-simulation-pill")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-header-metrics")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-action-bar")).not.toBeInTheDocument();
     expect(screen.getByTestId("gemini-widget-canvas")).toHaveClass("gemini-widget-canvas");
-    expect(screen.getByText("Virtual IoT Simulator Connected")).toBeInTheDocument();
-    expect(screen.getByText("Water, pressure, flow models synced with scheduler output")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Edit labels/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Publish Changes/i })).toBeInTheDocument();
+    expect(screen.queryByText("Virtual IoT Simulator Connected")).not.toBeInTheDocument();
+    expect(screen.queryByText("Water, pressure, flow models synced with scheduler output")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Edit labels/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Publish Changes/i })).not.toBeInTheDocument();
   });
 
-  it("keeps KPI and project metric cards inside narrow screens with shared overflow-safe CSS", () => {
+  it("keeps compact cards inside narrow screens with shared overflow-safe CSS", () => {
     const css = `${readFileSync(resolve(__dirname, "styles/app.css"), "utf8")}\n${readFileSync(resolve(__dirname, "styles/design-system.css"), "utf8")}`;
 
     expect(css).toContain("--spark-metric-min");
@@ -332,12 +336,9 @@ describe("App", () => {
     expect(css).toContain("display: contents");
     expect(css).toContain("--spark-metric-min: 7.25rem");
     expect(css).toContain("--spark-compact-metric-min: 4.75rem");
-    expect(css).toContain("--spark-header-metric-max: 39rem");
     expect(css).toContain("--spark-title-xl: clamp(1.55rem, 1.8vw, 2.05rem)");
     expect(css).toContain('"primary"');
     expect(css).toContain('"selector"');
-    expect(css).toContain('"metrics"');
-    expect(css).toContain('"primary selector metrics"');
     expect(css).toContain("box-sizing: border-box");
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spark-metric-min)), 1fr))");
     expect(css).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
@@ -347,9 +348,7 @@ describe("App", () => {
     expect(css).toContain(".spark-ui .dashboard-header-grid.spark-page-header-grid");
     expect(css).toContain(".spark-ui .spark-page-header-primary h1");
     expect(css).toContain(".spark-ui .project-stat-row span > *");
-    expect(css).toContain(".spark-ui.dashboard-shell .cockpit-metrics span > svg");
     expect(css).toContain("grid-row: 1 / span 2");
-    expect(css).toContain(".spark-ui.dashboard-shell .cockpit-metrics strong");
     expect(css).toContain("grid-column: 2");
     expect(css).toContain("overflow-wrap: anywhere");
     expect(css).toContain("white-space: normal");
@@ -398,7 +397,8 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Templates"));
 
-    expect(screen.getByText("Template library")).toBeInTheDocument();
+    expect(screen.queryByText("Template library")).not.toBeInTheDocument();
+    expect(screen.queryByText("Start from a product model, then build the dashboard")).not.toBeInTheDocument();
     expect(screen.getByText("3/3 templates used")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Create template/i })).toBeDisabled();
 
@@ -443,7 +443,7 @@ describe("App", () => {
     expect(screen.getByText("Live payload simulator")).toBeInTheDocument();
     expect(screen.getByText("GPS and camera cost control")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Projects"));
-    expect(screen.getByText("Project command center")).toBeInTheDocument();
+    expect(screen.queryByText("Project command center")).not.toBeInTheDocument();
     expect(screen.getByText("Starter plan capacity")).toBeInTheDocument();
   });
 
@@ -469,9 +469,10 @@ describe("App", () => {
     fireEvent.click(await screen.findByText("Devices"));
 
     expect(screen.getByTestId("devices-page")).toHaveClass("device-system-page");
-    expect(screen.getByTestId("device-provisioning-hero")).toHaveClass("device-system-hero");
+    expect(screen.queryByTestId("device-provisioning-hero")).not.toBeInTheDocument();
     expect(screen.getByTestId("device-provisioning-grid")).toHaveClass("device-system-grid");
-    expect(screen.getByText("Provisioning center")).toBeInTheDocument();
+    expect(screen.queryByText("Provisioning center")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bind boards to templates and ship firmware-ready credentials")).not.toBeInTheDocument();
     expect(screen.getByText("3/3 devices used")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Provision device/i })).toBeDisabled();
 
