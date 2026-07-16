@@ -360,6 +360,10 @@ describe("App", () => {
     expect(css).toContain("@container spark-page-header (max-width: 58rem)");
     expect(css).toContain("@container spark-metric-row (max-width: 25rem)");
     expect(css).toContain("@container spark-project-card (max-width: 20rem)");
+    expect(css).toContain(".spark-ui .device-binding-panel.bound");
+    expect(css).toContain("background: #f8fbff");
+    expect(css).toContain(".spark-ui .entity-card-actions button.entity-edit-button");
+    expect(css).toContain("background: #0f172a");
   });
 
   it("builds same-origin websocket URLs when the production API base is relative", () => {

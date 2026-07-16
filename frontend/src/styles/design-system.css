@@ -1190,16 +1190,18 @@ body {
   box-shadow: none;
 }
 
-.spark-ui .entity-card-actions button:not(.template-open-button) {
+.spark-ui .entity-card-actions button:not(.template-open-button, .entity-edit-button) {
   border: 1px solid var(--spark-border-strong);
   background: var(--spark-surface);
   color: var(--spark-text);
 }
 
-.spark-ui .entity-card-actions .entity-edit-button {
+.spark-ui .entity-card-actions button.entity-edit-button,
+.spark-ui .entity-card-actions .template-open-button.entity-edit-button {
   border-color: #0f172a;
   background: #0f172a;
   color: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
 }
 
 .spark-ui .entity-card-actions .entity-delete-button {
@@ -2022,14 +2024,14 @@ body {
 }
 
 .spark-ui .device-binding-panel.bound {
-  border-color: #bbf7d0;
-  background: var(--spark-success-soft);
+  border-color: #bfdbfe;
+  background: #f8fbff;
 }
 
 .spark-ui .device-binding-panel.bound > svg {
-  border-color: #bbf7d0;
-  background: #ffffff;
-  color: var(--spark-success);
+  border-color: #dbeafe;
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary);
 }
 
 .spark-ui .device-binding-panel.needs-binding {
