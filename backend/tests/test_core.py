@@ -18,6 +18,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, text
 from datetime import UTC, datetime
 from pathlib import Path
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -106,6 +107,46 @@ def test_onboarding_state_can_mark_demo_viewed_and_first_project():
     assert updated.current_step == "project"
     assert updated.demo_viewed is True
     assert updated.first_project_id == "project-123"
+
+
+def test_auth_email_validation_allows_test_domains_but_rejects_bad_syntax():
+    assert RegisterRequest(
+        tenant_name="Acme Farm",
+        full_name="Acme Owner",
+        email="owner@acme.test",
+        password="SparkDemo123!",
+    ).email == "owner@acme.test"
+
+    invalid_emails = [
+        "a b@example.com",
+        "foo@@bar.com",
+        "foo@.com",
+        "foo@bar.",
+        "foo@bar..com",
+        "foo@-bar.com",
+    ]
+    for email in invalid_emails:
+        with pytest.raises(ValueError):
+            RegisterRequest(
+                tenant_name="Acme Farm",
+                full_name="Acme Owner",
+                email=email,
+                password="SparkDemo123!",
+            )
+
+
+def test_runtime_upgrade_adds_email_verified_column_to_existing_sqlite_users_table():
+    engine = make_engine("sqlite:///:memory:")
+    with engine.begin() as connection:
+        connection.execute(text("create table telemetry (tenant_id varchar, device_id varchar, channel varchar, message_id varchar)"))
+        connection.execute(text("create table users (id varchar primary key, tenant_id varchar, email varchar)"))
+
+    ensure_runtime_indexes(engine)
+
+    with engine.begin() as connection:
+        columns = [row[1] for row in connection.execute(text("pragma table_info(users)")).fetchall()]
+
+    assert "email_verified_at" in columns
 
 
 def test_topic_helpers_create_spark_namespace():

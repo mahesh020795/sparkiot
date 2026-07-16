@@ -1,17 +1,23 @@
 from datetime import datetime
 from typing import Any, Literal
 
+from email_validator import EmailNotValidError, validate_email as validate_email_address
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 
 def validate_email(value: str) -> str:
     email = value.strip()
-    if "@" not in email or email.startswith("@") or email.endswith("@"):
+    try:
+        result = validate_email_address(
+            email,
+            check_deliverability=False,
+            test_environment=True,
+        )
+    except EmailNotValidError as exc:
+        raise ValueError("Invalid email address") from exc
+    if not result.normalized:
         raise ValueError("Invalid email address")
-    local, domain = email.rsplit("@", 1)
-    if not local or "." not in domain:
-        raise ValueError("Invalid email address")
-    return email
+    return result.normalized
 
 
 class RegisterRequest(BaseModel):
@@ -89,7 +95,7 @@ class OnboardingUpdate(BaseModel):
     current_step: str = Field(min_length=2, max_length=80)
     completed_steps: list[str] = Field(default_factory=list, max_length=20)
     demo_viewed: bool = False
-    first_project_id: str | None = None
+    first_project_id: str | None = Field(default=None, max_length=36)
 
 
 class ProjectCreate(BaseModel):
