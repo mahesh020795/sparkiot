@@ -23,9 +23,7 @@ export function Widget({ config, reading, devices, onCommand }: { config: Widget
   if (config.type === "serial_lcd") return <ValuePanel icon={<Radio />} config={config} value={String(raw ?? "Waiting for serial data")} mono />;
   if (config.type === "battery") return <ValuePanel icon={<Battery />} config={config} value={`${raw ?? 87}%`} />;
   if (config.type === "signal") return <ValuePanel icon={<Radio />} config={config} value={`${raw ?? -64} dBm`} />;
-  if (config.type === "date") return <ValuePanel icon={<Clock />} config={config} value={new Date().toLocaleDateString()} />;
-  if (config.type === "time") return <ValuePanel icon={<Clock />} config={config} value={new Date().toLocaleTimeString()} />;
-  if (config.type === "day") return <ValuePanel icon={<Clock />} config={config} value={new Date().toLocaleDateString(undefined, { weekday: "long" })} />;
+  if (config.type === "date" || config.type === "time" || config.type === "day") return <InputWidget config={config} value={raw} onCommand={onCommand} />;
   return <ValuePanel icon={<Power />} config={config} value={`${raw ?? "--"} ${config.unit ?? ""}`} />;
 }
 
@@ -304,6 +302,25 @@ function EventMonitorWidget({ config, value }: { config: WidgetConfig; value: st
   );
 }
 
+function InputWidget({ config, value, onCommand }: { config: WidgetConfig; value: unknown; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
+  const fallback = config.type === "date" ? new Date().toISOString().slice(0, 10) : config.type === "time" ? "06:00" : "monday";
+  const currentValue = normalizeInputValue(config.type, value, fallback);
+  const inputType = config.type === "date" ? "date" : config.type === "time" ? "time" : "text";
+  function updateValue(nextValue: string) {
+    onCommand?.(config, nextValue);
+  }
+  return (
+    <article className={`widget spark-widget-card value-widget widget-${config.type}`} style={{ ["--widget-accent" as string]: config.color ?? "#e3e8f0", textAlign: config.align ?? "left" }}>
+      <WidgetHeader config={config} icon={<Clock />} />
+      <label className="dashboard-input-field">
+        <span>Command value</span>
+        <input aria-label={`${config.title} input`} type={inputType} value={currentValue} onChange={(event) => updateValue(event.target.value)} />
+      </label>
+      <WidgetFooter config={config} value="Saved dashboard input" />
+    </article>
+  );
+}
+
 function ControlWidget({ config, device, value, icon, onCommand }: { config: WidgetConfig; device?: Device; value: boolean; icon: React.ReactNode; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
   const isPush = config.type === "push_button";
   function sendCommand() {
@@ -316,6 +333,22 @@ function ControlWidget({ config, device, value, icon, onCommand }: { config: Wid
   }
   const solenoid = config.title.toLowerCase().includes("solenoid");
   return <article className={`widget spark-widget-card control widget-${config.type}`}><WidgetHeader config={config} icon={solenoid ? <SlidersHorizontal /> : icon} /><div className="command-surface-label">{solenoid ? "Valve status" : "Command surface"}</div><button className={value ? "toggle on" : "toggle"} onClick={sendCommand}><span className="toggle-track"><span className="toggle-dot" /></span><span className="toggle-copy"><strong>{isPush ? "SEND" : value ? solenoid ? "OPEN (FLOW ENABLED)" : "ON" : solenoid ? "CLOSED (BLOCKED)" : "OFF"}</strong><small>{value ? "Command active" : "Ready to send"}</small></span></button><WidgetFooter config={config} value={solenoid ? "manual override" : device?.name ?? "Demo device"} /></article>;
+}
+
+function normalizeInputValue(type: string, value: unknown, fallback: string) {
+  if (typeof value !== "string" || !value.trim()) return fallback;
+  if (type === "date") {
+    const direct = value.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (direct) return value;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? fallback : parsed.toISOString().slice(0, 10);
+  }
+  if (type === "time") {
+    const direct = value.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    if (direct) return value;
+    return parseScheduleTime(value) || fallback;
+  }
+  return value;
 }
 
 function ValuePanel({ config, value, icon, mono, accent }: { config: WidgetConfig; value: string; icon: React.ReactNode; mono?: boolean; accent?: string }) {

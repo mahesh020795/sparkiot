@@ -17,7 +17,7 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
       .then(([nextDashboard, readings]) => {
         if (!mounted) return;
         setDashboard(nextDashboard);
-        setLatest(Object.fromEntries(readings.map((reading) => [`${reading.device_id}:${reading.channel}`, reading])));
+        setLatest({ ...Object.fromEntries(readings.map((reading) => [`${reading.device_id}:${reading.channel}`, reading])), ...readPersistedDashboardInputs(projectId) });
       })
       .catch(() => {
         if (mounted) setDashboard({ id: `${projectId}-empty-dashboard`, project_id: projectId, name: "Dashboard", revision: 1, widgets: [] });
@@ -68,6 +68,7 @@ export function DashboardPage({ projectId, devices }: { projectId: string; devic
       server_at: new Date().toISOString()
     };
     setLatest((current) => ({ ...current, [key]: nextReading }));
+    persistDashboardInput(projectId, nextReading);
     void api.command(widget.deviceId, widget.channel, value).catch(() => undefined);
   }
 
@@ -111,15 +112,15 @@ export function LocalDashboardPage({
 
   useEffect(() => {
     setDashboard(initialDashboard);
-    setLatest(initialLatest);
-  }, [initialDashboard, initialLatest]);
+    setLatest({ ...initialLatest, ...readPersistedDashboardInputs(projectId) });
+  }, [initialDashboard, initialLatest, projectId]);
 
   useEffect(() => {
     let mounted = true;
     async function loadLatest() {
       try {
         const readings = await api.demoLatest(projectId);
-        if (mounted) setLatest((current) => ({ ...current, ...readings }));
+        if (mounted) setLatest((current) => ({ ...current, ...readings, ...readPersistedDashboardInputs(projectId) }));
       } catch {
         // Keep simulator data available when the backend is not running yet.
       }
@@ -157,6 +158,15 @@ export function LocalDashboardPage({
         server_at: new Date().toISOString()
       }
     }));
+    persistDashboardInput(projectId, {
+      id: latest[key]?.id ?? `local-command-${widget.deviceId}-${widget.channel}`,
+      device_id: widget.deviceId,
+      channel: widget.channel,
+      value,
+      unit: widget.unit,
+      observed_at: new Date().toISOString(),
+      server_at: new Date().toISOString()
+    });
     void api.demoCommand(widget.deviceId, widget.channel, value).catch(() => undefined);
   }
 
@@ -179,4 +189,27 @@ export function LocalDashboardPage({
       </div>
     </section>
   );
+}
+
+function dashboardInputStorageKey(projectId: string) {
+  return `spark_iot_dashboard_inputs:${projectId}`;
+}
+
+function readPersistedDashboardInputs(projectId: string): Record<string, Telemetry> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(dashboardInputStorageKey(projectId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, Telemetry>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistDashboardInput(projectId: string, reading: Telemetry) {
+  if (typeof window === "undefined") return;
+  const key = `${reading.device_id}:${reading.channel}`;
+  const current = readPersistedDashboardInputs(projectId);
+  window.localStorage.setItem(dashboardInputStorageKey(projectId), JSON.stringify({ ...current, [key]: reading }));
 }

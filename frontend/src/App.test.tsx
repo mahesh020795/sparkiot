@@ -316,6 +316,21 @@ describe("App", () => {
     expect(screen.queryByText("Launch checklist")).not.toBeInTheDocument();
   });
 
+  it("keeps dashboard switch input state after a refresh", async () => {
+    const firstRender = render(<App />);
+
+    const zoneTwo = (await screen.findByText("Zone 2 Solenoid")).closest("article")!;
+    expect(within(zoneTwo).getByText("CLOSED (BLOCKED)")).toBeInTheDocument();
+    fireEvent.click(within(zoneTwo).getByRole("button"));
+    expect(within(zoneTwo).getByText("OPEN (FLOW ENABLED)")).toBeInTheDocument();
+
+    firstRender.unmount();
+    render(<App />);
+
+    const refreshedZoneTwo = (await screen.findByText("Zone 2 Solenoid")).closest("article")!;
+    expect(within(refreshedZoneTwo).getByText("OPEN (FLOW ENABLED)")).toBeInTheDocument();
+  });
+
   it("uses the standardized design-system shell and non-overlapping dashboard header", async () => {
     render(<App />);
 
