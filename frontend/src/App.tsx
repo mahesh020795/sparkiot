@@ -1,4 +1,4 @@
-import { ArrowRight, Bell, CalendarClock, CheckCircle2, Copy, Cpu, Database, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, Pencil, PlugZap, Plus, RadioTower, Settings, TerminalSquare, Trash2, UserCircle, Workflow } from "lucide-react";
+import { ArrowRight, Bell, CalendarClock, CheckCircle2, ChevronDown, Copy, Cpu, Database, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, Pencil, PlugZap, Plus, RadioTower, Settings, TerminalSquare, Trash2, UserCircle, Workflow } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { DashboardPage, LocalDashboardPage } from "./pages/DashboardPage";
 import { DevicesPage } from "./pages/DevicesPage";
@@ -41,6 +41,7 @@ export function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
   const [demoPreviewMode, setDemoPreviewMode] = useState(false);
+  const [dashboardSelectorOpen, setDashboardSelectorOpen] = useState(false);
   const [templateStudioId, setTemplateStudioId] = useState<string | null>(null);
   const [templateStudioInitialStep, setTemplateStudioInitialStep] = useState<StudioLaunchStep>("Setup");
   const [templateSaveStates, setTemplateSaveStates] = useState<Record<string, SaveState>>(() => Object.fromEntries(demoTemplates.map((template) => [template.id, "saved"])));
@@ -549,10 +550,16 @@ export function App() {
           </div>
           <div className="top-actions">
             {view === "dashboard" && (
-              <label className="project-switcher spark-page-header-selector" data-testid="dashboard-header-selector">
-                <span>Dashboard</span>
-                <select aria-label="Dashboard project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{activeProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
-              </label>
+              <DashboardProjectSelector
+                projects={activeProjects}
+                selectedProjectId={selectedProjectId}
+                open={dashboardSelectorOpen}
+                onToggle={() => setDashboardSelectorOpen((current) => !current)}
+                onSelect={(projectId) => {
+                  setSelectedProjectId(projectId);
+                  setDashboardSelectorOpen(false);
+                }}
+              />
             )}
             {view !== "dashboard" && <select aria-label="Project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{activeProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>}
           </div>
@@ -649,6 +656,49 @@ export function App() {
         {view === "notifications" && <NotificationsPage initialItems={isAccountMode ? accountNotifications : demoNotifications} accountMode={isAccountMode} />}
         {view === "settings" && <SettingsPage />}
       </main>
+    </div>
+  );
+}
+
+function DashboardProjectSelector({ projects, selectedProjectId, open, onToggle, onSelect }: {
+  projects: Project[];
+  selectedProjectId: string;
+  open: boolean;
+  onToggle: () => void;
+  onSelect: (projectId: string) => void;
+}) {
+  const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
+  return (
+    <div className="project-switcher spark-page-header-selector spark-select" data-testid="dashboard-header-selector">
+      <span>Dashboard</span>
+      <button
+        type="button"
+        className="spark-select-trigger"
+        aria-label="Dashboard project selector"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={onToggle}
+      >
+        <strong>{selectedProject?.name ?? "Select dashboard"}</strong>
+        <ChevronDown size={18} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="spark-select-menu" role="listbox" aria-label="Dashboard projects">
+          {projects.map((project) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={project.id === selectedProjectId}
+              className={project.id === selectedProjectId ? "spark-select-option selected" : "spark-select-option"}
+              key={project.id}
+              onClick={() => onSelect(project.id)}
+            >
+              <span>{project.name}</span>
+              {project.id === selectedProjectId && <CheckCircle2 size={16} aria-hidden="true" />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

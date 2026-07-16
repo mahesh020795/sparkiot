@@ -304,7 +304,13 @@ describe("App", () => {
     expect(screen.queryByText("Production preview")).not.toBeInTheDocument();
     const dashboardSelector = screen.getByLabelText("Dashboard project selector");
     expect(dashboardSelector).toBeInTheDocument();
-    expect(dashboardSelector).toHaveValue("project-irrigation");
+    expect(dashboardSelector).toHaveTextContent("Smart Irrigation");
+    expect(screen.queryByRole("listbox", { name: "Dashboard projects" })).not.toBeInTheDocument();
+    fireEvent.click(dashboardSelector);
+    expect(screen.getByRole("listbox", { name: "Dashboard projects" })).toHaveClass("spark-select-menu");
+    expect(screen.getByRole("option", { name: "Smart Home" })).toHaveClass("spark-select-option");
+    fireEvent.click(screen.getByRole("option", { name: "Energy Monitor" }));
+    expect(await screen.findByRole("heading", { name: "Energy Monitor Dashboard" })).toBeInTheDocument();
     const navigation = screen.getByRole("navigation", { name: "Main navigation" });
     expect(navigation).toHaveTextContent("Settings");
     expect(navigation).toHaveTextContent("Dashboard");
@@ -406,7 +412,7 @@ describe("App", () => {
     expect(screen.queryByText("Quality assurance console")).not.toBeInTheDocument();
     expect(screen.getByTestId("dashboard-header-primary")).toBeInTheDocument();
     expect(screen.queryByTestId("dashboard-legacy-hero")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Dashboard project selector")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Dashboard project selector"));
     expect(screen.getByText("Energy Monitor")).toBeInTheDocument();
     expect(screen.getByText("Smart Home")).toBeInTheDocument();
     expect(screen.queryByTestId("dashboard-simulation-pill")).not.toBeInTheDocument();
@@ -1617,7 +1623,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
 
     expect(await screen.findByText("Customer Greenhouse Dashboard")).toBeInTheDocument();
-    expect(screen.getByLabelText("Dashboard project selector")).toHaveValue("account-project");
+    expect(screen.getByLabelText("Dashboard project selector")).toHaveTextContent("Customer Greenhouse");
     expect(await screen.findByText("Greenhouse Temperature")).toBeInTheDocument();
     expect(await screen.findByText(/28\.6/)).toBeInTheDocument();
 
