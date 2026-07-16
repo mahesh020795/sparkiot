@@ -1262,7 +1262,8 @@ body {
   font-weight: 900;
 }
 
-.spark-ui .project-create-grid input {
+.spark-ui .project-create-grid input,
+.spark-ui .project-create-grid select {
   width: 100%;
   min-width: 0;
   min-height: 44px;
@@ -1272,6 +1273,28 @@ body {
   color: var(--spark-text);
   font: inherit;
   padding: 0 0.8rem;
+}
+
+.spark-ui .template-starter-help {
+  display: grid;
+  gap: 0.25rem;
+  align-content: center;
+  min-height: 44px;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface-muted);
+  color: var(--spark-muted);
+  padding: 0.75rem 0.85rem;
+}
+
+.spark-ui .template-starter-help strong {
+  color: var(--spark-text);
+  font-size: var(--spark-small);
+}
+
+.spark-ui .template-starter-help span {
+  font-size: var(--spark-small);
+  line-height: 1.4;
 }
 
 .spark-ui .device-create-grid {

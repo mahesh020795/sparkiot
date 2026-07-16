@@ -19,6 +19,7 @@ type SaveState = "saved" | "unsaved" | "saving" | "error";
 type TemplatePreset = "Smart Irrigation" | "Smart Home" | "Energy Monitor" | "Blank";
 type StudioLaunchStep = "Setup" | "Migrate" | "Datastreams" | "Dashboard" | "Notifications" | "Code" | "Simulator";
 type QuickStartDraft = { projectName: string; projectDescription: string; board: DeviceTemplate["board"]; preset: TemplatePreset; deviceName: string };
+type ProjectCreateWithTemplate = ProjectCreate & { template_id?: string };
 
 export function App() {
   const [view, setView] = useState<View>("dashboard");
@@ -283,15 +284,27 @@ export function App() {
     return created;
   }
 
-  async function createAccountProject(project: ProjectCreate) {
-    const created = await api.createProject(project);
+  async function createAccountProject(project: ProjectCreateWithTemplate) {
+    const { template_id, ...projectPayload } = project;
+    const created = await api.createProject(projectPayload);
     setAccountProjects((current) => [created, ...current]);
     setSelectedProjectId(created.id);
     markFirstProjectCreated(created.id);
+    if (template_id) {
+      const sourceTemplate = activeTemplates.find((template) => template.id === template_id);
+      if (sourceTemplate) {
+        const dashboard = await api.dashboard(created.id);
+        const draft = cloneTemplateForProject(sourceTemplate, created, dashboard);
+        const template = await api.createTemplate(draft);
+        setAccountTemplates((current) => [template, ...current.filter((item) => item.id !== template.id)]);
+        setAccountDashboards((current) => ({ ...current, [created.id]: template.dashboard }));
+        setTemplateSaveStates((current) => ({ ...current, [template.id]: "saved" }));
+      }
+    }
     return created;
   }
 
-  async function createDemoProject(project: ProjectCreate) {
+  async function createDemoProject(project: ProjectCreateWithTemplate) {
     const id = `demo-project-${Date.now()}`;
     const created: Project = {
       id,
@@ -301,6 +314,20 @@ export function App() {
     };
     setDemoProjectRows((current) => [created, ...current]);
     setSelectedProjectId(created.id);
+    if (project.template_id) {
+      const sourceTemplate = activeTemplates.find((template) => template.id === project.template_id);
+      if (sourceTemplate) {
+        const dashboard: Dashboard = {
+          id: `demo-dashboard-${Date.now()}`,
+          project_id: created.id,
+          name: `${created.name} Dashboard`,
+          revision: 1,
+          widgets: []
+        };
+        const cloned = cloneTemplateForProject(sourceTemplate, created, dashboard);
+        setTemplates((current) => [cloned, ...current]);
+      }
+    }
     return created;
   }
 
@@ -1095,6 +1122,51 @@ function buildStarterTemplateDraft(project: Project, dashboard: Dashboard, devic
   };
 }
 
+function cloneTemplateForProject(source: DeviceTemplate, project: Project, dashboard: Dashboard, device?: Device): DeviceTemplate {
+  const idSuffix = `${project.id}-${Date.now().toString(36)}`;
+  const streamIdMap = new Map<string, string>();
+  const datastreams = source.datastreams.map((stream, index) => {
+    const id = `ds-${idSuffix}-${index}`;
+    streamIdMap.set(stream.id, id);
+    return { ...stream, id };
+  });
+  const widgets = source.dashboard.widgets.map((widget, index) => {
+    const datastreamId = widget.datastreamId ? streamIdMap.get(widget.datastreamId) : undefined;
+    const stream = datastreams.find((item) => item.id === datastreamId);
+    return {
+      ...widget,
+      id: `w-${idSuffix}-${index}`,
+      datastreamId,
+      deviceId: device?.id ?? "",
+      title: stream?.name ?? widget.title,
+      channel: stream?.pin ?? widget.channel,
+      unit: stream?.unit ?? widget.unit,
+      min: stream?.min ?? widget.min,
+      max: stream?.max ?? widget.max,
+      color: stream?.color ?? widget.color
+    };
+  });
+  const notifications = source.notifications.map((rule, index) => ({
+    ...rule,
+    id: `rule-${idSuffix}-${index}`,
+    datastreamId: streamIdMap.get(rule.datastreamId) ?? datastreams[0]?.id ?? rule.datastreamId
+  }));
+  return {
+    ...source,
+    id: `template-${idSuffix}`,
+    name: project.name,
+    description: `${source.name} template applied to ${project.name}`,
+    revision: 1,
+    datastreams,
+    notifications,
+    dashboard: {
+      ...dashboard,
+      name: `${project.name} Dashboard`,
+      widgets
+    }
+  };
+}
+
 function starterDatastreams(preset: TemplatePreset) {
   const streams = {
     "Smart Irrigation": [
@@ -1187,13 +1259,13 @@ function TemplateLibrary({
       <div className="library-toolbar">
         <div>
           <strong>{templates.length}/3 templates used</strong>
-          <span>Starter plan keeps the MVP simple: one template/dashboard per project.</span>
+          <span>Reusable starter designs. Apply one when creating a project.</span>
         </div>
         <button
           className="primary"
           disabled={(accountMode && isAtLimit) || !onCreateTemplate || (accountMode && !availableProjects.length)}
           aria-disabled={(accountMode && isAtLimit) || !onCreateTemplate || (accountMode && !availableProjects.length)}
-          title={isAtLimit ? "Starter plan limit reached" : accountMode ? "Create account template" : "Demo templates are already filled"}
+          title={isAtLimit ? "Starter plan limit reached" : accountMode ? "Create reusable template" : "Create reusable demo template"}
           onClick={() => setCreateOpen((current) => !current)}
         >
           {isAtLimit ? <Lock size={16} /> : <Plus size={16} />}
@@ -1206,15 +1278,9 @@ function TemplateLibrary({
           <div>
             <span className="section-kicker">New device template</span>
             <h2>Create template</h2>
-            <p>Select the project, board and starter preset. Spark IoT will generate virtual pins, starter widgets and Arduino-ready bindings.</p>
+            <p>Create a reusable template first. Later, when you create a project, choose this template to generate the project dashboard, V-pins and Arduino-ready bindings.</p>
           </div>
           <div className="project-create-grid">
-            <label>
-              Project
-              <select aria-label="Template project" value={draftProjectId} onChange={(event) => setDraftProjectId(event.target.value)}>
-                {templateProjectOptions.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
-              </select>
-            </label>
             <label>
               Board
               <select aria-label="Template board" value={draftBoard} onChange={(event) => setDraftBoard(event.target.value as DeviceTemplate["board"])}>
@@ -1222,11 +1288,15 @@ function TemplateLibrary({
               </select>
             </label>
             <label>
-              Preset
-              <select aria-label="Template preset" value={draftPreset} onChange={(event) => setDraftPreset(event.target.value as TemplatePreset)}>
+              Starter design
+              <select aria-label="Template starter design" value={draftPreset} onChange={(event) => setDraftPreset(event.target.value as TemplatePreset)}>
                 {["Smart Irrigation", "Smart Home", "Energy Monitor", "Blank"].map((preset) => <option key={preset}>{preset}</option>)}
               </select>
             </label>
+            <div className="template-starter-help">
+              <strong>What this does</strong>
+              <span>Pre-fills V-pins, starter widgets and notification rules. You can edit everything inside Template Studio.</span>
+            </div>
           </div>
           <div className="provisioning-actions">
             <button className="primary" type="button" disabled={createState === "saving"} onClick={() => void createTemplate()}>
@@ -1280,15 +1350,20 @@ function TemplateLibrary({
   );
 }
 
-function ProjectsView({ projects, templates, accountMode = false, onCreateProject, onUpdateProject, onDeleteProject }: { projects: Project[]; templates: DeviceTemplate[]; accountMode?: boolean; onCreateProject?: (project: ProjectCreate) => Promise<Project>; onUpdateProject: (projectId: string, project: ProjectUpdate) => Promise<Project>; onDeleteProject: (projectId: string) => Promise<void> }) {
+function ProjectsView({ projects, templates, accountMode = false, onCreateProject, onUpdateProject, onDeleteProject }: { projects: Project[]; templates: DeviceTemplate[]; accountMode?: boolean; onCreateProject?: (project: ProjectCreateWithTemplate) => Promise<Project>; onUpdateProject: (projectId: string, project: ProjectUpdate) => Promise<Project>; onDeleteProject: (projectId: string) => Promise<void> }) {
   const projectLimit = 3;
   const isAtLimit = projects.length >= projectLimit;
   const [createOpen, setCreateOpen] = useState(false);
   const [projectDraft, setProjectDraft] = useState<ProjectCreate>({ name: "", description: "" });
+  const [selectedTemplateId, setSelectedTemplateId] = useState(templates[0]?.id ?? "");
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editProjectDraft, setEditProjectDraft] = useState<ProjectUpdate>({ name: "", description: "" });
   const [createState, setCreateState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [createMessage, setCreateMessage] = useState("");
+
+  useEffect(() => {
+    if (!selectedTemplateId && templates[0]) setSelectedTemplateId(templates[0].id);
+  }, [selectedTemplateId, templates]);
 
   async function createProject() {
     if (!onCreateProject || (accountMode && isAtLimit)) return;
@@ -1302,11 +1377,11 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
     setCreateState("saving");
     setCreateMessage("");
     try {
-      await onCreateProject({ name, description });
+      await onCreateProject({ name, description, template_id: selectedTemplateId || undefined });
       setProjectDraft({ name: "", description: "" });
       setCreateOpen(false);
       setCreateState("saved");
-      setCreateMessage("Project created. Next: add a template and provision a board.");
+      setCreateMessage(selectedTemplateId ? "Project created with the selected template. Next: provision a board." : "Project created. Next: choose a template and provision a board.");
     } catch {
       setCreateState("error");
       setCreateMessage("Project creation failed. Check Starter limits and API session.");
@@ -1344,7 +1419,7 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
           <div>
             <span className="section-kicker">New customer workspace</span>
             <h2>Create a project</h2>
-            <p>Each project gets one dashboard and can later bind a template, device and datastream set.</p>
+            <p>Each project chooses a reusable template, then binds one or more devices to that dashboard and V-pin contract.</p>
           </div>
           <div className="project-create-grid">
             <label>
@@ -1354,6 +1429,13 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
             <label>
               Project description
               <input aria-label="Project description" value={projectDraft.description} placeholder="Fish tank and plant bed monitoring" onChange={(event) => setProjectDraft((current) => ({ ...current, description: event.target.value }))} />
+            </label>
+            <label>
+              Start from template
+              <select aria-label="Project template" value={selectedTemplateId} onChange={(event) => setSelectedTemplateId(event.target.value)}>
+                <option value="">Blank project</option>
+                {templates.map((template) => <option key={template.id} value={template.id}>{template.name} ({template.board})</option>)}
+              </select>
             </label>
           </div>
           <div className="provisioning-actions">

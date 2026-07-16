@@ -494,6 +494,46 @@ describe("App", () => {
     expect(within(irrigationProject).getByRole("button", { name: /Delete project/i })).toBeInTheDocument();
   });
 
+  it("lets projects choose a reusable template during creation", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Projects"));
+
+    fireEvent.click(screen.getByRole("button", { name: /Create project/i }));
+    expect(screen.getByLabelText("Project template")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Project name"), { target: { value: "Aquaponics Lab" } });
+    fireEvent.change(screen.getByLabelText("Project description"), { target: { value: "Fish tank and plant bed monitoring" } });
+    fireEvent.change(screen.getByLabelText("Project template"), { target: { value: "template-home" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save project/i }));
+
+    const projectCard = await screen.findByRole("article", { name: /Aquaponics Lab project/i });
+    expect(within(projectCard).getByText("Fish tank and plant bed monitoring")).toBeInTheDocument();
+    expect(within(projectCard).getByText("ESP8266")).toBeInTheDocument();
+    expect(within(projectCard).getAllByText("3").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("Project created with the selected template. Next: provision a board.")).toBeInTheDocument();
+  });
+
+  it("makes Template Studio Add V pin, Add widget and Add rule buttons create visible items", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Templates"));
+    fireEvent.click(within(screen.getByRole("article", { name: /Energy Monitor template/i })).getByRole("button", { name: /Edit template/i }));
+
+    fireEvent.click(screen.getByText("Datastreams"));
+    expect(screen.queryByDisplayValue("Datastream V3")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Add V pin/i }));
+    expect(screen.getByDisplayValue("Datastream V3")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("V3")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Dashboard"));
+    expect(screen.queryByText("Camera Snapshot")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /cameraBind to V pin/i }));
+    expect(screen.getAllByText("Camera Snapshot").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getAllByText("Notifications")[1]);
+    const beforeRules = screen.getAllByDisplayValue("Voltage Alert").length;
+    fireEvent.click(screen.getByRole("button", { name: /Add rule/i }));
+    expect(screen.getAllByDisplayValue("Voltage Alert").length).toBe(beforeRules + 1);
+  });
+
 
   it("exports demo data history with a real CSV download action", async () => {
     const { click } = stubCsvDownload();
@@ -734,7 +774,7 @@ describe("App", () => {
 
     expect((await screen.findAllByText("Aquaponics Lab")).length).toBeGreaterThan(0);
     expect(screen.getByText("Fish tank and plant bed monitoring")).toBeInTheDocument();
-    expect(screen.getByText("Project created. Next: add a template and provision a board.")).toBeInTheDocument();
+    expect(screen.getByText("Project created. Next: choose a template and provision a board.")).toBeInTheDocument();
   });
 
   it("creates and saves real account templates for signed-in projects", async () => {

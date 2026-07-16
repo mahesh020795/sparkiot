@@ -101,19 +101,7 @@ export function TemplateStudioPage({
   }
 
   function addDatastream(seed?: Partial<Datastream>) {
-    const usedPins = new Set(template.datastreams.map((stream) => stream.pin));
-    const nextIndex = Array.from({ length: 64 }, (_, index) => index).find((index) => !usedPins.has(`V${index}` as Datastream["pin"])) ?? template.datastreams.length;
-    const nextPin = `V${nextIndex}` as Datastream["pin"];
-    const stream: Datastream = {
-      id: `ds-${crypto.randomUUID()}`,
-      name: seed?.name ?? `Datastream ${seed?.pin ?? nextPin}`,
-      pin: seed?.pin ?? nextPin,
-      dataType: seed?.dataType ?? "float",
-      unit: seed?.unit ?? "",
-      min: seed?.min ?? 0,
-      max: seed?.max ?? 100,
-      color: seed?.color ?? "#f26a21"
-    };
+    const stream = createDatastream(template.datastreams, seed);
     onChange({ ...template, datastreams: [...template.datastreams, stream] });
   }
 
@@ -139,11 +127,22 @@ export function TemplateStudioPage({
     setActiveStep("Migrate");
   }
 
-  function addWidget(type: string, datastreamId = template.datastreams[0]?.id) {
-    const stream = template.datastreams.find((item) => item.id === datastreamId);
-    if (!stream) return;
+  function addWidget(type: string, datastreamId?: string) {
+    const preferredType = dataTypeForWidgetType(type);
+    const existingStream =
+      (datastreamId ? template.datastreams.find((item) => item.id === datastreamId) : undefined) ??
+      template.datastreams.find((item) => item.dataType === preferredType);
+    const stream = existingStream ?? createDatastream(template.datastreams, {
+      name: defaultNameForWidgetType(type),
+      dataType: preferredType,
+      unit: preferredType === "boolean" || preferredType === "gps" || preferredType === "image" || preferredType === "string" ? "" : "unit",
+      min: preferredType === "boolean" ? 0 : preferredType === "gps" || preferredType === "image" || preferredType === "string" ? undefined : 0,
+      max: preferredType === "boolean" ? 1 : preferredType === "gps" || preferredType === "image" || preferredType === "string" ? undefined : 100,
+      color: colorForType(preferredType)
+    });
+    const datastreams = existingStream ? template.datastreams : [...template.datastreams, stream];
     const widget = hydrateWidget({ id: `w-${crypto.randomUUID()}`, type, title: stream.name, x: 0, y: Infinity, w: type === "chart" || type === "gps" || type === "camera" ? 6 : 3, h: type === "chart" || type === "gps" || type === "camera" ? 3 : 2, deviceId: "", channel: "" }, stream, device);
-    onChange({ ...template, dashboard: { ...template.dashboard, widgets: [...template.dashboard.widgets, widget] } });
+    onChange({ ...template, datastreams, dashboard: { ...template.dashboard, widgets: [...template.dashboard.widgets, widget] } });
     setSelectedWidgetId(widget.id);
   }
 
@@ -175,8 +174,8 @@ export function TemplateStudioPage({
   }
 
   function addNotification(seed?: Partial<TemplateNotification>) {
-    const stream = template.datastreams.find((item) => item.id === seed?.datastreamId) ?? template.datastreams[0];
-    if (!stream) return;
+    const existingStream = template.datastreams.find((item) => item.id === seed?.datastreamId) ?? template.datastreams[0];
+    const stream = existingStream ?? createDatastream(template.datastreams, { name: "Alert Value", dataType: "float", min: 0, max: 100, color: "#2563eb" });
     const notification: TemplateNotification = {
       id: `rule-${crypto.randomUUID()}`,
       name: seed?.name ?? `${stream.name} Alert`,
@@ -186,7 +185,7 @@ export function TemplateStudioPage({
       channel: seed?.channel ?? "push",
       cooldownMinutes: seed?.cooldownMinutes ?? 15
     };
-    onChange({ ...template, notifications: [...template.notifications, notification] });
+    onChange({ ...template, datastreams: existingStream ? template.datastreams : [...template.datastreams, stream], notifications: [...template.notifications, notification] });
   }
 
   function updateNotification(id: string, patch: Partial<TemplateNotification>) {
@@ -237,8 +236,8 @@ export function TemplateStudioPage({
           <span><strong>{template.datastreams.length}</strong> virtual pins</span>
           <span><strong>{template.dashboard.widgets.length}</strong> widgets</span>
           <span><strong>{template.notifications.length}</strong> alerts</span>
-          <button className="primary small" onClick={onSave} disabled={saveState === "saving"}><Save size={16} />{saveState === "saving" ? "Saving" : "Save"}</button>
-          <button className="primary small" onClick={() => setFullBuilder((value) => !value)}><Expand size={16} />{fullBuilder ? "Exit full builder" : "Full builder"}</button>
+          <button className="primary small" type="button" onClick={onSave} disabled={saveState === "saving"}><Save size={16} />{saveState === "saving" ? "Saving" : "Save"}</button>
+          <button className="primary small" type="button" onClick={() => setFullBuilder((value) => !value)}><Expand size={16} />{fullBuilder ? "Exit full builder" : "Full builder"}</button>
         </div>
       </header>
       {saveState === "error" && saveError && <div className="save-error-banner">{saveError}</div>}
@@ -340,7 +339,7 @@ export function TemplateStudioPage({
               <h2>Datastreams / Virtual Pins</h2>
               <p>Define the data contract your firmware, dashboard widgets and alerts will use.</p>
             </div>
-            <button className="primary small" title="Add datastream" onClick={() => addDatastream()}><Plus size={16} />Add V pin</button>
+            <button className="primary small" type="button" title="Add datastream" onClick={() => addDatastream()}><Plus size={16} />Add V pin</button>
           </div>
           <div className="datastream-registry-hero">
             <div>
@@ -386,7 +385,7 @@ export function TemplateStudioPage({
               <h2>Notification builder</h2>
               <p>Create event rules that feel simple for students but are structured like a real IoT operations tool.</p>
             </div>
-            <button className="primary small" onClick={() => addNotification()}><Plus size={16} />Add rule</button>
+            <button className="primary small" type="button" onClick={() => addNotification()}><Plus size={16} />Add rule</button>
           </div>
           <div className="alert-center-hero">
             <div>
@@ -548,7 +547,7 @@ function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, 
               <h2>Widget Library</h2>
             </div>
           </div>
-          <div className="widget-library">{widgetTypes.map((type) => <button className="widget-tile" key={type} onClick={() => onAddWidget(type)}><Grid2X2Plus size={15} /><span>{type.replace("_", " ")}</span><small>Bind to V pin</small></button>)}</div>
+          <div className="widget-library">{widgetTypes.map((type) => <button className="widget-tile" type="button" key={type} onClick={() => onAddWidget(type)}><Grid2X2Plus size={15} /><span>{type.replace("_", " ")}</span><small>Bind to V pin</small></button>)}</div>
         </div>
         <div className="studio-section">
           <div className="section-title"><div><span className="section-kicker">Properties</span><h2>Inspector</h2></div><SlidersHorizontal size={18} /></div>
@@ -628,6 +627,54 @@ function NotificationRule({ rule, streams, onChange }: { rule: TemplateNotificat
       </div>
     </article>
   );
+}
+
+function createDatastream(existing: Datastream[], seed?: Partial<Datastream>): Datastream {
+  const usedPins = new Set(existing.map((stream) => stream.pin));
+  const nextIndex = Array.from({ length: 64 }, (_, index) => index).find((index) => !usedPins.has(`V${index}` as Datastream["pin"])) ?? existing.length;
+  const nextPin = `V${nextIndex}` as Datastream["pin"];
+  const dataType = seed?.dataType ?? "float";
+  return {
+    id: `ds-${crypto.randomUUID()}`,
+    name: seed?.name ?? `Datastream ${seed?.pin ?? nextPin}`,
+    pin: seed?.pin ?? nextPin,
+    dataType,
+    unit: seed?.unit ?? "",
+    min: seed?.min ?? (dataType === "gps" || dataType === "image" || dataType === "string" ? undefined : 0),
+    max: seed?.max ?? (dataType === "gps" || dataType === "image" || dataType === "string" ? undefined : dataType === "boolean" ? 1 : 100),
+    color: seed?.color ?? colorForType(dataType)
+  };
+}
+
+function dataTypeForWidgetType(type: string): Datastream["dataType"] {
+  if (type === "switch" || type === "push_button" || type === "led") return "boolean";
+  if (type === "gps") return "gps";
+  if (type === "camera") return "image";
+  if (type === "serial_lcd") return "string";
+  if (type === "time" || type === "day") return "time";
+  if (type === "date") return "date";
+  return "float";
+}
+
+function defaultNameForWidgetType(type: string) {
+  const labels: Record<string, string> = {
+    gauge: "Gauge Value",
+    meter: "Meter Value",
+    value: "Numeric Value",
+    switch: "Switch Control",
+    push_button: "Push Button",
+    led: "LED State",
+    chart: "Chart Value",
+    gps: "GPS Location",
+    camera: "Camera Snapshot",
+    serial_lcd: "Serial LCD",
+    time: "Time Input",
+    date: "Date Input",
+    day: "Day Input",
+    battery: "Battery Level",
+    signal: "Signal Strength"
+  };
+  return labels[type] ?? "Datastream";
 }
 
 function parseMigration(text: string): Array<Omit<Datastream, "id" | "color"> & { color?: string }> {
