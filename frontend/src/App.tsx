@@ -307,6 +307,7 @@ export function App() {
 
   function markFirstProjectCreated(projectId: string) {
     if (!onboarding) return;
+    if (onboarding.first_project_id) return;
     const updated = {
       ...onboarding,
       current_step: "project",
@@ -314,7 +315,9 @@ export function App() {
       first_project_id: projectId,
     };
     setOnboarding(updated);
-    void api.updateOnboarding(updated);
+    void api.updateOnboarding(updated).catch(() => {
+      // Project creation succeeded; keep the UI moving even if progress persistence needs retry later.
+    });
   }
 
   function openSelectedTemplateStudio(initialStep: StudioLaunchStep = "Setup") {

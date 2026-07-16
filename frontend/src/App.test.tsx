@@ -211,6 +211,51 @@ describe("App", () => {
     }));
   });
 
+  it("does not overwrite the original first project when later projects are created", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const existingProject = { id: "project-original", name: "Original Farm", description: "First connected project", is_active: true };
+    const createdProject = { id: "project-later", name: "Later Project", description: "Second project", is_active: true };
+    vi.spyOn(api, "me").mockResolvedValue({
+      full_name: "Acme Owner",
+      email: "owner@acme.test",
+      tenant_id: "tenant-1",
+      plan_code: "starter",
+      email_verified: true,
+      onboarding_step: "project",
+    });
+    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 1, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "projects").mockResolvedValue([existingProject]);
+    vi.spyOn(api, "devices").mockResolvedValue([]);
+    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "notifications").mockResolvedValue([]);
+    vi.spyOn(api, "schedules").mockResolvedValue([]);
+    vi.spyOn(api, "dashboard").mockResolvedValue({ id: "dashboard-original", project_id: "project-original", name: "Original Farm Dashboard", revision: 1, widgets: [] });
+    vi.spyOn(api, "latest").mockResolvedValue([]);
+    vi.spyOn(api, "onboarding").mockResolvedValue({
+      current_step: "project",
+      completed_steps: ["verify_email", "starter_workspace", "project"],
+      demo_viewed: true,
+      first_project_id: "project-original",
+    });
+    vi.spyOn(api, "createProject").mockResolvedValue(createdProject);
+    const update = vi.spyOn(api, "updateOnboarding").mockResolvedValue({
+      current_step: "project",
+      completed_steps: ["verify_email", "starter_workspace", "project"],
+      demo_viewed: true,
+      first_project_id: "project-original",
+    });
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Projects"));
+    fireEvent.click(await screen.findByRole("button", { name: /Create project/i }));
+    fireEvent.change(screen.getByLabelText("Project name"), { target: { value: "Later Project" } });
+    fireEvent.change(screen.getByLabelText("Project description"), { target: { value: "Second project" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save project/i }));
+
+    await vi.waitFor(() => expect(api.createProject).toHaveBeenCalledWith({ name: "Later Project", description: "Second project" }));
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("opens directly on the Spark IoT dashboard without login", async () => {
     render(<App />);
     expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();
