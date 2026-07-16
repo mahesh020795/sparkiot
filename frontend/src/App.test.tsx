@@ -576,6 +576,11 @@ describe("App", () => {
     expect(screen.queryByText("Camera Snapshot")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /camera.*Output widget/i }));
     expect(screen.getAllByText("Camera Snapshot").length).toBeGreaterThan(0);
+    const addedCamera = screen.getAllByText("Camera Snapshot").map((item) => item.closest("article")).find(Boolean) as HTMLElement;
+    const gridItem = addedCamera.closest(".react-grid-item") as HTMLElement;
+    expect(gridItem?.getAttribute("style") ?? "").not.toMatch(/Infinity|NaN/);
+    expect(screen.getByRole("status")).toHaveTextContent(/Camera Snapshot widget added to canvas/i);
+    expect(screen.getByDisplayValue("Camera Snapshot")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByText("Notifications")[1]);
     const beforeRules = screen.getAllByDisplayValue("Voltage Alert").length;

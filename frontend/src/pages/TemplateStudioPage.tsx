@@ -73,6 +73,7 @@ export function TemplateStudioPage({
   const [fullBuilder, setFullBuilder] = useState(false);
   const [migrationText, setMigrationText] = useState("V0 Temperature float C 0 100\nV1 Humidity integer % 0 100\nV2 Pump boolean\nV3 GPS gps\nV4 Camera image");
   const [simulatorEvent, setSimulatorEvent] = useState<{ channel: string; value: string; at: string } | null>(null);
+  const [widgetAddStatus, setWidgetAddStatus] = useState("");
   const selectedWidget = template.dashboard.widgets.find((widget) => widget.id === selectedWidgetId);
   const selectedDatastream = template.datastreams.find((stream) => stream.id === selectedWidget?.datastreamId);
   const layout = useMemo(() => template.dashboard.widgets.map((widget) => ({ i: widget.id, x: widget.x, y: widget.y, w: widget.w, h: widget.h, minW: 2, minH: 2 })), [template.dashboard.widgets]);
@@ -144,9 +145,10 @@ export function TemplateStudioPage({
       color: colorForType(preferredType)
     });
     const datastreams = existingStream ? template.datastreams : [...template.datastreams, stream];
-    const widget = hydrateWidget({ id: `w-${crypto.randomUUID()}`, type, title: stream.name, x: 0, y: Infinity, w: type === "chart" || type === "gps" || type === "camera" ? 6 : 3, h: type === "chart" || type === "gps" || type === "camera" ? 3 : 2, deviceId: "", channel: "" }, stream, device);
+    const widget = hydrateWidget({ id: `w-${crypto.randomUUID()}`, type, title: stream.name, x: 0, y: nextWidgetRow(template.dashboard.widgets), w: type === "chart" || type === "gps" || type === "camera" ? 6 : 3, h: type === "chart" || type === "gps" || type === "camera" ? 3 : 2, deviceId: "", channel: "" }, stream, device);
     onChange({ ...template, datastreams, dashboard: { ...template.dashboard, widgets: [...template.dashboard.widgets, widget] } });
     setSelectedWidgetId(widget.id);
+    setWidgetAddStatus(`${widget.title} widget added to canvas. Save the template to keep it.`);
   }
 
   function updateWidget(id: string, patch: Partial<WidgetConfig>) {
@@ -366,6 +368,7 @@ export function TemplateStudioPage({
           device={device}
           latest={latest}
           layout={layout}
+          widgetAddStatus={widgetAddStatus}
           selectedWidgetId={selectedWidgetId}
           selectedWidget={selectedWidget}
           selectedDatastream={selectedDatastream}
@@ -494,11 +497,12 @@ export function TemplateStudioPage({
   );
 }
 
-function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, selectedWidget, selectedDatastream, onSelect, onLayout, onAddWidget, onUpdateWidget, onDuplicate, onDelete, saveState, onSave }: {
+function DashboardBuilder({ template, device, latest, layout, widgetAddStatus, selectedWidgetId, selectedWidget, selectedDatastream, onSelect, onLayout, onAddWidget, onUpdateWidget, onDuplicate, onDelete, saveState, onSave }: {
   template: DeviceTemplate;
   device?: Device;
   latest: Record<string, Telemetry>;
   layout: Layout;
+  widgetAddStatus: string;
   selectedWidgetId: string;
   selectedWidget?: WidgetConfig;
   selectedDatastream?: Datastream;
@@ -563,6 +567,7 @@ function DashboardBuilder({ template, device, latest, layout, selectedWidgetId, 
               </section>
             ))}
           </div>
+          {widgetAddStatus && <p className="widget-library-status" role="status">{widgetAddStatus}</p>}
         </div>
         <div className="studio-section">
           <div className="section-title"><div><span className="section-kicker">Properties</span><h2>Inspector</h2></div><SlidersHorizontal size={18} /></div>
@@ -690,6 +695,11 @@ function defaultNameForWidgetType(type: string) {
     signal: "Signal Strength"
   };
   return labels[type] ?? "Datastream";
+}
+
+function nextWidgetRow(widgets: WidgetConfig[]) {
+  if (!widgets.length) return 0;
+  return widgets.reduce((nextRow, widget) => Math.max(nextRow, Number(widget.y || 0) + Number(widget.h || 2)), 0);
 }
 
 function parseMigration(text: string): Array<Omit<Datastream, "id" | "color"> & { color?: string }> {

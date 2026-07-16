@@ -444,6 +444,7 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
 .widget-library-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 9px; }
 .widget-library button { justify-content: flex-start; text-transform: capitalize; font-size: 12px; padding: 9px 10px; border-radius: 12px; background: #fbfcfe; }
 .widget-library button:hover { background: #eff6ff; }
+.widget-library-status { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #bfdbfe; border-radius: 14px; background: #eff6ff; color: #1d4ed8; font-size: 12px; font-weight: 850; }
 .widget-tile { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: center; min-height: 58px; border-color: #e8edf5; background: linear-gradient(180deg, #fff, #fbfcfe) !important; box-shadow: 0 8px 18px rgba(16, 24, 40, 0.04); }
 .widget-tile svg { grid-row: span 2; color: #2563eb; }
 .widget-tile span { font-weight: 900; color: #1f2a3d; }
