@@ -1,4 +1,4 @@
-import { BellRing, LogIn, LogOut, Map, ShieldCheck, UserCircle } from "lucide-react";
+import { BellRing, Database, LogIn, LogOut, ShieldCheck, UserCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, clearSession, getSession, saveSession } from "../lib/api";
 
@@ -136,8 +136,22 @@ export function SettingsPage() {
             <BellRing size={16} />Enable browser push
           </button>
         </article>
-        <article className="panel settings-card"><div className="panel-title"><ShieldCheck size={18} /><h2>Starter plan</h2></div><p>1 user, 3 devices, 3 dashboards, GPS, camera URL, push notifications and 30-day history.</p></article>
-        <article className="panel settings-card"><div className="panel-title"><Map size={18} /><h2>Map tiles</h2></div><p>Set VITE_MAP_TILE_URL and VITE_MAP_ATTRIBUTION for a commercial-safe tile provider before production.</p></article>
+        <article className="panel settings-card settings-info-card">
+          <div className="panel-title"><ShieldCheck size={18} /><h2>Starter plan</h2></div>
+          <p>1 user, 3 devices, 3 dashboards, GPS, camera URL, push notifications and 30-day history.</p>
+          <div className="settings-state-row">
+            <strong>RM25-ready limits</strong>
+            <span>Customer-facing controls stay inside the Starter package boundaries.</span>
+          </div>
+        </article>
+        <article className="panel settings-card settings-info-card">
+          <div className="panel-title"><Database size={18} /><h2>Data window</h2></div>
+          <p>Telemetry, GPS trails and camera references are designed around the 30-day Starter retention window.</p>
+          <div className="settings-state-row">
+            <strong>30-day retention</strong>
+            <span>Production map tile provider setup stays in deployment docs, not customer settings.</span>
+          </div>
+        </article>
       </section>
     </section>
   );

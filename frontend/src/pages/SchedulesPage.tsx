@@ -1,4 +1,4 @@
-import { CalendarClock, Repeat2 } from "lucide-react";
+import { CalendarClock, Clock3, Cpu, Globe2, Hash, Repeat2, ToggleLeft } from "lucide-react";
 import { useState } from "react";
 import type { Device, Project, ScheduleCreate, ScheduleItem } from "../lib/types";
 
@@ -91,19 +91,22 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
             <h2>Create board timer</h2>
           </div>
           <p>Pick the device, virtual pin, command value, day pattern and local time. The worker publishes the command to the device topic when due.</p>
-          <div className="schedule-form-grid">
-            <label>
-              <span>Device</span>
+          <div className="schedule-form-grid premium-schedule-form-grid">
+            <label className="premium-schedule-field">
+              <span className="schedule-field-icon"><Cpu size={16} /></span>
+              <span className="schedule-field-copy"><small>Device</small></span>
               <select aria-label="Device" value={deviceId} onChange={(event) => setDeviceId(event.target.value)}>
                 {(availableDevices.length ? availableDevices : devices).map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}
               </select>
             </label>
-            <label>
-              <span>Virtual pin</span>
+            <label className="premium-schedule-field">
+              <span className="schedule-field-icon"><Hash size={16} /></span>
+              <span className="schedule-field-copy"><small>Virtual pin</small></span>
               <input aria-label="Virtual pin" value={channel} onChange={(event) => setChannel(event.target.value.toUpperCase())} />
             </label>
-            <label>
-              <span>Command value</span>
+            <label className="premium-schedule-field">
+              <span className="schedule-field-icon"><ToggleLeft size={16} /></span>
+              <span className="schedule-field-copy"><small>Command value</small></span>
               <select aria-label="Command value" value={commandValue} onChange={(event) => setCommandValue(event.target.value)}>
                 <option value="true">true</option>
                 <option value="false">false</option>
@@ -111,12 +114,14 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
                 <option value="0">0</option>
               </select>
             </label>
-            <label>
-              <span>Run time</span>
+            <label className="premium-schedule-field">
+              <span className="schedule-field-icon"><Clock3 size={16} /></span>
+              <span className="schedule-field-copy"><small>Run time</small></span>
               <input aria-label="Run time" type="time" value={timeOfDay} onChange={(event) => setTimeOfDay(event.target.value)} />
             </label>
-            <label>
-              <span>Repeat</span>
+            <label className="premium-schedule-field">
+              <span className="schedule-field-icon"><Repeat2 size={16} /></span>
+              <span className="schedule-field-copy"><small>Repeat</small></span>
               <select aria-label="Repeat" value={recurrence} onChange={(event) => setRecurrence(event.target.value)}>
                 <option value="daily">Daily</option>
                 <option value="weekdays">Weekdays</option>
@@ -125,8 +130,9 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
                 <option value="tue,thu,sat">Tue, Thu, Sat</option>
               </select>
             </label>
-            <label>
-              <span>Timezone</span>
+            <label className="premium-schedule-field">
+              <span className="schedule-field-icon"><Globe2 size={16} /></span>
+              <span className="schedule-field-copy"><small>Timezone</small></span>
               <input aria-label="Timezone" value={timezone} onChange={(event) => setTimezone(event.target.value)} />
             </label>
           </div>

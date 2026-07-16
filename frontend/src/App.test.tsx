@@ -784,6 +784,8 @@ describe("App", () => {
 
     expect(screen.getByTestId("schedules-page")).toHaveClass("schedule-system-page");
     expect(screen.getByTestId("schedule-workbench")).toHaveClass("schedule-workbench-single");
+    expect(document.querySelector(".premium-schedule-form-grid")).toBeTruthy();
+    expect(document.querySelectorAll(".premium-schedule-field").length).toBe(6);
     expect(screen.queryByText("Schedule automation")).not.toBeInTheDocument();
     expect(screen.queryByText("Blynk Timer-style day and time control for boards, pumps, relays and status outputs.")).not.toBeInTheDocument();
     expect(screen.queryByText("Demo-only planner")).not.toBeInTheDocument();
@@ -1049,7 +1051,11 @@ describe("App", () => {
 
     expect(screen.queryByText("Platform settings")).not.toBeInTheDocument();
     expect(screen.queryByText("Production readiness controls")).not.toBeInTheDocument();
+    expect(screen.queryByText("Map tiles")).not.toBeInTheDocument();
+    expect(screen.queryByText("VITE_MAP_TILE_URL")).not.toBeInTheDocument();
     expect(screen.getByText("Account access")).toBeInTheDocument();
+    expect(screen.getByText("Data window")).toBeInTheDocument();
+    expect(screen.getByText("30-day retention")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Sign in demo account/i }));
 
     expect(await screen.findByText("Signed in as Demo User")).toBeInTheDocument();

@@ -3304,7 +3304,62 @@ body {
   gap: 0.4rem;
 }
 
-.spark-ui .schedule-form-grid label > span {
+.spark-ui .premium-schedule-form-grid {
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .premium-schedule-field {
+  min-height: 6.4rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0.55rem 0.7rem;
+  padding: 0.8rem;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-lg);
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.045);
+}
+
+.spark-ui .premium-schedule-field .schedule-field-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dbeafe;
+  border-radius: 0.95rem;
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary);
+}
+
+.spark-ui .premium-schedule-field .schedule-field-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.spark-ui .premium-schedule-field .schedule-field-copy small {
+  color: var(--spark-muted);
+  font-size: var(--spark-text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 950;
+}
+
+.spark-ui .premium-schedule-field input,
+.spark-ui .premium-schedule-field select {
+  grid-column: 1 / -1;
+  min-height: 3rem;
+  border-radius: 0.95rem;
+  border-color: #dbe5f2;
+  background: #ffffff;
+  font-weight: 800;
+  color: var(--spark-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.spark-ui .schedule-form-grid label > span:not(.schedule-field-icon):not(.schedule-field-copy) {
   color: var(--spark-muted);
   font-size: var(--spark-text-xs);
   letter-spacing: 0.08em;
@@ -3524,15 +3579,36 @@ body {
 }
 
 /* Settings: browser push opt-in. */
+.spark-ui .settings-card {
+  min-width: 0;
+  min-height: 18rem;
+  display: grid;
+  grid-template-rows: auto minmax(4.5rem, auto) 1fr auto;
+  gap: var(--spark-space-4);
+  align-content: start;
+}
+
+.spark-ui .settings-card > p {
+  min-height: 4.5rem;
+  margin: 0;
+  color: var(--spark-muted);
+  line-height: 1.45;
+  font-weight: 760;
+  overflow-wrap: anywhere;
+}
+
 .spark-ui .browser-push-card {
   min-width: 0;
   display: grid;
   gap: var(--spark-space-4);
 }
 
-.spark-ui .push-state-row {
+.spark-ui .push-state-row,
+.spark-ui .settings-state-row {
   min-width: 0;
+  min-height: 6.25rem;
   display: grid;
+  align-content: start;
   gap: 0.3rem;
   padding: var(--spark-space-3);
   border: 1px solid var(--spark-border);
@@ -3540,17 +3616,24 @@ body {
   background: var(--spark-surface-muted);
 }
 
-.spark-ui .push-state-row strong {
+.spark-ui .push-state-row strong,
+.spark-ui .settings-state-row strong {
   color: var(--spark-text);
   font-size: 0.95rem;
   font-weight: 900;
 }
 
-.spark-ui .push-state-row span {
+.spark-ui .push-state-row span,
+.spark-ui .settings-state-row span {
   color: var(--spark-muted);
   font-size: var(--spark-text-sm);
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.spark-ui .settings-card > button,
+.spark-ui .settings-card .account-state button {
+  min-height: 3.25rem;
 }
 
 .spark-ui .browser-push-card.enabled .push-state-row {
