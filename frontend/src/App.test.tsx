@@ -282,7 +282,9 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();
-    expect(screen.queryByText("Interactive live simulation")).not.toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-simulation-pill")).toHaveClass("cockpit-simulation-strip");
+    expect(screen.getByText("Interactive live simulation")).toBeInTheDocument();
+    expect(screen.getByText("Solenoid outputs synchronized with maps & video stream")).toBeInTheDocument();
     expect(screen.queryByTestId("setup-summary-card")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Open setup flow/i })).not.toBeInTheDocument();
     expect(screen.queryByText("Spark IoT Launch Wizard")).not.toBeInTheDocument();
@@ -311,6 +313,7 @@ describe("App", () => {
     expect(screen.getByLabelText("Dashboard project selector")).toBeInTheDocument();
     expect(screen.getByText("Energy Monitor")).toBeInTheDocument();
     expect(screen.getByText("Smart Home")).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-simulation-pill")).toBeInTheDocument();
 
     expect(screen.getByTestId("dashboard-action-bar")).toHaveClass("gemini-action-strip");
     expect(screen.getByTestId("gemini-widget-canvas")).toHaveClass("gemini-widget-canvas");

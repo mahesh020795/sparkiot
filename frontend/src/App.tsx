@@ -405,6 +405,13 @@ export function App() {
             <div className="cockpit-kicker-row"><span className="eyebrow">{view === "dashboard" ? "Live control cockpit" : "Control Center"}</span>{view === "dashboard" && <span className="cockpit-badge">Premium industrial widgets</span>}</div>
             <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
             {view === "dashboard" && <p>Elevated radial scale sensors, interactive video streams, GIS field coordinate tracking</p>}
+            {view === "dashboard" && (
+              <div className="cockpit-simulation-strip" data-testid="dashboard-simulation-pill">
+                <RadioTower size={16} />
+                <strong>Interactive live simulation</strong>
+                <span>Solenoid outputs synchronized with maps & video stream</span>
+              </div>
+            )}
           </div>
           <div className="top-actions">
             {view === "dashboard" && (
