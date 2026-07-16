@@ -504,6 +504,12 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Export CSV/i }));
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/demo/devices/device-irrigation/history.csv"), expect.anything()));
     await vi.waitFor(() => expect(click).toHaveBeenCalled());
+
+    const homeHistoryCard = screen.getAllByText("ESP8266 Home Node").map((item) => item.closest("article")).find(Boolean);
+    expect(homeHistoryCard).toBeDefined();
+    fireEvent.click(within(homeHistoryCard as HTMLElement).getByRole("button", { name: "CSV" }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/demo/devices/device-home/history.csv"), expect.anything()));
+    await vi.waitFor(() => expect(click).toHaveBeenCalledTimes(2));
   });
 
   it("shows device provisioning with template binding, tokens and starter limit", async () => {
@@ -940,6 +946,20 @@ describe("App", () => {
     expect(screen.getByText(/SparkIoT\.virtualWrite\("V1", 50, "%"\)/)).toBeInTheDocument();
     expect(screen.getByText(/SparkIoT\.onCommand\("V0", onV0Command\)/)).toBeInTheDocument();
     expect(screen.getByText(/SparkIoT\.ack\("V0", state, "V0 command applied"\)/)).toBeInTheDocument();
+  });
+
+  it("runs a visible Template Studio simulator event instead of a decorative button", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Templates"));
+
+    const irrigationTemplateCard = screen.getByRole("article", { name: /Smart Irrigation template/i });
+    fireEvent.click(within(irrigationTemplateCard).getByRole("button", { name: /Open studio/i }));
+    fireEvent.click(screen.getByText("Simulator"));
+
+    fireEvent.click(screen.getByRole("button", { name: /Run demo event/i }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Demo event generated");
+    expect(screen.getByRole("status")).toHaveTextContent("device-irrigation V0");
   });
 
   it("makes account Code tab binding explicit when the matching device token is hidden", async () => {

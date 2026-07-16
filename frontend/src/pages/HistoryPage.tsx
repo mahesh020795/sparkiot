@@ -28,10 +28,11 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
   const channels = Array.from(new Set([...fallbackRows, ...rows].map((reading) => reading.channel))).sort();
   const filteredRows = selectedChannel === "all" ? rows : rows.filter((reading) => reading.channel === selectedChannel);
   const historyChannel = selectedChannel === "all" ? undefined : selectedChannel;
-  const csvUrl = selectedDevice ? (accountMode ? api.historyCsvUrl(selectedDevice.id, historyChannel) : api.demoHistoryCsvUrl(selectedDevice.id, historyChannel)) : "#";
 
-  async function exportCsv() {
-    if (!selectedDevice) return;
+  async function exportCsv(deviceOverride = selectedDevice, channelOverride = selectedChannel) {
+    if (!deviceOverride) return;
+    const exportChannel = channelOverride === "all" ? undefined : channelOverride;
+    const csvUrl = accountMode ? api.historyCsvUrl(deviceOverride.id, exportChannel) : api.demoHistoryCsvUrl(deviceOverride.id, exportChannel);
     const session = getSession();
     const response = await fetch(csvUrl, {
       headers: accountMode && session ? { Authorization: `Bearer ${session.access_token}` } : undefined
@@ -41,7 +42,7 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `spark-iot-${selectedDevice.id}-${selectedChannel}-history.csv`;
+    anchor.download = `spark-iot-${deviceOverride.id}-${channelOverride}-history.csv`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -93,7 +94,7 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
       <div className="history-summary-grid">
         {devices.map((device) => {
           const deviceRows = historyByDevice[device.id] ?? Object.values(initialLatest).filter((reading) => reading.device_id === device.id);
-          return <article key={device.id} className="history-device-card"><span className="status-dot" /><strong>{device.name}</strong><small>{device.board}</small><b>{deviceRows.length}</b><span>latest readings</span><button type="button" onClick={() => { setSelectedDeviceId(device.id); setSelectedChannel("all"); }}>CSV</button></article>;
+          return <article key={device.id} className="history-device-card"><span className="status-dot" /><strong>{device.name}</strong><small>{device.board}</small><b>{deviceRows.length}</b><span>latest readings</span><button type="button" onClick={() => { setSelectedDeviceId(device.id); setSelectedChannel("all"); void exportCsv(device, "all"); }}>CSV</button></article>;
         })}
       </div>
 

@@ -2190,6 +2190,40 @@ body {
   gap: var(--spark-space-3);
 }
 
+.spark-ui .simulator-event-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spark-space-2) var(--spark-space-3);
+  align-items: center;
+  margin-bottom: var(--spark-space-3);
+  padding: var(--spark-space-3) var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-soft);
+  color: var(--spark-text);
+}
+
+.spark-ui .simulator-event-preview strong {
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.spark-ui .simulator-event-preview code {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: var(--spark-space-3);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface);
+  color: var(--spark-primary);
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .simulator-event-preview small {
+  color: var(--spark-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
 .spark-ui .quick-template-card,
 .spark-ui .widget-tile,
 .spark-ui .simulator-grid article {

@@ -69,6 +69,7 @@ export function TemplateStudioPage({
   const [selectedWidgetId, setSelectedWidgetId] = useState(template.dashboard.widgets[0]?.id ?? "");
   const [fullBuilder, setFullBuilder] = useState(false);
   const [migrationText, setMigrationText] = useState("V0 Temperature float C 0 100\nV1 Humidity integer % 0 100\nV2 Pump boolean\nV3 GPS gps\nV4 Camera image");
+  const [simulatorEvent, setSimulatorEvent] = useState<{ channel: string; value: string; at: string } | null>(null);
   const selectedWidget = template.dashboard.widgets.find((widget) => widget.id === selectedWidgetId);
   const selectedDatastream = template.datastreams.find((stream) => stream.id === selectedWidget?.datastreamId);
   const layout = useMemo(() => template.dashboard.widgets.map((widget) => ({ i: widget.id, x: widget.x, y: widget.y, w: widget.w, h: widget.h, minW: 2, minH: 2 })), [template.dashboard.widgets]);
@@ -208,6 +209,16 @@ export function TemplateStudioPage({
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(url);
+  }
+
+  function runDemoEvent() {
+    const stream = template.datastreams[0];
+    if (!stream) return;
+    setSimulatorEvent({
+      channel: stream.pin,
+      value: sampleValue(stream),
+      at: new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date())
+    });
   }
 
   return (
@@ -457,7 +468,14 @@ export function TemplateStudioPage({
               <h3>Test every virtual pin before hardware arrives</h3>
               <p>Use demo payloads to validate dashboard widgets, GPS traces, camera URLs and alert rules.</p>
             </div>
-            <div className="section-title"><h2>Device simulator</h2><button className="primary small"><Play size={16} />Run demo event</button></div>
+            <div className="section-title"><h2>Device simulator</h2><button className="primary small" type="button" onClick={runDemoEvent}><Play size={16} />Run demo event</button></div>
+            {simulatorEvent && (
+              <div className="simulator-event-preview" role="status" aria-live="polite">
+                <strong>Demo event generated</strong>
+                <code>{`${device?.id ?? "demo-device"} ${simulatorEvent.channel} = ${simulatorEvent.value}`}</code>
+                <small>{simulatorEvent.at}</small>
+              </div>
+            )}
             <div className="simulator-grid">
               {template.datastreams.map((stream) => <article key={stream.id}><strong>{stream.pin}</strong><span>{stream.name}</span><small>{sampleValue(stream)}</small></article>)}
             </div>
