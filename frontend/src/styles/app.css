@@ -1280,21 +1280,24 @@ main {
   gap: 8px;
   flex-wrap: wrap;
 }
-.schedule-days span {
+.schedule-days button {
   width: 40px;
   height: 40px;
   display: grid;
   place-items: center;
+  padding: 0;
+  border: 0;
   border-radius: 999px;
   background: #f1f5f9;
   color: #64748b;
   font-weight: 950;
+  box-shadow: none;
 }
-.schedule-days span.active {
+.schedule-days button.active {
   background: #10b981;
   color: #ffffff;
 }
-.schedule-times span {
+.schedule-times button {
   flex: 1 1 88px;
   min-height: 58px;
   display: grid;
@@ -1305,15 +1308,56 @@ main {
   color: #1455ff;
   font-size: 13px;
   font-weight: 950;
+  box-shadow: none;
+  justify-content: center;
 }
-.schedule-slider,
+.schedule-times button.active {
+  border-color: #2563eb;
+  background: #dbeafe;
+  color: #0f3ed6;
+}
+.schedule-time-input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #1455ff;
+  font-weight: 900;
+  padding: 0 14px;
+}
+.schedule-duration-input {
+  width: 100%;
+  height: 12px;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2563eb var(--schedule-duration-percent, 36%), #eef2f7 var(--schedule-duration-percent, 36%));
+  cursor: pointer;
+}
+.schedule-duration-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+  background: #2563eb;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
+}
+.schedule-duration-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+  background: #2563eb;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
+}
 .capacity-bar {
   height: 8px;
   overflow: hidden;
   border-radius: 999px;
   background: #eef2f7;
 }
-.schedule-slider span,
 .capacity-bar span {
   display: block;
   height: 100%;

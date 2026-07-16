@@ -1,7 +1,7 @@
 import * as echarts from "echarts";
 import { Battery, CalendarDays, Camera, Circle, Clock, Droplets, Gauge, MapPinned, PlugZap, Power, Radio, Send, Shield, Signal, SlidersHorizontal, Sparkles, Thermometer, ToggleLeft, Zap } from "lucide-react";
 import type React from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { api } from "../../lib/api";
 import type { Device, Telemetry, WidgetConfig } from "../../lib/types";
@@ -144,24 +144,150 @@ function CameraWidget({ config, value }: { config: WidgetConfig; value: any }) {
 }
 
 function ScheduleWidget({ config, value }: { config: WidgetConfig; value: any }) {
-  const selectedDays = new Set<string>(Array.isArray(value?.days) ? value.days : ["M", "W", "F"]);
-  const times: string[] = Array.isArray(value?.times) ? value.times.map(String) : ["06:00 AM", "12:00 PM", "06:00 PM"];
-  const duration = Number(value?.duration ?? 25);
-  const days = ["M", "T", "W", "T", "F", "S", "S"];
+  const defaultDays = useMemo(() => normalizeScheduleDays(value?.days), [value?.days]);
+  const defaultTimes = useMemo(() => normalizeScheduleTimes(value?.times), [value?.times]);
+  const [selectedDays, setSelectedDays] = useState<Set<string>>(() => new Set(defaultDays));
+  const [times, setTimes] = useState<string[]>(defaultTimes);
+  const [selectedTimeIndex, setSelectedTimeIndex] = useState(0);
+  const [duration, setDuration] = useState(Number(value?.duration ?? 25));
+  const days = [
+    { key: "mon", short: "M", label: "Monday" },
+    { key: "tue", short: "T", label: "Tuesday" },
+    { key: "wed", short: "W", label: "Wednesday" },
+    { key: "thu", short: "T", label: "Thursday" },
+    { key: "fri", short: "F", label: "Friday" },
+    { key: "sat", short: "S", label: "Saturday" },
+    { key: "sun", short: "S", label: "Sunday" }
+  ];
+
+  function toggleDay(day: string) {
+    setSelectedDays((current) => {
+      const next = new Set(current);
+      if (next.has(day)) next.delete(day);
+      else next.add(day);
+      return next;
+    });
+  }
+
+  function updateSelectedTime(nextTime: string) {
+    setTimes((current) => current.map((time, index) => index === selectedTimeIndex ? nextTime : time));
+  }
+
   return (
     <article className="widget spark-widget-card widget-schedule">
       <WidgetHeader config={config} icon={<CalendarDays size={16} />} />
       <div className="schedule-body">
         <label>1. Selected days</label>
-        <div className="schedule-days">{days.map((day, index) => <span className={selectedDays.has(day) && index !== 3 ? "active" : ""} key={`${day}-${index}`}>{day}</span>)}</div>
+        <div className="schedule-days">
+          {days.map((day) => {
+            const active = selectedDays.has(day.key);
+            return (
+              <button
+                type="button"
+                className={active ? "active" : ""}
+                aria-pressed={active}
+                aria-label={`${active ? "Disable" : "Enable"} ${day.label}`}
+                key={day.key}
+                onClick={() => toggleDay(day.key)}
+              >
+                {day.short}
+              </button>
+            );
+          })}
+        </div>
         <label>2. Daily time cycles</label>
-        <div className="schedule-times">{times.map((time) => <span key={time}>{time}</span>)}</div>
+        <div className="schedule-times">
+          {times.map((time, index) => (
+            <button
+              type="button"
+              className={selectedTimeIndex === index ? "active" : ""}
+              aria-pressed={selectedTimeIndex === index}
+              aria-label={`Edit ${formatScheduleTime(time)} cycle`}
+              key={`${time}-${index}`}
+              onClick={() => setSelectedTimeIndex(index)}
+            >
+              {formatScheduleTime(time)}
+            </button>
+          ))}
+        </div>
+        <input
+          aria-label="Selected cycle time"
+          className="schedule-time-input"
+          type="time"
+          value={times[selectedTimeIndex] ?? "06:00"}
+          onChange={(event) => updateSelectedTime(event.target.value)}
+        />
         <label>3. Cycle duration <strong>{duration} min</strong></label>
-        <div className="schedule-slider"><span style={{ width: `${Math.min(100, duration * 3)}%` }} /></div>
+        <input
+          aria-label="Cycle duration minutes"
+          className="schedule-duration-input"
+          type="range"
+          min="5"
+          max="60"
+          step="5"
+          value={duration}
+          onChange={(event) => setDuration(Number(event.target.value))}
+          style={{ ["--schedule-duration-percent" as string]: `${((duration - 5) / 55) * 100}%` }}
+        />
       </div>
       <WidgetFooter config={config} value="bypasses schedule on rain" label="SMART TRIGGER" />
     </article>
   );
+}
+
+function normalizeScheduleDays(days: unknown): string[] {
+  if (!Array.isArray(days)) return ["mon", "wed", "fri"];
+  const aliases: Record<string, string> = {
+    M: "mon",
+    MON: "mon",
+    MONDAY: "mon",
+    TUE: "tue",
+    TUESDAY: "tue",
+    W: "wed",
+    WED: "wed",
+    WEDNESDAY: "wed",
+    THU: "thu",
+    THURSDAY: "thu",
+    F: "fri",
+    FRI: "fri",
+    FRIDAY: "fri",
+    SAT: "sat",
+    SATURDAY: "sat",
+    SUN: "sun",
+    SUNDAY: "sun"
+  };
+  const normalized = days
+    .map((day) => aliases[String(day).trim().toUpperCase()] ?? String(day).trim().toLowerCase())
+    .filter((day) => ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].includes(day));
+  return normalized.length ? Array.from(new Set(normalized)) : ["mon", "wed", "fri"];
+}
+
+function normalizeScheduleTimes(times: unknown): string[] {
+  if (!Array.isArray(times)) return ["06:00", "12:00", "18:00"];
+  const normalized = times.map((time) => parseScheduleTime(String(time))).filter(Boolean);
+  return normalized.length ? normalized.slice(0, 4) : ["06:00", "12:00", "18:00"];
+}
+
+function parseScheduleTime(time: string): string {
+  const trimmed = time.trim();
+  const direct = trimmed.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  if (direct) return trimmed;
+  const twelveHour = trimmed.match(/^(\d{1,2}):([0-5]\d)\s*(AM|PM)$/i);
+  if (!twelveHour) return "";
+  let hour = Number(twelveHour[1]);
+  const minute = twelveHour[2];
+  const meridiem = twelveHour[3].toUpperCase();
+  if (meridiem === "PM" && hour < 12) hour += 12;
+  if (meridiem === "AM" && hour === 12) hour = 0;
+  return `${String(hour).padStart(2, "0")}:${minute}`;
+}
+
+function formatScheduleTime(time: string): string {
+  const [hourText, minute = "00"] = parseScheduleTime(time).split(":");
+  const hour = Number(hourText);
+  const displayHour = hour % 12 || 12;
+  const meridiem = hour >= 12 ? "PM" : "AM";
+  return `${String(displayHour).padStart(2, "0")}:${minute} ${meridiem}`;
 }
 
 function PowerHubWidget({ config, value }: { config: WidgetConfig; value: number }) {
