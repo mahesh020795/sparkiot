@@ -6,7 +6,7 @@ from app.api.deps import current_user
 from app.core.database import get_db
 from app.core.security import hash_secret, issue_device_secret
 from app.models.domain import CommandLog, Device, Project, User
-from app.schemas.api import CommandRequest, DeviceCreate, DeviceResponse
+from app.schemas.api import CommandRequest, DeviceCreate, DeviceResponse, DeviceUpdate, StatusResponse
 from app.services.mqtt import command_topic, publish_command, telemetry_topic
 from app.services.plans import PlanLimitError, assert_can_create_device
 
@@ -39,11 +39,39 @@ def create_device(payload: DeviceCreate, user: User = Depends(current_user), db:
     return _device_response(device, token)
 
 
+def _tenant_device(device_id: str, user: User, db: Session) -> Device:
+    device = db.get(Device, device_id)
+    if not device or device.tenant_id != user.tenant_id or not device.is_active:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return device
+
+
+@router.put("/{device_id}", response_model=DeviceResponse)
+def update_device(device_id: str, payload: DeviceUpdate, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    device = _tenant_device(device_id, user, db)
+    project = db.get(Project, payload.project_id)
+    if not project or project.tenant_id != user.tenant_id or not project.is_active:
+        raise HTTPException(status_code=404, detail="Project not found")
+    device.project_id = payload.project_id
+    device.name = payload.name
+    device.board = payload.board
+    db.commit()
+    db.refresh(device)
+    return _device_response(device)
+
+
+@router.delete("/{device_id}", response_model=StatusResponse)
+def delete_device(device_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    device = _tenant_device(device_id, user, db)
+    device.is_active = False
+    device.is_online = False
+    db.commit()
+    return StatusResponse(message="Device archived")
+
+
 @router.post("/{device_id}/regenerate-token", response_model=DeviceResponse)
 def regenerate_token(device_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    device = db.get(Device, device_id)
-    if not device or device.tenant_id != user.tenant_id:
-        raise HTTPException(status_code=404, detail="Device not found")
+    device = _tenant_device(device_id, user, db)
     token = issue_device_secret()
     device.secret_hash = hash_secret(token)
     db.commit()

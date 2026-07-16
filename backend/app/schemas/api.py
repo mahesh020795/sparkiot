@@ -103,6 +103,10 @@ class ProjectCreate(BaseModel):
     description: str = ""
 
 
+class ProjectUpdate(ProjectCreate):
+    pass
+
+
 class ProjectResponse(ProjectCreate):
     id: str
     is_active: bool
@@ -112,6 +116,10 @@ class DeviceCreate(BaseModel):
     project_id: str
     name: str = Field(min_length=2, max_length=160)
     board: str = "ESP32"
+
+
+class DeviceUpdate(DeviceCreate):
+    pass
 
 
 class DeviceResponse(BaseModel):

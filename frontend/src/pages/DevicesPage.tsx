@@ -1,7 +1,7 @@
 import { Clipboard, Copy, KeyRound, Lock, Pencil, Plus, RadioTower, Router, TerminalSquare, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import type { BoardType, Device, DeviceCreate, DeviceTemplate, Project } from "../lib/types";
+import type { BoardType, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, Project } from "../lib/types";
 
 type Props = {
   devices: Device[];
@@ -10,11 +10,13 @@ type Props = {
   accountMode?: boolean;
   onCreateDevice?: (device: DeviceCreate) => Promise<Device>;
   onRegenerateToken?: (deviceId: string) => Promise<Device>;
+  onUpdateDevice: (deviceId: string, device: DeviceUpdate) => Promise<Device>;
+  onDeleteDevice: (deviceId: string) => Promise<void>;
 };
 
 const boardOptions: BoardType[] = ["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"];
 
-export function DevicesPage({ devices, templates, projects = [], accountMode = false, onCreateDevice, onRegenerateToken }: Props) {
+export function DevicesPage({ devices, templates, projects = [], accountMode = false, onCreateDevice, onRegenerateToken, onUpdateDevice, onDeleteDevice }: Props) {
   const deviceLimit = 3;
   const isAtLimit = devices.length >= deviceLimit;
   const [tokenStates, setTokenStates] = useState<Record<string, "idle" | "saving" | "saved" | "error">>({});
@@ -26,6 +28,8 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
     name: "",
     board: "ESP32"
   });
+  const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
+  const [editDeviceDraft, setEditDeviceDraft] = useState<DeviceUpdate>({ project_id: "", name: "", board: "ESP32" });
 
   async function regenerateToken(deviceId: string) {
     if (!onRegenerateToken) return;
@@ -59,6 +63,13 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
       setProvisionState("error");
       setProvisionMessage("Device provisioning failed. Check starter limits and API session.");
     }
+  }
+
+  async function saveDeviceEdit(deviceId: string) {
+    const name = editDeviceDraft.name.trim();
+    if (!editDeviceDraft.project_id || name.length < 2) return;
+    await onUpdateDevice(deviceId, { ...editDeviceDraft, name });
+    setEditingDeviceId(null);
   }
 
   return (
@@ -142,8 +153,31 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
               <div className="provisioning-card-head">
                 <span className="device-icon"><Router size={20} /></span>
                 <div>
-                  <h2>{device.name}</h2>
-                  <p>{template?.name ?? "Unassigned template"}</p>
+                  {editingDeviceId === device.id ? (
+                    <div className="entity-edit-form">
+                      <label>
+                        Device name
+                        <input aria-label="Edit device name" value={editDeviceDraft.name} onChange={(event) => setEditDeviceDraft((current) => ({ ...current, name: event.target.value }))} />
+                      </label>
+                      <label>
+                        Project
+                        <select aria-label="Edit device project" value={editDeviceDraft.project_id} onChange={(event) => setEditDeviceDraft((current) => ({ ...current, project_id: event.target.value }))}>
+                          {(projects.length ? projects : templates.map((item) => ({ id: item.dashboard.project_id, name: item.name }))).map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+                        </select>
+                      </label>
+                      <label>
+                        Board
+                        <select aria-label="Edit device board" value={editDeviceDraft.board} onChange={(event) => setEditDeviceDraft((current) => ({ ...current, board: event.target.value as BoardType }))}>
+                          {boardOptions.map((board) => <option key={board} value={board}>{board}</option>)}
+                        </select>
+                      </label>
+                    </div>
+                  ) : (
+                    <>
+                      <h2>{device.name}</h2>
+                      <p>{template?.name ?? "Unassigned template"}</p>
+                    </>
+                  )}
                 </div>
                 <span className={device.is_online ? "pill online-pill" : "pill"}>{device.is_online ? "Online" : "Offline"}</span>
               </div>
@@ -173,8 +207,17 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
                 </button>
               </div>
               <div className="entity-card-actions">
-                <button className="entity-edit-button" type="button" aria-label={`Edit device ${device.name}`}><Pencil size={16} />Edit device</button>
-                <button className="entity-delete-button" type="button" aria-label={`Delete device ${device.name}`}><Trash2 size={16} />Delete device</button>
+                {editingDeviceId === device.id ? (
+                  <>
+                    <button className="entity-edit-button" type="button" onClick={() => void saveDeviceEdit(device.id)}>Save device</button>
+                    <button type="button" onClick={() => setEditingDeviceId(null)}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <button className="entity-edit-button" type="button" aria-label={`Edit device ${device.name}`} onClick={() => { setEditingDeviceId(device.id); setEditDeviceDraft({ project_id: device.project_id, name: device.name, board: device.board as BoardType }); }}><Pencil size={16} />Edit device</button>
+                    <button className="entity-delete-button" type="button" aria-label={`Delete device ${device.name}`} onClick={() => { if (window.confirm(`Delete device "${device.name}"?`)) void onDeleteDevice(device.id); }}><Trash2 size={16} />Delete device</button>
+                  </>
+                )}
               </div>
               <span className={`token-rotation-state ${tokenState}`}>{formatTokenState(tokenState, accountMode)}</span>
             </article>

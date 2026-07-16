@@ -1,4 +1,4 @@
-import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ScheduleCreate, ScheduleItem, StatusResponse, Telemetry, UserProfile } from "./types";
+import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ProjectUpdate, ScheduleCreate, ScheduleItem, StatusResponse, Telemetry, UserProfile } from "./types";
 
 function defaultApiBase() {
   return "/api/v1";
@@ -52,8 +52,12 @@ export const api = {
   usage: () => request<{ users: number; max_users: number; devices: number; max_devices: number; projects: number; max_projects: number; retention_days: number }>("/tenant/usage"),
   projects: () => request<Project[]>("/projects"),
   createProject: (project: ProjectCreate) => request<Project>("/projects", { method: "POST", body: JSON.stringify(project) }),
+  updateProject: (projectId: string, project: ProjectUpdate) => request<Project>(`/projects/${projectId}`, { method: "PUT", body: JSON.stringify(project) }),
+  deleteProject: (projectId: string) => request<StatusResponse>(`/projects/${projectId}`, { method: "DELETE" }),
   devices: () => request<Device[]>("/devices"),
   createDevice: (device: DeviceCreate) => request<Device>("/devices", { method: "POST", body: JSON.stringify(device) }),
+  updateDevice: (deviceId: string, device: DeviceUpdate) => request<Device>(`/devices/${deviceId}`, { method: "PUT", body: JSON.stringify(device) }),
+  deleteDevice: (deviceId: string) => request<StatusResponse>(`/devices/${deviceId}`, { method: "DELETE" }),
   dashboard: (projectId: string) => request<Dashboard>(`/dashboards/project/${projectId}`),
   saveDashboard: (dashboard: Dashboard) => request<Dashboard>(`/dashboards/${dashboard.id}`, { method: "PUT", body: JSON.stringify({ revision: dashboard.revision, widgets: dashboard.widgets }) }),
   latest: (projectId: string) => request<Telemetry[]>(`/telemetry/projects/${projectId}/latest`),
@@ -65,6 +69,7 @@ export const api = {
   templates: () => request<DeviceTemplate[]>("/templates"),
   createTemplate: (template: DeviceTemplate) => request<DeviceTemplate>("/templates", { method: "POST", body: JSON.stringify(template) }),
   saveTemplate: (template: DeviceTemplate) => request<DeviceTemplate>(`/templates/${template.id}`, { method: "PUT", body: JSON.stringify(template) }),
+  deleteTemplate: (templateId: string) => request<StatusResponse>(`/templates/${templateId}`, { method: "DELETE" }),
   demoCommand: (deviceId: string, channel: string, value: unknown) => request<{ status: string; topic: string; payload: { value: unknown } }>(`/demo/devices/${deviceId}/commands`, { method: "POST", body: JSON.stringify({ channel, value }) }),
   demoCommandLogs: (deviceId: string) => request<CommandLogItem[]>(`/demo/devices/${deviceId}/command-logs`),
   commandLogs: (deviceId: string) => request<CommandLogItem[]>(`/devices/${deviceId}/command-logs`),

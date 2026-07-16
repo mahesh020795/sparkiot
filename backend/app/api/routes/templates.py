@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import current_user
 from app.core.database import get_db
 from app.models.domain import Dashboard, DeviceTemplateRecord, Project, User
-from app.schemas.api import TemplateStudioResponse, TemplateStudioUpdate
+from app.schemas.api import StatusResponse, TemplateStudioResponse, TemplateStudioUpdate
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
@@ -57,6 +57,7 @@ def _get_tenant_template(db: Session, tenant_id: str, template_id: str) -> tuple
 
 @router.get("", response_model=list[TemplateStudioResponse])
 def list_templates(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    active_project_ids = set(db.scalars(select(Project.id).where(Project.tenant_id == user.tenant_id, Project.is_active)).all())
     templates = db.scalars(
         select(DeviceTemplateRecord)
         .where(DeviceTemplateRecord.tenant_id == user.tenant_id)
@@ -66,7 +67,7 @@ def list_templates(user: User = Depends(current_user), db: Session = Depends(get
         dashboard.id: dashboard
         for dashboard in db.scalars(select(Dashboard).where(Dashboard.tenant_id == user.tenant_id)).all()
     }
-    return [template_payload(template, dashboards[template.dashboard_id]) for template in templates if template.dashboard_id in dashboards]
+    return [template_payload(template, dashboards[template.dashboard_id]) for template in templates if template.dashboard_id in dashboards and template.project_id in active_project_ids]
 
 
 @router.get("/{template_id}", response_model=TemplateStudioResponse)
@@ -149,3 +150,11 @@ def update_template(template_id: str, payload: TemplateStudioUpdate, user: User 
     db.refresh(template)
     db.refresh(dashboard)
     return template_payload(template, dashboard)
+
+
+@router.delete("/{template_id}", response_model=StatusResponse)
+def delete_template(template_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    template, _dashboard = _get_tenant_template(db, user.tenant_id, template_id)
+    db.delete(template)
+    db.commit()
+    return StatusResponse(message="Template deleted")

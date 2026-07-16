@@ -499,6 +499,38 @@ describe("App", () => {
     expect(within(irrigationDevice).getByRole("button", { name: /Delete device/i })).toBeInTheDocument();
   });
 
+  it("edits and deletes projects, templates and devices from their card actions", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<App />);
+
+    fireEvent.click(await screen.findByText("Projects"));
+    const irrigationProject = screen.getByRole("article", { name: /Smart Irrigation project/i });
+    fireEvent.click(within(irrigationProject).getByRole("button", { name: /Edit project/i }));
+    fireEvent.change(screen.getByLabelText("Edit project name"), { target: { value: "Irrigation Pro" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save project/i }));
+    expect(screen.getByRole("article", { name: /Irrigation Pro project/i })).toBeInTheDocument();
+
+    const homeProject = screen.getByRole("article", { name: /Smart Home project/i });
+    fireEvent.click(within(homeProject).getByRole("button", { name: /Delete project/i }));
+    expect(screen.queryByRole("article", { name: /Smart Home project/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Templates"));
+    const energyTemplate = screen.getByRole("article", { name: /Energy Monitor template/i });
+    fireEvent.click(within(energyTemplate).getByRole("button", { name: /Delete template/i }));
+    expect(screen.queryByRole("article", { name: /Energy Monitor template/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Devices"));
+    const irrigationDevice = screen.getByRole("article", { name: /ESP32 Irrigation Node provisioning card/i });
+    fireEvent.click(within(irrigationDevice).getByRole("button", { name: /Edit device/i }));
+    fireEvent.change(screen.getByLabelText("Edit device name"), { target: { value: "Irrigation Edge Node" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save device/i }));
+    expect(screen.getByRole("article", { name: /Irrigation Edge Node provisioning card/i })).toBeInTheDocument();
+
+    const energyDevice = screen.getByRole("article", { name: /ESP32 Energy Node provisioning card/i });
+    fireEvent.click(within(energyDevice).getByRole("button", { name: /Delete device/i }));
+    expect(screen.queryByRole("article", { name: /ESP32 Energy Node provisioning card/i })).not.toBeInTheDocument();
+  });
+
   it("regenerates account device tokens and updates the Arduino bind block", async () => {
     localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
     const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Live protected tenant workspace", is_active: true };

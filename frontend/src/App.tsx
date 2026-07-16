@@ -12,7 +12,7 @@ import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api, clearSession, getSession, type Session } from "./lib/api";
-import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ScheduleCreate, ScheduleItem, Telemetry, UserProfile } from "./lib/types";
+import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ProjectUpdate, ScheduleCreate, ScheduleItem, Telemetry, UserProfile } from "./lib/types";
 
 type View = "dashboard" | "setup" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
 type SaveState = "saved" | "unsaved" | "saving" | "error";
@@ -25,6 +25,8 @@ export function App() {
   const [session, setSession] = useState<Session | null>(() => getSession());
   const [authScreenOpen, setAuthScreenOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(demoProjects[0].id);
+  const [demoProjectRows, setDemoProjectRows] = useState<Project[]>(demoProjects);
+  const [demoDeviceRows, setDemoDeviceRows] = useState<Device[]>(demoDevices);
   const [templates, setTemplates] = useState<DeviceTemplate[]>(demoTemplates);
   const [accountProjects, setAccountProjects] = useState<Project[]>([]);
   const [accountDevices, setAccountDevices] = useState<Device[]>([]);
@@ -44,8 +46,8 @@ export function App() {
   const [templateSaveError, setTemplateSaveError] = useState<string>("");
 
   const isAccountMode = Boolean(session) && !demoPreviewMode;
-  const activeProjects = isAccountMode ? accountProjects : demoProjects;
-  const activeDevices = isAccountMode ? accountDevices : demoDevices;
+  const activeProjects = isAccountMode ? accountProjects : demoProjectRows;
+  const activeDevices = isAccountMode ? accountDevices : demoDeviceRows;
   const activeLatest = isAccountMode ? accountLatest : demoLatest;
   const activeTemplates = isAccountMode ? accountTemplates : templates;
   const selectedProject = useMemo(() => activeProjects.find((project) => project.id === selectedProjectId), [activeProjects, selectedProjectId]);
@@ -235,6 +237,30 @@ export function App() {
     return updated;
   }
 
+  async function updateDevice(deviceId: string, device: DeviceUpdate) {
+    if (isAccountMode) {
+      const updated = await api.updateDevice(deviceId, device);
+      setAccountDevices((current) => current.map((item) => item.id === updated.id ? updated : item));
+      return updated;
+    }
+    let updatedDevice: Device | undefined;
+    setDemoDeviceRows((current) => current.map((item) => {
+      if (item.id !== deviceId) return item;
+      updatedDevice = { ...item, ...device };
+      return updatedDevice;
+    }));
+    return updatedDevice ?? demoDeviceRows.find((item) => item.id === deviceId)!;
+  }
+
+  async function deleteDevice(deviceId: string) {
+    if (isAccountMode) {
+      await api.deleteDevice(deviceId);
+      setAccountDevices((current) => current.filter((device) => device.id !== deviceId));
+      return;
+    }
+    setDemoDeviceRows((current) => current.filter((device) => device.id !== deviceId));
+  }
+
   async function createAccountDevice(device: DeviceCreate) {
     const created = await api.createDevice(device);
     setAccountDevices((current) => [created, ...current]);
@@ -247,6 +273,47 @@ export function App() {
     setSelectedProjectId(created.id);
     markFirstProjectCreated(created.id);
     return created;
+  }
+
+  async function updateProject(projectId: string, project: ProjectUpdate) {
+    if (isAccountMode) {
+      const updated = await api.updateProject(projectId, project);
+      setAccountProjects((current) => current.map((item) => item.id === updated.id ? updated : item));
+      return updated;
+    }
+    let updatedProject: Project | undefined;
+    setDemoProjectRows((current) => current.map((item) => {
+      if (item.id !== projectId) return item;
+      updatedProject = { ...item, ...project };
+      return updatedProject;
+    }));
+    return updatedProject ?? demoProjectRows.find((item) => item.id === projectId)!;
+  }
+
+  async function deleteProject(projectId: string) {
+    if (isAccountMode) {
+      await api.deleteProject(projectId);
+      setAccountProjects((current) => current.filter((project) => project.id !== projectId));
+      setAccountDevices((current) => current.filter((device) => device.project_id !== projectId));
+      setAccountTemplates((current) => current.filter((template) => template.dashboard.project_id !== projectId));
+    } else {
+      setDemoProjectRows((current) => current.filter((project) => project.id !== projectId));
+      setDemoDeviceRows((current) => current.filter((device) => device.project_id !== projectId));
+      setTemplates((current) => current.filter((template) => template.dashboard.project_id !== projectId));
+    }
+    if (selectedProjectId === projectId) {
+      const fallback = activeProjects.find((project) => project.id !== projectId);
+      if (fallback) setSelectedProjectId(fallback.id);
+    }
+  }
+
+  async function deleteTemplate(templateId: string) {
+    if (isAccountMode) {
+      await api.deleteTemplate(templateId);
+      setAccountTemplates((current) => current.filter((template) => template.id !== templateId));
+    } else {
+      setTemplates((current) => current.filter((template) => template.id !== templateId));
+    }
   }
 
   async function createAccountTemplate(projectId: string, board: DeviceTemplate["board"], preset: TemplatePreset) {
@@ -429,7 +496,7 @@ export function App() {
             <p>The Overview stays focused on live telemetry. This setup page keeps the professional Blynk-style onboarding flow available for projects, templates, V-pins, devices, Arduino code and board testing.</p>
           </section>
         )}
-        {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : undefined} />}
+        {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : undefined} onUpdateProject={updateProject} onDeleteProject={deleteProject} />}
         {view === "templates" && (
           templateStudioId ? (
             <TemplateStudioPage
@@ -450,6 +517,7 @@ export function App() {
               projects={activeProjects}
               accountMode={isAccountMode}
               onCreateTemplate={isAccountMode ? createAccountTemplate : undefined}
+              onDeleteTemplate={deleteTemplate}
               onOpen={(template) => {
                 setSelectedProjectId(template.dashboard.project_id);
                 setTemplateStudioInitialStep("Setup");
@@ -466,6 +534,8 @@ export function App() {
             accountMode={isAccountMode}
             onCreateDevice={isAccountMode ? createAccountDevice : undefined}
             onRegenerateToken={isAccountMode ? regenerateAccountDeviceToken : undefined}
+            onUpdateDevice={updateDevice}
+            onDeleteDevice={deleteDevice}
           />
         )}
         {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} latest={activeLatest} accountMode={isAccountMode} />}
@@ -1006,12 +1076,14 @@ function TemplateLibrary({
   projects,
   accountMode = false,
   onCreateTemplate,
+  onDeleteTemplate,
   onOpen
 }: {
   templates: DeviceTemplate[];
   projects: Project[];
   accountMode?: boolean;
   onCreateTemplate?: (projectId: string, board: DeviceTemplate["board"], preset: TemplatePreset) => Promise<DeviceTemplate>;
+  onDeleteTemplate: (templateId: string) => Promise<void>;
   onOpen: (template: DeviceTemplate) => void;
 }) {
   const templateLimit = 3;
@@ -1124,7 +1196,14 @@ function TemplateLibrary({
               <button className="template-open-button entity-edit-button" onClick={() => onOpen(template)} aria-label={`Open studio / Edit template ${template.name}`}>
                 <Pencil size={16} />Edit template
               </button>
-              <button className="entity-delete-button" type="button" aria-label={`Delete template ${template.name}`}>
+              <button
+                className="entity-delete-button"
+                type="button"
+                aria-label={`Delete template ${template.name}`}
+                onClick={() => {
+                  if (window.confirm(`Delete template "${template.name}"?`)) void onDeleteTemplate(template.id);
+                }}
+              >
                 <Trash2 size={16} />Delete template
               </button>
             </div>
@@ -1135,11 +1214,13 @@ function TemplateLibrary({
   );
 }
 
-function ProjectsView({ projects, templates, accountMode = false, onCreateProject }: { projects: Project[]; templates: DeviceTemplate[]; accountMode?: boolean; onCreateProject?: (project: ProjectCreate) => Promise<Project> }) {
+function ProjectsView({ projects, templates, accountMode = false, onCreateProject, onUpdateProject, onDeleteProject }: { projects: Project[]; templates: DeviceTemplate[]; accountMode?: boolean; onCreateProject?: (project: ProjectCreate) => Promise<Project>; onUpdateProject: (projectId: string, project: ProjectUpdate) => Promise<Project>; onDeleteProject: (projectId: string) => Promise<void> }) {
   const projectLimit = 3;
   const isAtLimit = projects.length >= projectLimit;
   const [createOpen, setCreateOpen] = useState(false);
   const [projectDraft, setProjectDraft] = useState<ProjectCreate>({ name: "", description: "" });
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editProjectDraft, setEditProjectDraft] = useState<ProjectUpdate>({ name: "", description: "" });
   const [createState, setCreateState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [createMessage, setCreateMessage] = useState("");
 
@@ -1164,6 +1245,13 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
       setCreateState("error");
       setCreateMessage("Project creation failed. Check Starter limits and API session.");
     }
+  }
+
+  async function saveProjectEdit(projectId: string) {
+    const name = editProjectDraft.name.trim();
+    if (name.length < 2) return;
+    await onUpdateProject(projectId, { name, description: editProjectDraft.description.trim() });
+    setEditingProjectId(null);
   }
 
   return (
@@ -1218,16 +1306,35 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
         return (
           <article className="panel project-card" key={project.id} aria-label={`${project.name} project`}>
             <div className="project-card-head"><span className="status-dot online" /><span className="pill online-pill">Active</span></div>
-            <h2>{project.name}</h2>
-            <p>{project.description}</p>
+            {editingProjectId === project.id ? (
+              <div className="entity-edit-form">
+                <label>
+                  Project name
+                  <input aria-label="Edit project name" value={editProjectDraft.name} onChange={(event) => setEditProjectDraft((current) => ({ ...current, name: event.target.value }))} />
+                </label>
+                <label>
+                  Description
+                  <input aria-label="Edit project description" value={editProjectDraft.description} onChange={(event) => setEditProjectDraft((current) => ({ ...current, description: event.target.value }))} />
+                </label>
+                <div className="entity-card-actions">
+                  <button className="entity-edit-button" type="button" onClick={() => void saveProjectEdit(project.id)}>Save project</button>
+                  <button type="button" onClick={() => setEditingProjectId(null)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h2>{project.name}</h2>
+                <p>{project.description}</p>
+              </>
+            )}
             <div className="project-stat-row">
               <span><strong>{template?.board}</strong><small>Board</small></span>
               <span><strong>{template?.datastreams.length ?? 0}</strong><small>V pins</small></span>
               <span><strong>{template?.dashboard.widgets.length ?? 0}</strong><small>Widgets</small></span>
             </div>
             <div className="entity-card-actions">
-              <button className="entity-edit-button" type="button" aria-label={`Edit project ${project.name}`}><Pencil size={16} />Edit project</button>
-              <button className="entity-delete-button" type="button" aria-label={`Delete project ${project.name}`}><Trash2 size={16} />Delete project</button>
+              <button className="entity-edit-button" type="button" aria-label={`Edit project ${project.name}`} onClick={() => { setEditingProjectId(project.id); setEditProjectDraft({ name: project.name, description: project.description }); }}><Pencil size={16} />Edit project</button>
+              <button className="entity-delete-button" type="button" aria-label={`Delete project ${project.name}`} onClick={() => { if (window.confirm(`Delete project "${project.name}"?`)) void onDeleteProject(project.id); }}><Trash2 size={16} />Delete project</button>
             </div>
           </article>
         );
