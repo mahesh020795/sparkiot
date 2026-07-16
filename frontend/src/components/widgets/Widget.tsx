@@ -6,6 +6,16 @@ import L from "leaflet";
 import { api } from "../../lib/api";
 import type { Device, Telemetry, WidgetConfig } from "../../lib/types";
 
+const WEEK_DAYS = [
+  { key: "monday", short: "M", label: "Monday" },
+  { key: "tuesday", short: "T", label: "Tuesday" },
+  { key: "wednesday", short: "W", label: "Wednesday" },
+  { key: "thursday", short: "T", label: "Thursday" },
+  { key: "friday", short: "F", label: "Friday" },
+  { key: "saturday", short: "S", label: "Saturday" },
+  { key: "sunday", short: "S", label: "Sunday" }
+];
+
 export function Widget({ config, reading, devices, onCommand }: { config: WidgetConfig; reading?: Telemetry; devices: Device[]; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
   const value = reading?.value as any;
   const raw = typeof value === "object" && value !== null && "raw" in value ? value.raw : value;
@@ -147,15 +157,6 @@ function ScheduleWidget({ config, value, onCommand }: { config: WidgetConfig; va
   const [selectedDays, setSelectedDays] = useState<Set<string>>(() => new Set(defaultDays));
   const [times, setTimes] = useState<string[]>(defaultTimes);
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0);
-  const days = [
-    { key: "mon", short: "M", label: "Monday" },
-    { key: "tue", short: "T", label: "Tuesday" },
-    { key: "wed", short: "W", label: "Wednesday" },
-    { key: "thu", short: "T", label: "Thursday" },
-    { key: "fri", short: "F", label: "Friday" },
-    { key: "sat", short: "S", label: "Saturday" },
-    { key: "sun", short: "S", label: "Sunday" }
-  ];
 
   useEffect(() => {
     setSelectedDays(new Set(defaultDays));
@@ -190,8 +191,9 @@ function ScheduleWidget({ config, value, onCommand }: { config: WidgetConfig; va
       <div className="schedule-body">
         <label>1. Selected days</label>
         <div className="schedule-days">
-          {days.map((day) => {
-            const active = selectedDays.has(day.key);
+          {WEEK_DAYS.map((day) => {
+            const scheduleKey = day.key.slice(0, 3);
+            const active = selectedDays.has(scheduleKey);
             return (
               <button
                 type="button"
@@ -199,7 +201,7 @@ function ScheduleWidget({ config, value, onCommand }: { config: WidgetConfig; va
                 aria-pressed={active}
                 aria-label={`${active ? "Disable" : "Enable"} ${day.label}`}
                 key={day.key}
-                onClick={() => toggleDay(day.key)}
+                onClick={() => toggleDay(scheduleKey)}
               >
                 {day.short}
               </button>
@@ -319,18 +321,86 @@ function EventMonitorWidget({ config, value }: { config: WidgetConfig; value: st
 function InputWidget({ config, value, onCommand }: { config: WidgetConfig; value: unknown; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
   const fallback = config.type === "date" ? new Date().toISOString().slice(0, 10) : config.type === "time" ? "06:00" : "monday";
   const currentValue = normalizeInputValue(config.type, value, fallback);
-  const inputType = config.type === "date" ? "date" : config.type === "time" ? "time" : "text";
   function updateValue(nextValue: string) {
     onCommand?.(config, nextValue);
   }
+  if (config.type === "day") {
+    return (
+      <article className="widget spark-widget-card widget-schedule widget-day">
+        <WidgetHeader config={config} icon={<CalendarDays size={16} />} />
+        <div className="schedule-body">
+          <label>1. Selected day</label>
+          <div className="schedule-days">
+            {WEEK_DAYS.map((day) => {
+              const active = currentValue === day.key;
+              return (
+                <button
+                  type="button"
+                  className={active ? "active" : ""}
+                  aria-pressed={active}
+                  aria-label={`Select ${day.label}`}
+                  key={day.key}
+                  onClick={() => updateValue(day.key)}
+                >
+                  {day.short}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <WidgetFooter config={config} value="Saved dashboard input" label="COMMAND DAY" />
+      </article>
+    );
+  }
+
+  if (config.type === "time") {
+    const presets = ["06:00", "12:00", "18:00"];
+    return (
+      <article className="widget spark-widget-card widget-schedule widget-time">
+        <WidgetHeader config={config} icon={<Clock size={16} />} />
+        <div className="schedule-body">
+          <label>1. Command time</label>
+          <div className="schedule-times">
+            {presets.map((time) => (
+              <button
+                type="button"
+                className={currentValue === time ? "active" : ""}
+                aria-pressed={currentValue === time}
+                aria-label={`Set ${formatScheduleTime(time)} command time`}
+                key={time}
+                onClick={() => updateValue(time)}
+              >
+                {formatScheduleTime(time)}
+              </button>
+            ))}
+          </div>
+          <input
+            aria-label="Selected command time"
+            className="schedule-time-input"
+            type="time"
+            value={currentValue}
+            onChange={(event) => updateValue(event.target.value)}
+          />
+        </div>
+        <WidgetFooter config={config} value="Saved dashboard input" label="COMMAND TIME" />
+      </article>
+    );
+  }
+
   return (
-    <article className={`widget spark-widget-card value-widget widget-${config.type}`} style={{ ["--widget-accent" as string]: config.color ?? "#e3e8f0", textAlign: config.align ?? "left" }}>
-      <WidgetHeader config={config} icon={<Clock />} />
-      <label className="dashboard-input-field">
-        <span>Command value</span>
-        <input aria-label={`${config.title} input`} type={inputType} value={currentValue} onChange={(event) => updateValue(event.target.value)} />
-      </label>
-      <WidgetFooter config={config} value="Saved dashboard input" />
+    <article className="widget spark-widget-card widget-schedule widget-date">
+      <WidgetHeader config={config} icon={<CalendarDays size={16} />} />
+      <div className="schedule-body">
+        <label>1. Command date</label>
+        <input
+          aria-label="Selected command date"
+          className="schedule-time-input"
+          type="date"
+          value={currentValue}
+          onChange={(event) => updateValue(event.target.value)}
+        />
+      </div>
+      <WidgetFooter config={config} value="Saved dashboard input" label="COMMAND DATE" />
     </article>
   );
 }
@@ -362,7 +432,32 @@ function normalizeInputValue(type: string, value: unknown, fallback: string) {
     if (direct) return value;
     return parseScheduleTime(value) || fallback;
   }
+  if (type === "day") return normalizeDayValue(value) || fallback;
   return value;
+}
+
+function normalizeDayValue(value: unknown) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  const aliases: Record<string, string> = {
+    m: "monday",
+    mon: "monday",
+    monday: "monday",
+    tue: "tuesday",
+    tuesday: "tuesday",
+    w: "wednesday",
+    wed: "wednesday",
+    wednesday: "wednesday",
+    thu: "thursday",
+    thursday: "thursday",
+    f: "friday",
+    fri: "friday",
+    friday: "friday",
+    sat: "saturday",
+    saturday: "saturday",
+    sun: "sunday",
+    sunday: "sunday"
+  };
+  return aliases[normalized] ?? "";
 }
 
 function ValuePanel({ config, value, icon, mono, accent }: { config: WidgetConfig; value: string; icon: React.ReactNode; mono?: boolean; accent?: string }) {
