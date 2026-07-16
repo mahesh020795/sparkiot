@@ -153,6 +153,8 @@ class DashboardUpdate(BaseModel):
             for key in ("id", "title", "type", "x", "y", "w", "h"):
                 if key not in widget:
                     raise ValueError(f"Widget missing {key}")
+            if widget.get("type") == "schedule":
+                validate_schedule_widget(widget)
         return widgets
 
 
@@ -162,6 +164,30 @@ class DashboardResponse(BaseModel):
     name: str
     revision: int
     widgets: list[dict[str, Any]]
+
+
+def validate_schedule_widget(widget: dict[str, Any]) -> None:
+    allowed_days = {"mon", "tue", "wed", "thu", "fri", "sat", "sun"}
+    days = widget.get("days")
+    if days is not None:
+        if not isinstance(days, list) or not days or len(days) > 7 or any(day not in allowed_days for day in days):
+            raise ValueError("Schedule widget days must use mon/tue/wed/thu/fri/sat/sun")
+
+    max_time_slots = widget.get("maxTimeSlots", len(widget.get("timeSlots", [])) or 3)
+    if not isinstance(max_time_slots, int) or max_time_slots < 1 or max_time_slots > 6:
+        raise ValueError("Schedule widget maxTimeSlots must be between 1 and 6")
+
+    time_slots = widget.get("timeSlots")
+    if time_slots is not None:
+        if not isinstance(time_slots, list) or not time_slots or len(time_slots) > max_time_slots:
+            raise ValueError("Schedule widget timeSlots must fit maxTimeSlots")
+        for slot in time_slots:
+            if not isinstance(slot, str):
+                raise ValueError("Schedule widget timeSlots must be HH:MM strings")
+            try:
+                datetime.strptime(slot, "%H:%M")
+            except ValueError as exc:
+                raise ValueError("Schedule widget timeSlots must be valid HH:MM values") from exc
 
 
 class DatastreamDefinition(BaseModel):

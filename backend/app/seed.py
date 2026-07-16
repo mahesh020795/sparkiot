@@ -38,6 +38,7 @@ DEMO_TEMPLATE_STREAMS = {
         stream("ds-gps", "GPS Location", "V5", "gps", "", None, None, "#0891b2"),
         stream("ds-camera", "ESP32-CAM Snapshot", "V6", "image", "", None, None, "#475569"),
         stream("ds-serial", "Serial LCD", "V7", "string", "", None, None, "#334155"),
+        stream("ds-schedule", "Irrigation Schedule", "V8", "time", "AUTO", None, None, "#2563eb"),
     ],
     "project-home": [
         stream("ds-relay", "Relay Switch", "V0", "boolean", "", 0, 1, "#2563eb"),
@@ -63,7 +64,8 @@ def hydrate_template_widgets(project_id: str, device_id: str) -> list[dict]:
             ("w-camera", "camera", "ds-camera", 9, 3, 3, 3),
             ("w-pump", "switch", "ds-pump", 0, 6, 3, 2),
             ("w-led", "led", "ds-led", 3, 6, 3, 2),
-            ("w-serial", "serial_lcd", "ds-serial", 6, 6, 6, 2),
+            ("w-schedule", "schedule", "ds-schedule", 6, 6, 3, 3),
+            ("w-serial", "serial_lcd", "ds-serial", 9, 6, 3, 3),
         ],
         "project-home": [
             ("w-relay", "switch", "ds-relay", 0, 0, 3, 2),
@@ -96,6 +98,7 @@ def hydrate_template_widgets(project_id: str, device_id: str) -> list[dict]:
                 "min": stream_item.get("min"),
                 "max": stream_item.get("max"),
                 "color": stream_item["color"],
+                **({"days": ["mon", "wed", "fri"], "timeSlots": ["06:00", "12:00", "18:00"], "maxTimeSlots": 3} if widget_type == "schedule" else {}),
             }
         )
     return widgets

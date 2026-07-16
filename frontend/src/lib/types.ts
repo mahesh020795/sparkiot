@@ -64,6 +64,9 @@ export type WidgetConfig = {
   max?: number;
   color?: string;
   align?: "left" | "center" | "right";
+  days?: string[];
+  timeSlots?: string[];
+  maxTimeSlots?: number;
 };
 
 export type UserProfile = {

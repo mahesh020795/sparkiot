@@ -540,6 +540,9 @@ describe("App", () => {
     expect(screen.getByText("Input widgets")).toBeInTheDocument();
     expect(screen.getByText("Output widgets")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /time Input widget/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /schedule Input widget/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /date Input widget/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /day Input widget/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /camera Output widget/i })).toBeInTheDocument();
     fireEvent.click(screen.getAllByText("Notifications")[1]);
     expect(screen.getByText("Alert operations center")).toBeInTheDocument();

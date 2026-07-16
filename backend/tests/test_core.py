@@ -594,6 +594,42 @@ def test_template_studio_accepts_starter_professional_dashboard_size_and_widgets
     assert parsed.dashboard.widgets[14]["type"] == "event_monitor"
 
 
+def test_template_studio_accepts_time_and_configurable_schedule_widgets():
+    payload = valid_template_payload()
+    payload["datastreams"].extend(
+        [
+            {"id": "ds-time", "name": "Pump Time", "pin": "V2", "dataType": "time", "unit": "", "color": "#2563eb"},
+            {"id": "ds-schedule", "name": "Irrigation Schedule", "pin": "V3", "dataType": "time", "unit": "AUTO", "color": "#2563eb"},
+        ]
+    )
+    payload["dashboard"]["widgets"].extend(
+        [
+            {"id": "w-time", "type": "time", "title": "Pump Time", "x": 3, "y": 0, "w": 3, "h": 2, "deviceId": "device-irrigation", "channel": "V2", "datastreamId": "ds-time"},
+            {"id": "w-schedule", "type": "schedule", "title": "Irrigation Schedule", "x": 6, "y": 0, "w": 3, "h": 3, "deviceId": "device-irrigation", "channel": "V3", "datastreamId": "ds-schedule", "days": ["mon", "wed", "fri"], "timeSlots": ["06:00", "12:00", "18:00"], "maxTimeSlots": 3},
+        ]
+    )
+
+    parsed = TemplateStudioUpdate(**payload)
+
+    assert parsed.dashboard.widgets[1]["type"] == "time"
+    assert parsed.dashboard.widgets[2]["type"] == "schedule"
+    assert parsed.dashboard.widgets[2]["timeSlots"] == ["06:00", "12:00", "18:00"]
+    assert parsed.dashboard.widgets[2]["maxTimeSlots"] == 3
+
+
+def test_template_studio_rejects_invalid_schedule_widget_shape():
+    payload = valid_template_payload()
+    payload["datastreams"].append({"id": "ds-schedule", "name": "Irrigation Schedule", "pin": "V2", "dataType": "time", "unit": "AUTO", "color": "#2563eb"})
+    payload["dashboard"]["widgets"].append(
+        {"id": "w-schedule", "type": "schedule", "title": "Irrigation Schedule", "x": 3, "y": 0, "w": 3, "h": 3, "deviceId": "device-irrigation", "channel": "V2", "datastreamId": "ds-schedule", "days": ["monday"], "timeSlots": ["25:00"], "maxTimeSlots": 1}
+    )
+
+    with pytest.raises(ValueError) as exc:
+        TemplateStudioUpdate(**payload)
+
+    assert "Schedule widget days must use mon/tue/wed/thu/fri/sat/sun" in str(exc.value)
+
+
 def test_template_studio_rejects_duplicate_virtual_pins():
     payload = valid_template_payload()
     payload["datastreams"][1]["pin"] = "V0"

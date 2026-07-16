@@ -30,7 +30,7 @@ import type { Telemetry } from "../lib/types";
 
 const GridLayout = WidthProvider(BaseGridLayout);
 const widgetLibraryGroups = [
-  { title: "Input widgets", kind: "Input", caption: "Send values or commands to the board", types: ["switch", "push_button", "time", "date", "day"] },
+  { title: "Input widgets", kind: "Input", caption: "Send values or commands to the board", types: ["switch", "push_button", "time", "schedule"] },
   { title: "Output widgets", kind: "Output", caption: "Display telemetry, media and board status", types: ["gauge", "meter", "value", "led", "chart", "gps", "camera", "serial_lcd", "battery", "signal"] }
 ] as const;
 const STARTER_WIDGET_LIMIT = 18;
@@ -150,7 +150,18 @@ export function TemplateStudioPage({
       color: colorForType(preferredType)
     });
     const datastreams = existingStream ? template.datastreams : [...template.datastreams, stream];
-    const widget = hydrateWidget({ id: clientId("w"), type, title: stream.name, x: 0, y: nextWidgetRow(template.dashboard.widgets), w: type === "chart" || type === "gps" || type === "camera" ? 6 : 3, h: type === "chart" || type === "gps" || type === "camera" ? 3 : 2, deviceId: "", channel: "" }, stream, device);
+    const widget = hydrateWidget({
+      id: clientId("w"),
+      type,
+      title: stream.name,
+      x: 0,
+      y: nextWidgetRow(template.dashboard.widgets),
+      w: type === "chart" || type === "gps" || type === "camera" ? 6 : 3,
+      h: type === "chart" || type === "gps" || type === "camera" || type === "schedule" ? 3 : 2,
+      deviceId: "",
+      channel: "",
+      ...(type === "schedule" ? { days: ["mon", "wed", "fri"], timeSlots: ["06:00", "12:00", "18:00"], maxTimeSlots: 3 } : {})
+    }, stream, device);
     onChange({ ...template, datastreams, dashboard: { ...template.dashboard, widgets: [...template.dashboard.widgets, widget] } });
     setSelectedWidgetId(widget.id);
     setWidgetAddStatus(`${widget.title} widget added to canvas. Save the template to keep it.`);
@@ -589,6 +600,22 @@ function DashboardBuilder({ template, device, latest, layout, widgetAddStatus, s
               }}>{template.datastreams.map((stream) => <option key={stream.id} value={stream.id}>{stream.pin} - {stream.name}</option>)}</select></label>
               <label>Colour<input type="color" value={selectedWidget.color ?? selectedDatastream?.color ?? "#f26a21"} onChange={(event) => onUpdateWidget(selectedWidget.id, { color: event.target.value })} /></label>
               <label>Align<select value={selectedWidget.align ?? "center"} onChange={(event) => onUpdateWidget(selectedWidget.id, { align: event.target.value as WidgetConfig["align"] })}><option>left</option><option>center</option><option>right</option></select></label>
+              {selectedWidget.type === "schedule" && (
+                <label>
+                  Time slots
+                  <select
+                    aria-label="Schedule time slot count"
+                    value={selectedWidget.maxTimeSlots ?? selectedWidget.timeSlots?.length ?? 3}
+                    onChange={(event) => {
+                      const maxTimeSlots = Number(event.target.value);
+                      const currentSlots = normalizeWidgetTimeSlots(selectedWidget.timeSlots, maxTimeSlots);
+                      onUpdateWidget(selectedWidget.id, { maxTimeSlots, timeSlots: currentSlots });
+                    }}
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((count) => <option key={count} value={count}>{count}</option>)}
+                  </select>
+                </label>
+              )}
               <div className="inspector-actions"><button onClick={onDuplicate}><Copy size={16} />Duplicate</button><button onClick={onDelete}><Trash2 size={16} />Delete</button></div>
             </>
           ) : <p>Select a widget to edit its binding, colour and alignment.</p>}
@@ -684,8 +711,7 @@ function dataTypeForWidgetType(type: string): Datastream["dataType"] {
   if (type === "gps") return "gps";
   if (type === "camera") return "image";
   if (type === "serial_lcd") return "string";
-  if (type === "time" || type === "day") return "time";
-  if (type === "date") return "date";
+  if (type === "time" || type === "schedule") return "time";
   return "float";
 }
 
@@ -702,12 +728,17 @@ function defaultNameForWidgetType(type: string) {
     camera: "Camera Snapshot",
     serial_lcd: "Serial LCD",
     time: "Time Input",
-    date: "Date Input",
-    day: "Day Input",
+    schedule: "Schedule",
     battery: "Battery Level",
     signal: "Signal Strength"
   };
   return labels[type] ?? "Datastream";
+}
+
+function normalizeWidgetTimeSlots(slots: string[] | undefined, count: number): string[] {
+  const fallback = ["06:00", "12:00", "18:00", "21:00", "00:00", "03:00"];
+  const merged = [...(slots ?? []), ...fallback];
+  return merged.slice(0, count);
 }
 
 function nextWidgetRow(widgets: WidgetConfig[]) {

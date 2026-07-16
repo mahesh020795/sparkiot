@@ -152,8 +152,9 @@ function CameraWidget({ config, value }: { config: WidgetConfig; value: any }) {
 }
 
 function ScheduleWidget({ config, value, onCommand }: { config: WidgetConfig; value: any; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
-  const defaultDays = useMemo(() => normalizeScheduleDays(value?.days), [value?.days]);
-  const defaultTimes = useMemo(() => normalizeScheduleTimes(value?.times), [value?.times]);
+  const maxTimeSlots = clampTimeSlotCount(config.maxTimeSlots ?? config.timeSlots?.length ?? 3);
+  const defaultDays = useMemo(() => normalizeScheduleDays(value?.days ?? config.days), [config.days, value?.days]);
+  const defaultTimes = useMemo(() => normalizeScheduleTimes(value?.timeSlots ?? value?.times ?? config.timeSlots, maxTimeSlots), [config.timeSlots, maxTimeSlots, value?.timeSlots, value?.times]);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(() => new Set(defaultDays));
   const [times, setTimes] = useState<string[]>(defaultTimes);
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0);
@@ -164,7 +165,7 @@ function ScheduleWidget({ config, value, onCommand }: { config: WidgetConfig; va
   }, [defaultDays, defaultTimes]);
 
   function commitSchedule(nextDays: Set<string>, nextTimes: string[]) {
-    onCommand?.(config, { days: Array.from(nextDays), times: nextTimes });
+    onCommand?.(config, { days: Array.from(nextDays), timeSlots: nextTimes, times: nextTimes });
   }
 
   function toggleDay(day: string) {
@@ -263,10 +264,18 @@ function normalizeScheduleDays(days: unknown): string[] {
   return normalized.length ? Array.from(new Set(normalized)) : ["mon", "wed", "fri"];
 }
 
-function normalizeScheduleTimes(times: unknown): string[] {
-  if (!Array.isArray(times)) return ["06:00", "12:00", "18:00"];
+function normalizeScheduleTimes(times: unknown, maxTimeSlots = 3): string[] {
+  const count = clampTimeSlotCount(maxTimeSlots);
+  const fallback = ["06:00", "12:00", "18:00", "21:00", "00:00", "03:00"].slice(0, count);
+  if (!Array.isArray(times)) return fallback;
   const normalized = times.map((time) => parseScheduleTime(String(time))).filter(Boolean);
-  return normalized.length ? normalized.slice(0, 4) : ["06:00", "12:00", "18:00"];
+  return normalized.length ? normalized.slice(0, count) : fallback;
+}
+
+function clampTimeSlotCount(value: unknown): number {
+  const count = Number(value);
+  if (!Number.isFinite(count)) return 3;
+  return Math.min(6, Math.max(1, Math.trunc(count)));
 }
 
 function parseScheduleTime(time: string): string {
