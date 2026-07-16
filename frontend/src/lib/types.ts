@@ -63,3 +63,27 @@ export type WidgetConfig = {
   color?: string;
   align?: "left" | "center" | "right";
 };
+
+export type UserProfile = {
+  id?: string;
+  tenant_id: string;
+  email: string;
+  full_name: string;
+  plan_code: string;
+  email_verified: boolean;
+  onboarding_step: string;
+};
+
+export type OnboardingState = {
+  current_step: string;
+  completed_steps: string[];
+  demo_viewed: boolean;
+  first_project_id?: string | null;
+};
+
+export type StatusResponse = {
+  status: string;
+  message: string;
+  reset_token?: string;
+  verification_token?: string;
+};

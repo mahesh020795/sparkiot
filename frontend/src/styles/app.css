@@ -2339,3 +2339,135 @@ main,
   color: #1455ff;
 }
 */
+
+.onboarding-screen,
+.starter-workspace {
+  min-height: 100vh;
+  background: #f6f8fc;
+  color: var(--text-primary);
+  padding: 32px;
+}
+
+.onboarding-card,
+.starter-hero,
+.starter-panel {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 28px;
+  box-shadow: var(--shadow-soft);
+}
+
+.verify-card {
+  max-width: 720px;
+  margin: 64px auto;
+  padding: 36px;
+}
+
+.onboarding-icon {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.verify-token-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  margin: 24px 0 12px;
+}
+
+.onboarding-actions,
+.starter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.starter-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  gap: 24px;
+  padding: 36px;
+}
+
+.starter-hero h1 {
+  max-width: 760px;
+  font-size: clamp(2.2rem, 5vw, 4.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.07em;
+  margin: 12px 0;
+}
+
+.starter-hero p {
+  max-width: 680px;
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.starter-empty-preview {
+  min-height: 280px;
+  border: 1px dashed #bfdbfe;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #f8fbff, #ffffff);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 28px;
+}
+
+.starter-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.2fr) repeat(3, minmax(220px, 0.6fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.starter-panel {
+  padding: 24px;
+}
+
+.starter-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.starter-step-list {
+  display: grid;
+  gap: 12px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.starter-step-list li {
+  display: grid;
+  gap: 3px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.starter-step-list span,
+.starter-panel.compact p {
+  color: var(--text-secondary);
+}
+
+.starter-link-button {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 1100px) {
+  .starter-hero,
+  .starter-grid {
+    grid-template-columns: 1fr;
+  }
+}

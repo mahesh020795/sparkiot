@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
-import { realtimeUrl } from "./lib/api";
+import { api, realtimeUrl } from "./lib/api";
 
 vi.mock("echarts", () => ({
   init: () => ({ setOption: vi.fn(), dispose: vi.fn() })
@@ -20,11 +20,65 @@ vi.mock("leaflet", () => ({
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   localStorage.clear();
 });
 
 describe("App", () => {
+  it("shows verification pending after signup before the SaaS workspace", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
+    vi.spyOn(api, "me").mockResolvedValue({
+      full_name: "Acme Owner",
+      email: "owner@acme.test",
+      tenant_id: "tenant-1",
+      plan_code: "starter",
+      email_verified: false,
+      onboarding_step: "verify_email",
+    });
+    vi.spyOn(api, "onboarding").mockResolvedValue({
+      current_step: "verify_email",
+      completed_steps: [],
+      demo_viewed: false,
+      first_project_id: null,
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText(/Verify your email/i)).toBeInTheDocument();
+    expect(screen.getByText(/owner@acme.test/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /View demo dashboard/i })).toBeInTheDocument();
+  });
+
+  it("shows starter workspace for verified users with no projects", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
+    vi.spyOn(api, "me").mockResolvedValue({
+      full_name: "Acme Owner",
+      email: "owner@acme.test",
+      tenant_id: "tenant-1",
+      plan_code: "starter",
+      email_verified: true,
+      onboarding_step: "starter_workspace",
+    });
+    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 0, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "projects").mockResolvedValue([]);
+    vi.spyOn(api, "devices").mockResolvedValue([]);
+    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "onboarding").mockResolvedValue({
+      current_step: "starter_workspace",
+      completed_steps: ["verify_email"],
+      demo_viewed: false,
+      first_project_id: null,
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText(/Welcome to Spark IoT/i)).toBeInTheDocument();
+    expect(screen.getByText(/No live dashboard yet/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Create first project/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /View demo dashboard/i })).toBeInTheDocument();
+  });
+
   it("opens directly on the Spark IoT dashboard without login", async () => {
     render(<App />);
     expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();

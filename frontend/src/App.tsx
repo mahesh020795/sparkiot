@@ -7,10 +7,12 @@ import { LoginPage } from "./pages/LoginPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { SchedulesPage } from "./pages/SchedulesPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { StarterWorkspacePage } from "./pages/StarterWorkspacePage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api, clearSession, getSession, type Session } from "./lib/api";
-import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, Project, ProjectCreate, ScheduleCreate, ScheduleItem, Telemetry } from "./lib/types";
+import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ScheduleCreate, ScheduleItem, Telemetry, UserProfile } from "./lib/types";
 
 type View = "dashboard" | "setup" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
 type SaveState = "saved" | "unsaved" | "saving" | "error";
@@ -33,6 +35,9 @@ export function App() {
   const [accountSchedules, setAccountSchedules] = useState<ScheduleItem[]>([]);
   const [accountUsage, setAccountUsage] = useState<{ devices: number; max_devices: number; projects: number; max_projects: number; retention_days: number } | null>(null);
   const [accountLoadState, setAccountLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
+  const [demoPreviewMode, setDemoPreviewMode] = useState(false);
   const [templateStudioId, setTemplateStudioId] = useState<string | null>(null);
   const [templateStudioInitialStep, setTemplateStudioInitialStep] = useState<StudioLaunchStep>("Setup");
   const [templateSaveStates, setTemplateSaveStates] = useState<Record<string, SaveState>>(() => Object.fromEntries(demoTemplates.map((template) => [template.id, "saved"])));
@@ -59,6 +64,16 @@ export function App() {
     ["notifications", Bell, "Notifications"],
     ["settings", Settings, "Settings"]
   ] as const;
+
+  async function refreshAccountData() {
+    if (!session) return;
+    const [me, onboardingState] = await Promise.all([
+      api.me().catch(() => null),
+      api.onboarding().catch(() => null)
+    ]);
+    setUserProfile(me);
+    setOnboarding(onboardingState);
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -93,12 +108,26 @@ export function App() {
         setAccountNotifications([]);
         setAccountSchedules([]);
         setAccountUsage(null);
+        setUserProfile(null);
+        setOnboarding(null);
+        setDemoPreviewMode(false);
         setAccountLoadState("idle");
         if (!demoProjects.some((project) => project.id === selectedProjectId)) setSelectedProjectId(demoProjects[0].id);
         return;
       }
       setAccountLoadState("loading");
       try {
+        const [me, onboardingState] = await Promise.all([
+          api.me().catch(() => null),
+          api.onboarding().catch(() => null)
+        ]);
+        if (!mounted) return;
+        setUserProfile(me);
+        setOnboarding(onboardingState);
+        if (me && !me.email_verified) {
+          setAccountLoadState("ready");
+          return;
+        }
         const [projects, devices, accountTemplateRows, notifications, schedules, usage] = await Promise.all([
           api.projects(),
           api.devices(),
@@ -181,6 +210,7 @@ export function App() {
   function handleLogin(nextSession: Session) {
     setSession(nextSession);
     setAuthScreenOpen(false);
+    setDemoPreviewMode(false);
     setView("dashboard");
   }
 
@@ -188,6 +218,9 @@ export function App() {
     clearSession();
     setSession(null);
     setAuthScreenOpen(false);
+    setUserProfile(null);
+    setOnboarding(null);
+    setDemoPreviewMode(false);
     setView("dashboard");
   }
 
@@ -272,6 +305,32 @@ export function App() {
 
   if (authScreenOpen) {
     return <LoginPage onLogin={handleLogin} onCancel={() => setAuthScreenOpen(false)} />;
+  }
+
+  const onboardingStep = onboarding?.current_step ?? userProfile?.onboarding_step;
+
+  if (session && userProfile && !userProfile.email_verified && !demoPreviewMode) {
+    return (
+      <VerifyEmailPage
+        user={userProfile}
+        onVerified={() => {
+          void refreshAccountData();
+        }}
+        onPreviewDemo={() => setDemoPreviewMode(true)}
+        onLogout={signOut}
+      />
+    );
+  }
+
+  if (session && userProfile?.email_verified && accountLoadState === "ready" && accountProjects.length === 0 && view === "dashboard" && !demoPreviewMode && (onboardingStep === "starter_workspace" || onboardingStep === undefined)) {
+    return (
+      <StarterWorkspacePage
+        user={userProfile}
+        onCreateProject={() => setView("setup")}
+        onOpenSetupFlow={() => setView("setup")}
+        onPreviewDemo={() => setDemoPreviewMode(true)}
+      />
+    );
   }
 
   return (
