@@ -473,6 +473,8 @@ describe("App", () => {
     expect(screen.getByTestId("device-provisioning-grid")).toHaveClass("device-system-grid");
     expect(screen.queryByText("Provisioning center")).not.toBeInTheDocument();
     expect(screen.queryByText("Bind boards to templates and ship firmware-ready credentials")).not.toBeInTheDocument();
+    expect(screen.queryByText("Production rule")).not.toBeInTheDocument();
+    expect(screen.queryByText(/raw device token only once/i)).not.toBeInTheDocument();
     expect(screen.getByText("3/3 devices used")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Provision device/i })).toBeDisabled();
 
@@ -733,9 +735,12 @@ describe("App", () => {
     fireEvent.click(await screen.findByText("Schedules"));
 
     expect(screen.getByTestId("schedules-page")).toHaveClass("schedule-system-page");
-    expect(screen.getByText("Schedule automation")).toBeInTheDocument();
-    expect(screen.getByText("Blynk Timer-style day and time control for boards, pumps, relays and status outputs.")).toBeInTheDocument();
-    expect(screen.getByText("Demo-only planner")).toBeInTheDocument();
+    expect(screen.queryByText("Schedule automation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Blynk Timer-style day and time control for boards, pumps, relays and status outputs.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Demo-only planner")).not.toBeInTheDocument();
+    expect(screen.queryByText("Active rules")).not.toBeInTheDocument();
+    expect(screen.queryByText("Plan window")).not.toBeInTheDocument();
+    expect(screen.queryByText("Production guardrails")).not.toBeInTheDocument();
     expect(screen.getByText("Irrigation morning run")).toBeInTheDocument();
     expect(screen.getAllByText("V3").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Device")).toHaveValue("device-irrigation");
@@ -993,6 +998,8 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Settings"));
 
+    expect(screen.queryByText("Platform settings")).not.toBeInTheDocument();
+    expect(screen.queryByText("Production readiness controls")).not.toBeInTheDocument();
     expect(screen.getByText("Account access")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Sign in demo account/i }));
 

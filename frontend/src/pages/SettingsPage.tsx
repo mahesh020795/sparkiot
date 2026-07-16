@@ -107,7 +107,6 @@ export function SettingsPage() {
 
   return (
     <section className="support-page">
-      <div className="support-hero"><div><span className="section-kicker">Platform settings</span><h2>Production readiness controls</h2><p>Keep plan limits, map-tile guidance, account access and deployment assumptions visible before Spark IoT goes live.</p></div></div>
       <section className="content-grid">
         <article className="panel settings-card account-access-card" data-testid="account-access-card">
           <div className="panel-title"><UserCircle size={18} /><h2>Account access</h2></div>

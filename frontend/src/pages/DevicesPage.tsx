@@ -1,4 +1,4 @@
-import { CheckCircle2, Clipboard, Copy, KeyRound, Lock, Plus, RadioTower, Router, ShieldCheck, TerminalSquare } from "lucide-react";
+import { Clipboard, Copy, KeyRound, Lock, Plus, RadioTower, Router, TerminalSquare } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import type { BoardType, Device, DeviceCreate, DeviceTemplate, Project } from "../lib/types";
@@ -178,14 +178,6 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
         })}
       </section>
 
-      <article className="panel provisioning-safety-card">
-        <ShieldCheck size={18} />
-        <div>
-          <strong>Production rule</strong>
-          <p>The backend shows the raw device token only once, stores only a hash, and regenerates credentials when a board is lost or shared.</p>
-        </div>
-        <CheckCircle2 size={18} />
-      </article>
     </section>
   );
 }

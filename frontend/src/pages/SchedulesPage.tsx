@@ -1,5 +1,5 @@
-import { CalendarClock, CheckCircle2, Clock3, PlugZap, RadioTower, Repeat2, ShieldCheck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { CalendarClock, Repeat2 } from "lucide-react";
+import { useState } from "react";
 import type { Device, Project, ScheduleCreate, ScheduleItem } from "../lib/types";
 
 type Props = {
@@ -54,12 +54,6 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
   const currentProject = projects.find((project) => project.id === currentDevice?.project_id) ?? firstProject;
   const renderedSchedules = accountMode ? visibleSchedules : localDemoSchedules;
 
-  const scheduleStats = useMemo(() => {
-    const active = renderedSchedules.filter((schedule) => schedule.is_active).length;
-    const uniqueDevices = new Set(renderedSchedules.map((schedule) => schedule.device_id)).size;
-    return { active, uniqueDevices, total: renderedSchedules.length };
-  }, [renderedSchedules]);
-
   async function handleCreate() {
     const nextSchedule: ScheduleCreate = {
       project_id: currentProject?.id ?? selectedProjectId,
@@ -90,24 +84,6 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
 
   return (
     <section className="support-page schedule-system-page" data-testid="schedules-page">
-      <div className="support-hero schedule-system-hero">
-        <div>
-          <span className="section-kicker">Automation</span>
-          <h2>Schedule automation</h2>
-          <p>Blynk Timer-style day and time control for boards, pumps, relays and status outputs.</p>
-          <div className="schedule-mode-banner">
-            <RadioTower size={16} />
-            <strong>{accountMode ? "Live tenant scheduler" : "Demo-only planner"}</strong>
-            <span>{accountMode ? "Creates protected backend schedules consumed by the worker." : "Preview the customer flow before sign-in or billing."}</span>
-          </div>
-        </div>
-        <div className="support-metrics schedule-metrics">
-          <span><CheckCircle2 size={18} /><div><strong>{scheduleStats.active}</strong><small>Active rules</small></div></span>
-          <span><PlugZap size={18} /><div><strong>{scheduleStats.uniqueDevices}</strong><small>Devices</small></div></span>
-          <span><Clock3 size={18} /><div><strong>30d</strong><small>Plan window</small></div></span>
-        </div>
-      </div>
-
       <section className="schedule-workbench">
         <article className="panel schedule-form-card">
           <div className="panel-title">
@@ -165,17 +141,6 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
           <span className={`schedule-create-state ${createState}`}>{formatCreateState(createState, accountMode)}</span>
         </article>
 
-        <article className="panel schedule-safety-card">
-          <div className="panel-title">
-            <ShieldCheck size={18} />
-            <h2>Production guardrails</h2>
-          </div>
-          <div className="schedule-guardrail-list">
-            <span><strong>Tenant scoped</strong><small>Schedules are bound to one project and one device.</small></span>
-            <span><strong>Worker safe</strong><small>Runs once per due occurrence, then records last execution.</small></span>
-            <span><strong>Starter friendly</strong><small>Works inside 3 projects, 3 devices and 30-day retention.</small></span>
-          </div>
-        </article>
       </section>
 
       <section className="schedule-list-grid">
