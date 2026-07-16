@@ -43,6 +43,24 @@ function stubCsvDownload() {
   return { click };
 }
 
+function plusUsage(overrides: Partial<Awaited<ReturnType<typeof api.usage>>> = {}) {
+  return {
+    plan_code: "plus",
+    plan_name: "Plus",
+    monthly_price_rm: 25,
+    users: 1,
+    max_users: 1,
+    devices: 0,
+    max_devices: 3,
+    projects: 0,
+    max_projects: 3,
+    max_widgets: 18,
+    retention_days: 30,
+    features: ["GPS", "Camera URL", "Browser push", "30-day history"],
+    ...overrides,
+  };
+}
+
 describe("App", () => {
   it("shows verification pending after signup before the SaaS workspace", async () => {
     localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
@@ -78,7 +96,7 @@ describe("App", () => {
       email_verified: true,
       onboarding_step: "starter_workspace",
     });
-    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 0, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "usage").mockResolvedValue(plusUsage());
     vi.spyOn(api, "projects").mockResolvedValue([]);
     vi.spyOn(api, "devices").mockResolvedValue([]);
     vi.spyOn(api, "templates").mockResolvedValue([]);
@@ -107,7 +125,7 @@ describe("App", () => {
       email_verified: true,
       onboarding_step: "starter_workspace",
     });
-    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 0, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "usage").mockResolvedValue(plusUsage());
     vi.spyOn(api, "projects").mockResolvedValue([]);
     vi.spyOn(api, "devices").mockResolvedValue([]);
     vi.spyOn(api, "templates").mockResolvedValue([]);
@@ -140,7 +158,7 @@ describe("App", () => {
       email_verified: true,
       onboarding_step: "starter_workspace",
     });
-    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 0, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "usage").mockResolvedValue(plusUsage());
     vi.spyOn(api, "projects").mockResolvedValue([]);
     vi.spyOn(api, "devices").mockResolvedValue([]);
     vi.spyOn(api, "templates").mockResolvedValue([]);
@@ -195,7 +213,7 @@ describe("App", () => {
       email_verified: true,
       onboarding_step: "starter_workspace",
     });
-    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 0, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "usage").mockResolvedValue(plusUsage());
     vi.spyOn(api, "projects").mockResolvedValue([]);
     vi.spyOn(api, "devices").mockResolvedValue([]);
     vi.spyOn(api, "templates").mockResolvedValue([]);
@@ -241,7 +259,7 @@ describe("App", () => {
       email_verified: true,
       onboarding_step: "project",
     });
-    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 1, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "usage").mockResolvedValue(plusUsage({ projects: 1 }));
     vi.spyOn(api, "projects").mockResolvedValue([existingProject]);
     vi.spyOn(api, "devices").mockResolvedValue([]);
     vi.spyOn(api, "templates").mockResolvedValue([]);
@@ -1265,7 +1283,23 @@ describe("App", () => {
       }
       if (url.includes("/auth/me")) {
         expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer access-demo");
-        return new Response(JSON.stringify({ full_name: "Demo User", email: "demo@sparkiot.dev", tenant_id: "demo-tenant", plan_code: "starter" }), { status: 200, headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ full_name: "Demo User", email: "demo@sparkiot.dev", tenant_id: "demo-tenant", plan_code: "plus", email_verified: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/tenant/usage")) {
+        return new Response(JSON.stringify({
+          users: 1,
+          max_users: 1,
+          devices: 2,
+          max_devices: 3,
+          projects: 2,
+          max_projects: 3,
+          max_widgets: 18,
+          retention_days: 30,
+          plan_code: "plus",
+          plan_name: "Plus",
+          monthly_price_rm: 25,
+          features: ["GPS", "Camera URL", "Browser push", "30-day history"]
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       return new Response("not found", { status: 404 });
     });
@@ -1279,13 +1313,21 @@ describe("App", () => {
     expect(screen.queryByText("Map tiles")).not.toBeInTheDocument();
     expect(screen.queryByText("VITE_MAP_TILE_URL")).not.toBeInTheDocument();
     expect(screen.getByText("Account access")).toBeInTheDocument();
-    expect(screen.getByText("Data window")).toBeInTheDocument();
-    expect(screen.getByText("30-day retention")).toBeInTheDocument();
+    expect(screen.getByText("Plan & usage")).toBeInTheDocument();
+    expect(screen.getByText("Security")).toBeInTheDocument();
+    expect(screen.getAllByText("Free").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Plus").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Pro").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Enterprise").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /Sign in demo account/i }));
 
-    expect(await screen.findByText("Signed in as Demo User")).toBeInTheDocument();
+    expect(await screen.findByText("Demo User")).toBeInTheDocument();
     expect(screen.getByText(/demo@sparkiot\.dev/)).toBeInTheDocument();
-    expect(screen.getByText(/starter/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Email verified/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Plus/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/RM25\/month/).length).toBeGreaterThan(0);
+    expect(screen.getByText("2 / 3 projects")).toBeInTheDocument();
+    expect(screen.getByText("2 / 3 devices")).toBeInTheDocument();
     expect(screen.getByText(/demo-tenant/)).toBeInTheDocument();
     expect(localStorage.getItem("spark_iot_session")).toContain("access-demo");
 
@@ -1322,7 +1364,10 @@ describe("App", () => {
         return new Response(JSON.stringify({ access_token: "push-token", refresh_token: "refresh-token", token_type: "bearer" }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       if (url.includes("/auth/me")) {
-        return new Response(JSON.stringify({ full_name: "Demo User", email: "demo@sparkiot.dev", tenant_id: "demo-tenant", plan_code: "starter" }), { status: 200, headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ full_name: "Demo User", email: "demo@sparkiot.dev", tenant_id: "demo-tenant", plan_code: "plus", email_verified: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/tenant/usage")) {
+        return new Response(JSON.stringify(plusUsage({ devices: 2, projects: 2 })), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       if (url.includes("/notifications/push-public-key")) {
         return new Response(JSON.stringify({ public_key: "AQID" }), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -1340,7 +1385,7 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Settings"));
     fireEvent.click(screen.getByRole("button", { name: /Sign in demo account/i }));
-    expect(await screen.findByText("Signed in as Demo User")).toBeInTheDocument();
+    expect(await screen.findByText("Demo User")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Enable browser push/i }));
 

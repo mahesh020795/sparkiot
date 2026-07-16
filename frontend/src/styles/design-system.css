@@ -3747,6 +3747,199 @@ body {
   color: #be123c;
 }
 
+.spark-ui .settings-page {
+  display: grid;
+  gap: var(--spark-space-5);
+}
+
+.spark-ui .settings-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .settings-page .settings-card {
+  min-height: 0;
+  grid-template-rows: auto;
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .settings-page .settings-card > p {
+  min-height: 0;
+}
+
+.spark-ui .settings-detail-list,
+.spark-ui .usage-meter-list,
+.spark-ui .security-list {
+  display: grid;
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spark-space-3);
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--spark-border-soft);
+}
+
+.spark-ui .settings-row:last-child {
+  border-bottom: 0;
+}
+
+.spark-ui .settings-row span,
+.spark-ui .plan-tier-card span {
+  color: var(--spark-muted);
+  font-size: var(--spark-text-xs);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spark-ui .settings-row strong {
+  min-width: 0;
+  color: var(--spark-text);
+  font-size: var(--spark-text-sm);
+  font-weight: 900;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui .current-plan-box {
+  padding: var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-lg);
+  background: var(--spark-surface-muted);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.spark-ui .current-plan-box span {
+  color: var(--spark-muted);
+  font-size: var(--spark-text-xs);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spark-ui .current-plan-box strong {
+  color: var(--spark-text);
+  font-size: 1.65rem;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.spark-ui .current-plan-box em {
+  color: var(--spark-blue);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.spark-ui .security-item {
+  display: flex;
+  gap: var(--spark-space-3);
+  align-items: flex-start;
+  padding: var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-muted);
+}
+
+.spark-ui .security-item > svg {
+  flex: 0 0 auto;
+  color: var(--spark-blue);
+}
+
+.spark-ui .security-item span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.spark-ui .security-item strong {
+  color: var(--spark-text);
+  font-weight: 900;
+}
+
+.spark-ui .security-item small {
+  color: var(--spark-muted);
+  font-size: var(--spark-text-sm);
+  line-height: 1.35;
+}
+
+.spark-ui .settings-plan-ladder {
+  display: grid;
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .plan-ladder-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .plan-tier-card {
+  min-width: 0;
+  display: grid;
+  gap: var(--spark-space-2);
+  padding: var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-lg);
+  background: var(--spark-surface);
+}
+
+.spark-ui .plan-tier-card.active {
+  border-color: var(--spark-blue);
+  background: #eff6ff;
+  box-shadow: 0 18px 42px rgba(37, 99, 235, 0.12);
+}
+
+.spark-ui .plan-tier-card strong {
+  color: var(--spark-text);
+  font-size: 1.2rem;
+  font-weight: 950;
+}
+
+.spark-ui .plan-tier-card em {
+  color: var(--spark-text);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.spark-ui .plan-tier-card p,
+.spark-ui .plan-tier-card small {
+  margin: 0;
+  color: var(--spark-muted);
+  line-height: 1.4;
+}
+
+.spark-ui .plan-tier-card small {
+  font-weight: 800;
+}
+
+@media (max-width: 1180px) {
+  .spark-ui .settings-overview-grid,
+  .spark-ui .plan-ladder-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .spark-ui .settings-overview-grid,
+  .spark-ui .plan-ladder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spark-ui .settings-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .spark-ui .settings-row strong {
+    text-align: left;
+  }
+}
+
 /*
   Spark IoT Product UI Standard v3
   Final authoritative layer for sale-ready screens. Keep global rhythm here:

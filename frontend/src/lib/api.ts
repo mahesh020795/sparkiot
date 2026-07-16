@@ -1,4 +1,4 @@
-import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ProjectUpdate, ScheduleCreate, ScheduleItem, StatusResponse, Telemetry, UserProfile } from "./types";
+import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ProjectUpdate, ScheduleCreate, ScheduleItem, StatusResponse, Telemetry, UsageSummary, UserProfile } from "./types";
 
 function defaultApiBase() {
   return "/api/v1";
@@ -49,7 +49,7 @@ export const api = {
   confirmEmailVerification: (token: string) => request<StatusResponse>("/auth/email-verification/confirm", { method: "POST", body: JSON.stringify({ token }) }),
   onboarding: () => request<OnboardingState>("/onboarding"),
   updateOnboarding: (state: OnboardingState) => request<OnboardingState>("/onboarding", { method: "PATCH", body: JSON.stringify(state) }),
-  usage: () => request<{ users: number; max_users: number; devices: number; max_devices: number; projects: number; max_projects: number; retention_days: number }>("/tenant/usage"),
+  usage: () => request<UsageSummary>("/tenant/usage"),
   projects: () => request<Project[]>("/projects"),
   createProject: (project: ProjectCreate) => request<Project>("/projects", { method: "POST", body: JSON.stringify(project) }),
   updateProject: (projectId: string, project: ProjectUpdate) => request<Project>(`/projects/${projectId}`, { method: "PUT", body: JSON.stringify(project) }),

@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.security import create_access_token, hash_secret, issue_refresh_token, refresh_token_digest, verify_secret
 from app.models.domain import EmailVerificationToken, Notification, OnboardingState, PasswordResetToken, RefreshToken, Tenant, User
 from app.schemas.api import EmailVerificationConfirmRequest, LoginRequest, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, StatusResponse, TokenResponse, UserResponse
+from app.services.plans import normalize_plan_code
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,11 +38,11 @@ def _create_email_verification(db: Session, user: User) -> str:
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     if db.scalar(select(User).where(User.email == payload.email.lower())):
         raise HTTPException(status_code=409, detail={"code": "duplicate_email", "message": "Email already exists"})
-    tenant = Tenant(name=payload.tenant_name)
+    tenant = Tenant(name=payload.tenant_name, plan_code="free")
     db.add(tenant)
     db.flush()
     if db.scalar(select(User).where(User.tenant_id == tenant.id, User.is_active)):
-        raise HTTPException(status_code=409, detail={"code": "plan_user_limit", "message": "Starter plan allows 1 active user"})
+        raise HTTPException(status_code=409, detail={"code": "plan_user_limit", "message": "Free plan allows 1 active user"})
     user = User(tenant_id=tenant.id, email=payload.email.lower(), full_name=payload.full_name, password_hash=hash_secret(payload.password))
     db.add(user)
     db.flush()
@@ -57,7 +58,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         tenant_id=tenant.id,
         user_id=user.id,
         title="Welcome to Spark IoT",
-        body="Starter workspace is ready. Create a project, choose a template, add your first board, then generate Arduino code.",
+        body="Free workspace is ready. Create a project, choose a template, add your first board, then generate Arduino code.",
     ))
     db.commit()
     db.refresh(user)
@@ -162,7 +163,7 @@ def confirm_email_verification(payload: EmailVerificationConfirmRequest, db: Ses
         body="Your Spark IoT workspace is ready. Create your first project to connect a board.",
     ))
     db.commit()
-    return StatusResponse(message="Email verified. Your Starter Workspace is ready.")
+    return StatusResponse(message="Email verified. Your Free workspace is ready.")
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -189,7 +190,7 @@ def me(user: User = Depends(current_user), db: Session = Depends(get_db)):
         tenant_id=user.tenant_id,
         email=user.email,
         full_name=user.full_name,
-        plan_code=user.tenant.plan_code,
+        plan_code=normalize_plan_code(user.tenant.plan_code),
         email_verified=user.email_verified_at is not None,
         onboarding_step=state.current_step if state else "starter_workspace",
     )

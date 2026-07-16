@@ -1,33 +1,77 @@
-import { BellRing, Database, LogIn, LogOut, ShieldCheck, UserCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { BellRing, CheckCircle2, CreditCard, LockKeyhole, LogIn, LogOut, MailCheck, ShieldCheck, UserCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { api, clearSession, getSession, saveSession } from "../lib/api";
+import type { UsageSummary, UserProfile } from "../lib/types";
 
-type AccountProfile = { full_name: string; email: string; tenant_id: string; plan_code: string };
 type AccountStatus = "idle" | "loading" | "signed-in" | "error";
 type PushStatus = "idle" | "checking" | "enabled" | "error" | "unsupported";
 
+const planCatalog = [
+  { code: "free", name: "Free", price: "RM0/month", summary: "Start testing one board.", limits: "1 project · 1 device · 7-day data" },
+  { code: "plus", name: "Plus", price: "RM25/month", summary: "Best starter plan for students and small IoT customers.", limits: "3 projects · 3 devices · 30-day data" },
+  { code: "pro", name: "Pro", price: "RM49/month", summary: "For growing customer labs and more active dashboards.", limits: "10 projects · 10 devices · 90-day data" },
+  { code: "enterprise", name: "Enterprise", price: "Custom", summary: "For universities, companies and white-label deployment.", limits: "Custom limits · SLA-ready support" },
+];
+
+const demoUsage: UsageSummary = {
+  plan_code: "plus",
+  plan_name: "Plus",
+  monthly_price_rm: 25,
+  users: 1,
+  max_users: 1,
+  devices: 3,
+  max_devices: 3,
+  projects: 3,
+  max_projects: 3,
+  max_widgets: 18,
+  retention_days: 30,
+  features: ["GPS", "Camera URL", "Browser push", "30-day history"],
+};
+
+function normalizePlanCode(code?: string) {
+  return code === "starter" ? "plus" : (code || "free");
+}
+
+function priceLabel(usage: UsageSummary | null, profile: UserProfile | null) {
+  const code = normalizePlanCode(usage?.plan_code ?? profile?.plan_code);
+  const catalogPlan = planCatalog.find((plan) => plan.code === code);
+  if (usage?.monthly_price_rm === null) return "Custom";
+  if (typeof usage?.monthly_price_rm === "number") return `RM${usage.monthly_price_rm}/month`;
+  return catalogPlan?.price ?? "RM0/month";
+}
+
 export function SettingsPage() {
-  const [profile, setProfile] = useState<AccountProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [status, setStatus] = useState<AccountStatus>(getSession() ? "loading" : "idle");
   const [pushStatus, setPushStatus] = useState<PushStatus>("idle");
   const [pushMessage, setPushMessage] = useState("Sign in, then enable browser notifications for Blynk-style alert delivery.");
   const [error, setError] = useState("");
 
+  const activePlanCode = useMemo(() => normalizePlanCode(usage?.plan_code ?? profile?.plan_code), [usage?.plan_code, profile?.plan_code]);
+
   async function loadProfile() {
     if (!getSession()) {
       setProfile(null);
+      setUsage(null);
       setStatus("idle");
       return;
     }
     setStatus("loading");
     setError("");
     try {
-      const next = await api.me();
-      setProfile(next);
+      const [nextProfile, nextUsage] = await Promise.all([
+        api.me(),
+        api.usage().catch(() => null),
+      ]);
+      setProfile(nextProfile);
+      setUsage(nextUsage);
       setStatus("signed-in");
     } catch {
       clearSession();
       setProfile(null);
+      setUsage(null);
       setStatus("error");
       setError("Saved session expired. Sign in again to reconnect the account workspace.");
     }
@@ -43,8 +87,12 @@ export function SettingsPage() {
     try {
       const session = await api.login("demo@sparkiot.dev", "SparkDemo123!");
       saveSession(session);
-      const next = await api.me();
-      setProfile(next);
+      const [nextProfile, nextUsage] = await Promise.all([
+        api.me(),
+        api.usage().catch(() => demoUsage),
+      ]);
+      setProfile(nextProfile);
+      setUsage(nextUsage ?? demoUsage);
       setStatus("signed-in");
     } catch {
       setStatus("error");
@@ -55,6 +103,7 @@ export function SettingsPage() {
   function signOut() {
     clearSession();
     setProfile(null);
+    setUsage(null);
     setStatus("idle");
     setPushStatus("idle");
     setPushMessage("Sign in, then enable browser notifications for Blynk-style alert delivery.");
@@ -105,29 +154,59 @@ export function SettingsPage() {
     }
   }
 
+  const signedIn = Boolean(profile);
+  const currentPlanName = usage?.plan_name ?? planCatalog.find((plan) => plan.code === activePlanCode)?.name ?? "Free";
+
   return (
-    <section className="support-page">
-      <section className="content-grid">
+    <section className="support-page settings-page">
+      <section className="settings-overview-grid">
         <article className="panel settings-card account-access-card" data-testid="account-access-card">
           <div className="panel-title"><UserCircle size={18} /><h2>Account access</h2></div>
           {profile ? (
-            <div className="account-state signed-in">
-              <strong>Signed in as {profile.full_name}</strong>
-              <span>{profile.email} - {profile.plan_code} - {profile.tenant_id}</span>
+            <div className="settings-detail-list">
+              <SettingsRow label="Name" value={profile.full_name} />
+              <SettingsRow label="Email" value={profile.email} />
+              <SettingsRow label="Workspace" value={profile.tenant_id} />
+              <SettingsRow label="Email status" value={profile.email_verified ? "Email verified" : "Verification pending"} />
               <button type="button" onClick={signOut}><LogOut size={16} />Sign out</button>
             </div>
           ) : (
             <div className="account-state">
               <strong>{status === "loading" ? "Connecting account..." : "Not signed in"}</strong>
-              <span>Use the seeded demo account to test the authenticated API, plan limits and tenant-scoped workspace.</span>
+              <span>Use the seeded demo account to test authenticated API, plan limits and tenant-scoped workspace.</span>
               <button type="button" className="primary" onClick={signInDemo} disabled={status === "loading"}><LogIn size={16} />Sign in demo account</button>
             </div>
           )}
           {error && <p className="error account-error">{error}</p>}
         </article>
+
+        <article className="panel settings-card plan-usage-card" data-testid="plan-usage-card">
+          <div className="panel-title"><CreditCard size={18} /><h2>Plan &amp; usage</h2></div>
+          <div className="current-plan-box">
+            <span>Current plan</span>
+            <strong>{currentPlanName}</strong>
+            <em>{priceLabel(usage, profile)}</em>
+          </div>
+          <div className="usage-meter-list">
+            <SettingsRow label="Projects" value={usage ? `${usage.projects} / ${usage.max_projects} projects` : signedIn ? "Loading usage" : "Sign in to view"} />
+            <SettingsRow label="Devices" value={usage ? `${usage.devices} / ${usage.max_devices} devices` : signedIn ? "Loading usage" : "Sign in to view"} />
+            <SettingsRow label="Users" value={usage ? `${usage.users} / ${usage.max_users} users` : signedIn ? "Loading usage" : "Sign in to view"} />
+            <SettingsRow label="Data window" value={usage ? `${usage.retention_days}-day history` : "Plan based"} />
+          </div>
+        </article>
+
+        <article className="panel settings-card security-card">
+          <div className="panel-title"><LockKeyhole size={18} /><h2>Security</h2></div>
+          <div className="security-list">
+            <SecurityItem icon={<MailCheck size={16} />} title={profile?.email_verified ? "Email verified" : "Email verification"} detail={profile?.email_verified ? "Account email is verified." : "Verify email before production use."} />
+            <SecurityItem icon={<ShieldCheck size={16} />} title="Password protected" detail="Passwords are hashed; reset tokens are single-use." />
+            <SecurityItem icon={<CheckCircle2 size={16} />} title="Tenant scoped" detail="Projects, devices and dashboards stay inside one workspace." />
+          </div>
+        </article>
+
         <article className={`panel settings-card browser-push-card ${pushStatus}`} data-testid="browser-push-card">
           <div className="panel-title"><BellRing size={18} /><h2>Browser push</h2></div>
-          <p>Enable real browser push subscriptions for threshold alerts, schedule events and manual notification tests.</p>
+          <p>Enable browser push subscriptions for threshold alerts, schedule events and manual notification tests.</p>
           <div className="push-state-row">
             <strong>{pushStatus === "enabled" ? "Browser push enabled" : pushStatus === "checking" ? "Enabling push..." : pushStatus === "unsupported" ? "Push unsupported" : "Push opt-in required"}</strong>
             <span>{pushMessage}</span>
@@ -136,24 +215,44 @@ export function SettingsPage() {
             <BellRing size={16} />Enable browser push
           </button>
         </article>
-        <article className="panel settings-card settings-info-card">
-          <div className="panel-title"><ShieldCheck size={18} /><h2>Starter plan</h2></div>
-          <p>1 user, 3 devices, 3 dashboards, GPS, camera URL, push notifications and 30-day history.</p>
-          <div className="settings-state-row">
-            <strong>RM25-ready limits</strong>
-            <span>Customer-facing controls stay inside the Starter package boundaries.</span>
-          </div>
-        </article>
-        <article className="panel settings-card settings-info-card">
-          <div className="panel-title"><Database size={18} /><h2>Data window</h2></div>
-          <p>Telemetry, GPS trails and camera references are designed around the 30-day Starter retention window.</p>
-          <div className="settings-state-row">
-            <strong>30-day retention</strong>
-            <span>Production map tile provider setup stays in deployment docs, not customer settings.</span>
-          </div>
-        </article>
       </section>
+
+      <article className="panel settings-plan-ladder">
+        <div className="panel-title"><CreditCard size={18} /><h2>Account plans</h2></div>
+        <div className="plan-ladder-grid">
+          {planCatalog.map((plan) => (
+            <div key={plan.code} className={`plan-tier-card ${activePlanCode === plan.code ? "active" : ""}`}>
+              <span>{activePlanCode === plan.code ? "Current plan" : "Available"}</span>
+              <strong>{plan.name}</strong>
+              <em>{plan.price}</em>
+              <p>{plan.summary}</p>
+              <small>{plan.limits}</small>
+            </div>
+          ))}
+        </div>
+      </article>
     </section>
+  );
+}
+
+function SettingsRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="settings-row">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function SecurityItem({ icon, title, detail }: { icon: ReactNode; title: string; detail: string }) {
+  return (
+    <div className="security-item">
+      {icon}
+      <span>
+        <strong>{title}</strong>
+        <small>{detail}</small>
+      </span>
+    </div>
   );
 }
 

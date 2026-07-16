@@ -3,6 +3,7 @@ from app.services.mqtt_bridge import build_ack_log_payload, build_ingest_request
 from app.services.telemetry import evaluate_alerts, ingest, normalize_value
 from app.services.schedules import due_occurrence_key, run_due_schedules_once
 from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
+from app.services.plans import usage
 from app.schemas.api import EmailVerificationConfirmRequest, OnboardingUpdate, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
 from app.core.database import Base, ensure_runtime_indexes, make_engine
 from app.core.security import create_access_token, hash_secret, verify_secret
@@ -154,7 +155,7 @@ def test_topic_helpers_create_spark_namespace():
     assert telemetry_topic("tenant-1", "device-1", "temperature") == "spark/v1/tenant-1/device-1/telemetry/temperature"
 
 
-def test_register_creates_starter_tenant_user_refresh_token_and_welcome_notification():
+def test_register_creates_free_tenant_user_refresh_token_and_welcome_notification():
     db = memory_session()
 
     response = register(
@@ -169,7 +170,7 @@ def test_register_creates_starter_tenant_user_refresh_token_and_welcome_notifica
 
     tenant = db.scalar(select(Tenant).where(Tenant.name == "Rectronx Lab"))
     assert tenant is not None
-    assert tenant.plan_code == "starter"
+    assert tenant.plan_code == "free"
     user = db.scalar(select(User).where(User.email == "mahesh@example.com"))
     assert user is not None
     assert user.tenant_id == tenant.id
@@ -181,7 +182,45 @@ def test_register_creates_starter_tenant_user_refresh_token_and_welcome_notifica
     notification = db.scalar(select(Notification).where(Notification.tenant_id == tenant.id, Notification.user_id == user.id))
     assert notification is not None
     assert notification.title == "Welcome to Spark IoT"
-    assert "Starter workspace is ready" in notification.body
+    assert "Free workspace is ready" in notification.body
+
+
+def test_usage_returns_free_plus_pro_enterprise_plan_metadata_and_legacy_starter_mapping():
+    db = memory_session()
+    tenants = [
+        Tenant(id="tenant-free", name="Free Lab", plan_code="free"),
+        Tenant(id="tenant-plus", name="Plus Lab", plan_code="plus"),
+        Tenant(id="tenant-pro", name="Pro Lab", plan_code="pro"),
+        Tenant(id="tenant-enterprise", name="Enterprise Lab", plan_code="enterprise"),
+        Tenant(id="tenant-starter", name="Starter Legacy Lab", plan_code="starter"),
+    ]
+    db.add_all(tenants)
+    db.commit()
+
+    free_usage = usage(db, "tenant-free")
+    plus_usage = usage(db, "tenant-plus")
+    pro_usage = usage(db, "tenant-pro")
+    enterprise_usage = usage(db, "tenant-enterprise")
+    starter_usage = usage(db, "tenant-starter")
+
+    assert free_usage["plan_code"] == "free"
+    assert free_usage["plan_name"] == "Free"
+    assert free_usage["monthly_price_rm"] == 0
+    assert free_usage["max_projects"] == 1
+    assert free_usage["max_devices"] == 1
+    assert free_usage["retention_days"] == 7
+    assert plus_usage["plan_code"] == "plus"
+    assert plus_usage["plan_name"] == "Plus"
+    assert plus_usage["monthly_price_rm"] == 25
+    assert plus_usage["max_projects"] == 3
+    assert plus_usage["max_devices"] == 3
+    assert pro_usage["plan_code"] == "pro"
+    assert pro_usage["monthly_price_rm"] == 49
+    assert pro_usage["max_projects"] > plus_usage["max_projects"]
+    assert enterprise_usage["plan_code"] == "enterprise"
+    assert enterprise_usage["monthly_price_rm"] is None
+    assert starter_usage["plan_code"] == "plus"
+    assert starter_usage["plan_name"] == "Plus"
 
 
 def test_register_rejects_duplicate_email_without_creating_extra_tenant():

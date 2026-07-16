@@ -76,6 +76,21 @@ export type UserProfile = {
   onboarding_step: string;
 };
 
+export type UsageSummary = {
+  plan_code: string;
+  plan_name: string;
+  monthly_price_rm: number | null;
+  users: number;
+  max_users: number;
+  devices: number;
+  max_devices: number;
+  projects: number;
+  max_projects: number;
+  max_widgets: number;
+  retention_days: number;
+  features: string[];
+};
+
 export type OnboardingState = {
   current_step: string;
   completed_steps: string[];

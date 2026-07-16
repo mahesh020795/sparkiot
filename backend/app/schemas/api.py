@@ -345,10 +345,15 @@ class AlertRuleCreate(BaseModel):
 
 
 class UsageResponse(BaseModel):
+    plan_code: str
+    plan_name: str
+    monthly_price_rm: int | None
     users: int
     max_users: int
     devices: int
     max_devices: int
     projects: int
     max_projects: int
+    max_widgets: int
     retention_days: int
+    features: list[str]
