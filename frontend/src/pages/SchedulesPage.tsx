@@ -1,4 +1,4 @@
-import { CalendarClock, Clock3, Cpu, Globe2, Hash, Repeat2, ToggleLeft } from "lucide-react";
+import { CalendarClock, Clock3, Cpu, Globe2, Hash, Repeat2, ToggleLeft, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { Device, Project, ScheduleCreate, ScheduleItem } from "../lib/types";
 
@@ -9,6 +9,7 @@ type Props = {
   schedules: ScheduleItem[];
   selectedProjectId: string;
   onCreateSchedule: (schedule: ScheduleCreate) => Promise<ScheduleItem>;
+  onDeleteSchedule: (scheduleId: string) => Promise<void>;
 };
 
 const demoSchedules: ScheduleItem[] = [
@@ -36,7 +37,7 @@ const demoSchedules: ScheduleItem[] = [
   }
 ];
 
-export function SchedulesPage({ accountMode, projects, devices, schedules, selectedProjectId, onCreateSchedule }: Props) {
+export function SchedulesPage({ accountMode, projects, devices, schedules, selectedProjectId, onCreateSchedule, onDeleteSchedule }: Props) {
   const firstProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
   const availableDevices = devices.filter((device) => !firstProject || device.project_id === firstProject.id);
   const firstDevice = availableDevices[0] ?? devices[0];
@@ -80,6 +81,15 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
     } catch {
       setCreateState("error");
     }
+  }
+
+  async function handleDelete(scheduleId: string) {
+    if (!window.confirm("Delete this schedule?")) return;
+    if (!accountMode) {
+      setLocalDemoSchedules((current) => current.filter((schedule) => schedule.id !== scheduleId));
+      return;
+    }
+    await onDeleteSchedule(scheduleId);
   }
 
   return (
@@ -156,6 +166,7 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
             schedule={schedule}
             project={projects.find((project) => project.id === schedule.project_id)}
             device={devices.find((device) => device.id === schedule.device_id)}
+            onDelete={() => void handleDelete(schedule.id)}
           />
         )) : (
           <article className="panel empty-state">
@@ -168,7 +179,7 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
   );
 }
 
-function ScheduleCard({ schedule, project, device }: { schedule: ScheduleItem; project?: Project; device?: Device }) {
+function ScheduleCard({ schedule, project, device, onDelete }: { schedule: ScheduleItem; project?: Project; device?: Device; onDelete: () => void }) {
   return (
     <article className="panel schedule-card">
       <div className="schedule-card-head">
@@ -189,6 +200,9 @@ function ScheduleCard({ schedule, project, device }: { schedule: ScheduleItem; p
         <span><small>Timezone</small><strong>{schedule.timezone}</strong></span>
       </div>
       <code>{(device?.command_topic ?? "spark/v1/demo-tenant/device/command/{channel}").replace("{channel}", schedule.channel)}</code>
+      <button className="entity-delete-button schedule-delete-button" type="button" aria-label={`Delete schedule ${scheduleTitle(schedule, project)}`} onClick={onDelete}>
+        <Trash2 size={16} />Delete schedule
+      </button>
       <small className="schedule-id">{schedule.id}</small>
     </article>
   );

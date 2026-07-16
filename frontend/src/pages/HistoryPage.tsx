@@ -1,6 +1,6 @@
 import { Download, History, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../lib/api";
+import { api, getSession } from "../lib/api";
 import type { Device, Telemetry } from "../lib/types";
 
 function formatValue(value: unknown) {
@@ -29,6 +29,24 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
   const filteredRows = selectedChannel === "all" ? rows : rows.filter((reading) => reading.channel === selectedChannel);
   const historyChannel = selectedChannel === "all" ? undefined : selectedChannel;
   const csvUrl = selectedDevice ? (accountMode ? api.historyCsvUrl(selectedDevice.id, historyChannel) : api.demoHistoryCsvUrl(selectedDevice.id, historyChannel)) : "#";
+
+  async function exportCsv() {
+    if (!selectedDevice) return;
+    const session = getSession();
+    const response = await fetch(csvUrl, {
+      headers: accountMode && session ? { Authorization: `Bearer ${session.access_token}` } : undefined
+    });
+    if (!response.ok) throw new Error(await response.text());
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `spark-iot-${selectedDevice.id}-${selectedChannel}-history.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
 
   useEffect(() => {
     if (!selectedDevice) return;
@@ -69,13 +87,13 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
       <div className="history-controls" aria-label="History filters">
         <label>Device<select value={selectedDevice?.id ?? ""} onChange={(event) => { setSelectedDeviceId(event.target.value); setSelectedChannel("all"); }}>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label>
         <label>Datastream<select value={selectedChannel} onChange={(event) => setSelectedChannel(event.target.value)}><option value="all">All channels</option>{channels.map((channel) => <option key={channel} value={channel}>{channel}</option>)}</select></label>
-        <a className="action-button primary" href={csvUrl} download><Download size={16} />Export CSV</a>
+        <button className="action-button primary" type="button" onClick={() => void exportCsv()}><Download size={16} />Export CSV</button>
       </div>
 
       <div className="history-summary-grid">
         {devices.map((device) => {
           const deviceRows = historyByDevice[device.id] ?? Object.values(initialLatest).filter((reading) => reading.device_id === device.id);
-          return <article key={device.id} className="history-device-card"><span className="status-dot" /><strong>{device.name}</strong><small>{device.board}</small><b>{deviceRows.length}</b><span>latest readings</span><a href={accountMode ? api.historyCsvUrl(device.id) : api.demoHistoryCsvUrl(device.id)} download>CSV</a></article>;
+          return <article key={device.id} className="history-device-card"><span className="status-dot" /><strong>{device.name}</strong><small>{device.board}</small><b>{deviceRows.length}</b><span>latest readings</span><button type="button" onClick={() => { setSelectedDeviceId(device.id); setSelectedChannel("all"); }}>CSV</button></article>;
         })}
       </div>
 

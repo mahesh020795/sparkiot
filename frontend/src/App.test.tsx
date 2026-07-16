@@ -25,6 +25,24 @@ afterEach(() => {
   localStorage.clear();
 });
 
+function stubCsvDownload() {
+  const click = vi.fn();
+  const realCreateElement = document.createElement.bind(document);
+  vi.spyOn(document, "createElement").mockImplementation((tagName: string, options?: ElementCreationOptions) => {
+    const element = realCreateElement(tagName, options);
+    if (tagName.toLowerCase() === "a") {
+      Object.defineProperty(element, "click", { value: click });
+    }
+    return element;
+  });
+  vi.stubGlobal("URL", {
+    ...URL,
+    createObjectURL: vi.fn(() => "blob:spark-iot-csv"),
+    revokeObjectURL: vi.fn()
+  });
+  return { click };
+}
+
 describe("App", () => {
   it("shows verification pending after signup before the SaaS workspace", async () => {
     localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
@@ -406,7 +424,7 @@ describe("App", () => {
     expect(screen.queryByText("Template library")).not.toBeInTheDocument();
     expect(screen.queryByText("Start from a product model, then build the dashboard")).not.toBeInTheDocument();
     expect(screen.getByText("3/3 templates used")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Create template/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Create template/i })).toBeEnabled();
 
     const energyTemplateCard = screen.getByRole("article", { name: /Energy Monitor template/i });
     expect(within(energyTemplateCard).queryByText("Active")).not.toBeInTheDocument();
@@ -462,7 +480,16 @@ describe("App", () => {
   });
 
 
-  it("shows demo data history with real CSV export links", async () => {
+  it("exports demo data history with a real CSV download action", async () => {
+    const { click } = stubCsvDownload();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/demo/devices/device-irrigation/history.csv")) {
+        return new Response("observed_at,device_id,channel,value,unit\n", { status: 200, headers: { "Content-Type": "text/csv" } });
+      }
+      return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+    });
+    vi.stubGlobal("fetch", fetchMock);
     render(<App />);
     fireEvent.click(await screen.findByText("Data History"));
 
@@ -474,8 +501,9 @@ describe("App", () => {
     expect(screen.getAllByText("ESP32 Irrigation Node").length).toBeGreaterThan(0);
     expect(screen.getAllByText("V0").length).toBeGreaterThan(0);
     expect(screen.getAllByText("29.4").length).toBeGreaterThan(0);
-    const exportLink = screen.getByRole("link", { name: /Export CSV/i });
-    expect(exportLink).toHaveAttribute("href", expect.stringContaining("/api/v1/demo/devices/device-irrigation/history.csv"));
+    fireEvent.click(screen.getByRole("button", { name: /Export CSV/i }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/demo/devices/device-irrigation/history.csv"), expect.anything()));
+    await vi.waitFor(() => expect(click).toHaveBeenCalled());
   });
 
   it("shows device provisioning with template binding, tokens and starter limit", async () => {
@@ -490,7 +518,9 @@ describe("App", () => {
     expect(screen.queryByText("Production rule")).not.toBeInTheDocument();
     expect(screen.queryByText(/raw device token only once/i)).not.toBeInTheDocument();
     expect(screen.getByText("3/3 devices used")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Provision device/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Provision device/i })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /Provision device/i }));
+    expect(screen.getByTestId("device-create-form")).toBeInTheDocument();
 
     const irrigationDevice = screen.getByRole("article", { name: /ESP32 Irrigation Node provisioning card/i });
     expect(irrigationDevice).toHaveClass("device-system-card");
@@ -848,6 +878,10 @@ describe("App", () => {
       if (url.includes("/telemetry/projects/account-project/latest")) {
         return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
       }
+      if (url.includes("/schedules/schedule-greenhouse-fan") && init?.method === "DELETE") {
+        expect((init.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
+        return new Response(JSON.stringify({ status: "ok", message: "Schedule deleted" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
       if (url.includes("/schedules") && init?.method === "POST") {
         expect((init.headers as Record<string, string>).Authorization).toBe("Bearer account-token");
         expect(init.body).toContain('"device_id":"account-device"');
@@ -873,6 +907,9 @@ describe("App", () => {
 
     expect(await screen.findByText("schedule-new")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/schedules"), expect.objectContaining({ method: "POST" }));
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: /Delete schedule Customer Greenhouse fan/i }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/schedules/schedule-greenhouse-fan"), expect.objectContaining({ method: "DELETE" })));
   });
 
   it("generates board-specific SparkIoT Arduino library sketches from selected templates and devices", async () => {
@@ -1405,10 +1442,10 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Data History"));
 
     expect((await screen.findAllByText("ESP32 Greenhouse Node")).length).toBeGreaterThan(0);
-    const exportLink = screen.getByRole("link", { name: /Export CSV/i });
-    expect(exportLink).toHaveAttribute("href", expect.stringContaining("/api/v1/telemetry/devices/account-device/history.csv"));
-    expect(exportLink).not.toHaveAttribute("href", expect.stringContaining("/demo/devices/account-device/history.csv"));
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/telemetry/devices/account-device/history"), expect.anything()));
+    const { click } = stubCsvDownload();
+    fireEvent.click(screen.getByRole("button", { name: /Export CSV/i }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/telemetry/devices/account-device/history.csv"), expect.objectContaining({ headers: { Authorization: "Bearer account-token" } })));
+    await vi.waitFor(() => expect(click).toHaveBeenCalled());
   });
 
   it("uses account device APIs on Live Test after sign in instead of demo board-test endpoints", async () => {

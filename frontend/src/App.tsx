@@ -267,11 +267,40 @@ export function App() {
     return created;
   }
 
+  async function createDemoDevice(device: DeviceCreate) {
+    const id = `demo-device-${Date.now()}`;
+    const created: Device = {
+      id,
+      project_id: device.project_id,
+      name: device.name,
+      board: device.board,
+      is_online: false,
+      token: `spk_demo_${Date.now().toString(36)}`,
+      telemetry_topic: `spark/v1/demo-tenant/${id}/telemetry/{channel}`,
+      command_topic: `spark/v1/demo-tenant/${id}/command/{channel}`
+    };
+    setDemoDeviceRows((current) => [created, ...current]);
+    return created;
+  }
+
   async function createAccountProject(project: ProjectCreate) {
     const created = await api.createProject(project);
     setAccountProjects((current) => [created, ...current]);
     setSelectedProjectId(created.id);
     markFirstProjectCreated(created.id);
+    return created;
+  }
+
+  async function createDemoProject(project: ProjectCreate) {
+    const id = `demo-project-${Date.now()}`;
+    const created: Project = {
+      id,
+      name: project.name,
+      description: project.description || "Demo sandbox project",
+      is_active: true
+    };
+    setDemoProjectRows((current) => [created, ...current]);
+    setSelectedProjectId(created.id);
     return created;
   }
 
@@ -329,6 +358,41 @@ export function App() {
     setSelectedProjectId(created.dashboard.project_id);
     setTemplateStudioId(created.id);
     return created;
+  }
+
+  async function createDemoTemplate(projectId: string, board: DeviceTemplate["board"], preset: TemplatePreset) {
+    const project = demoProjectRows.find((item) => item.id === projectId) ?? activeProjects.find((item) => item.id === projectId);
+    if (!project) throw new Error("Project not found");
+    const device = demoDeviceRows.find((item) => item.project_id === projectId);
+    const dashboard: Dashboard = {
+      id: `demo-dashboard-${Date.now()}`,
+      project_id: project.id,
+      name: `${project.name} Dashboard`,
+      revision: 1,
+      widgets: []
+    };
+    const draft = buildStarterTemplateDraft(project, dashboard, device, board, preset);
+    const created: DeviceTemplate = {
+      ...draft,
+      id: `demo-template-${Date.now()}`,
+      dashboard: {
+        ...draft.dashboard,
+        id: dashboard.id,
+        project_id: project.id
+      }
+    };
+    setTemplates((current) => [created, ...current]);
+    setSelectedProjectId(project.id);
+    setTemplateStudioInitialStep("Setup");
+    setTemplateStudioId(created.id);
+    return created;
+  }
+
+  async function deleteSchedule(scheduleId: string) {
+    if (isAccountMode) {
+      await api.deleteSchedule(scheduleId);
+      setAccountSchedules((current) => current.filter((schedule) => schedule.id !== scheduleId));
+    }
   }
 
   async function createAccountQuickStart(draft: QuickStartDraft) {
@@ -496,7 +560,7 @@ export function App() {
             <p>The Overview stays focused on live telemetry. This setup page keeps the professional Blynk-style onboarding flow available for projects, templates, V-pins, devices, Arduino code and board testing.</p>
           </section>
         )}
-        {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : undefined} onUpdateProject={updateProject} onDeleteProject={deleteProject} />}
+        {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : createDemoProject} onUpdateProject={updateProject} onDeleteProject={deleteProject} />}
         {view === "templates" && (
           templateStudioId ? (
             <TemplateStudioPage
@@ -516,7 +580,7 @@ export function App() {
               templates={activeTemplates}
               projects={activeProjects}
               accountMode={isAccountMode}
-              onCreateTemplate={isAccountMode ? createAccountTemplate : undefined}
+              onCreateTemplate={isAccountMode ? createAccountTemplate : createDemoTemplate}
               onDeleteTemplate={deleteTemplate}
               onOpen={(template) => {
                 setSelectedProjectId(template.dashboard.project_id);
@@ -532,7 +596,7 @@ export function App() {
             templates={activeTemplates}
             projects={activeProjects}
             accountMode={isAccountMode}
-            onCreateDevice={isAccountMode ? createAccountDevice : undefined}
+            onCreateDevice={isAccountMode ? createAccountDevice : createDemoDevice}
             onRegenerateToken={isAccountMode ? regenerateAccountDeviceToken : undefined}
             onUpdateDevice={updateDevice}
             onDeleteDevice={deleteDevice}
@@ -547,6 +611,7 @@ export function App() {
             schedules={accountSchedules}
             selectedProjectId={selectedProjectId}
             onCreateSchedule={createAccountSchedule}
+            onDeleteSchedule={deleteSchedule}
           />
         )}
         {view === "history" && <HistoryPage devices={activeDevices} initialLatest={activeLatest} accountMode={isAccountMode} />}
@@ -1089,6 +1154,7 @@ function TemplateLibrary({
   const templateLimit = 3;
   const isAtLimit = templates.length >= templateLimit;
   const availableProjects = projects.filter((project) => !templates.some((template) => template.dashboard.project_id === project.id));
+  const templateProjectOptions = accountMode ? availableProjects : (availableProjects.length ? availableProjects : projects);
   const [createOpen, setCreateOpen] = useState(false);
   const [draftProjectId, setDraftProjectId] = useState(availableProjects[0]?.id ?? projects[0]?.id ?? "");
   const [draftBoard, setDraftBoard] = useState<DeviceTemplate["board"]>("ESP32");
@@ -1097,11 +1163,11 @@ function TemplateLibrary({
   const [createMessage, setCreateMessage] = useState("");
 
   useEffect(() => {
-    if (!draftProjectId && availableProjects[0]) setDraftProjectId(availableProjects[0].id);
-  }, [draftProjectId, availableProjects]);
+    if (!draftProjectId && templateProjectOptions[0]) setDraftProjectId(templateProjectOptions[0].id);
+  }, [draftProjectId, templateProjectOptions]);
 
   async function createTemplate() {
-    if (!onCreateTemplate || isAtLimit || !draftProjectId) return;
+    if (!onCreateTemplate || (accountMode && isAtLimit) || !draftProjectId) return;
     setCreateState("saving");
     setCreateMessage("");
     try {
@@ -1125,10 +1191,10 @@ function TemplateLibrary({
         </div>
         <button
           className="primary"
-          disabled={isAtLimit || (accountMode && (!onCreateTemplate || !availableProjects.length))}
-          aria-disabled={isAtLimit || (accountMode && (!onCreateTemplate || !availableProjects.length))}
+          disabled={(accountMode && isAtLimit) || !onCreateTemplate || (accountMode && !availableProjects.length)}
+          aria-disabled={(accountMode && isAtLimit) || !onCreateTemplate || (accountMode && !availableProjects.length)}
           title={isAtLimit ? "Starter plan limit reached" : accountMode ? "Create account template" : "Demo templates are already filled"}
-          onClick={() => accountMode && setCreateOpen((current) => !current)}
+          onClick={() => setCreateOpen((current) => !current)}
         >
           {isAtLimit ? <Lock size={16} /> : <Plus size={16} />}
           Create template
@@ -1146,7 +1212,7 @@ function TemplateLibrary({
             <label>
               Project
               <select aria-label="Template project" value={draftProjectId} onChange={(event) => setDraftProjectId(event.target.value)}>
-                {availableProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+                {templateProjectOptions.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
               </select>
             </label>
             <label>
@@ -1225,7 +1291,7 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
   const [createMessage, setCreateMessage] = useState("");
 
   async function createProject() {
-    if (!onCreateProject || isAtLimit) return;
+    if (!onCreateProject || (accountMode && isAtLimit)) return;
     const name = projectDraft.name.trim();
     const description = projectDraft.description.trim();
     if (name.length < 2) {
@@ -1263,8 +1329,8 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
         </div>
         <button
           className="primary"
-          disabled={isAtLimit || !onCreateProject}
-          aria-disabled={isAtLimit || !onCreateProject}
+          disabled={(accountMode && isAtLimit) || !onCreateProject}
+          aria-disabled={(accountMode && isAtLimit) || !onCreateProject}
           title={isAtLimit ? "Starter plan project limit reached" : accountMode ? "Create project" : "Sign in to create real projects"}
           onClick={() => setCreateOpen((current) => !current)}
         >

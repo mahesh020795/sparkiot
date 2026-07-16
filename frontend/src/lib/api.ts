@@ -84,6 +84,7 @@ export const api = {
   markNotificationRead: (notificationId: string) => request<NotificationItem>(`/notifications/${notificationId}/read`, { method: "PATCH" }),
   schedules: () => request<ScheduleItem[]>("/schedules"),
   createSchedule: (schedule: ScheduleCreate) => request<ScheduleItem>("/schedules", { method: "POST", body: JSON.stringify(schedule) }),
+  deleteSchedule: (scheduleId: string) => request<StatusResponse>(`/schedules/${scheduleId}`, { method: "DELETE" }),
   pushPublicKey: () => request<{ public_key: string }>("/notifications/push-public-key"),
   savePushSubscription: (subscription: PushSubscriptionJSON) => request<{ status: string }>("/notifications/push-subscriptions", { method: "POST", body: JSON.stringify(subscription) }),
   removePushSubscription: (subscription: PushSubscriptionJSON) => request<void>("/notifications/push-subscriptions", { method: "DELETE", body: JSON.stringify(subscription) })

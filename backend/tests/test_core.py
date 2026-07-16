@@ -11,6 +11,7 @@ from app.api.routes.auth import confirm_email_verification, confirm_password_res
 from app.api.routes.onboarding import get_onboarding, update_onboarding
 from app.api.routes.templates import create_template, list_templates, update_template
 from app.api.routes.devices import command_logs
+from app.api.routes.schedules import delete_schedule
 from app.api.routes.notifications import mark_notification_read
 from app.api.routes.realtime import realtime_subscription_scope
 from app.api.routes.telemetry import history_csv
@@ -859,6 +860,47 @@ def test_due_schedule_worker_publishes_once_per_occurrence(monkeypatch):
     assert len(logs) == 1
     assert logs[0].status == "sched:schedule:202607150630"
     assert logs[0].value == {"raw": True}
+
+
+def test_delete_schedule_removes_only_tenant_schedule():
+    db = memory_session()
+    tenant = Tenant(id="tenant-delete-schedule", name="Delete Schedule Tenant")
+    other_tenant = Tenant(id="tenant-delete-schedule-other", name="Other Delete Schedule Tenant")
+    user = User(id="user-delete-schedule", tenant_id=tenant.id, email="schedule-delete@example.com", full_name="Schedule Delete", password_hash=hash_secret("SparkDemo123!"))
+    schedule = Schedule(
+        id="schedule-delete-me",
+        tenant_id=tenant.id,
+        project_id="project-delete-schedule",
+        device_id="device-delete-schedule",
+        channel="V3",
+        command_value={"raw": True},
+        timezone="Asia/Kuala_Lumpur",
+        time_of_day="06:00",
+        recurrence="daily",
+    )
+    other_schedule = Schedule(
+        id="schedule-keep-other",
+        tenant_id=other_tenant.id,
+        project_id="project-other-schedule",
+        device_id="device-other-schedule",
+        channel="V4",
+        command_value={"raw": False},
+        timezone="Asia/Kuala_Lumpur",
+        time_of_day="07:00",
+        recurrence="daily",
+    )
+    db.add_all([tenant, other_tenant, user, schedule, other_schedule])
+    db.commit()
+
+    response = delete_schedule(schedule.id, user, db)
+
+    assert response.message == "Schedule deleted"
+    assert db.get(Schedule, schedule.id) is None
+    assert db.get(Schedule, other_schedule.id) is not None
+
+    with pytest.raises(Exception):
+        delete_schedule(other_schedule.id, user, db)
+
 
 def test_demo_history_payload_and_csv_unwrap_values_for_export():
     class Reading:

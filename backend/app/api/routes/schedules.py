@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import current_user
 from app.core.database import get_db
 from app.models.domain import Device, Project, Schedule, User
-from app.schemas.api import ScheduleCreate, ScheduleResponse
+from app.schemas.api import ScheduleCreate, ScheduleResponse, StatusResponse
 from app.services.schedules import unwrap_command_value
 
 router = APIRouter(prefix="/schedules", tags=["schedules"])
@@ -54,3 +54,13 @@ def create_schedule(payload: ScheduleCreate, user: User = Depends(current_user),
     db.commit()
     db.refresh(schedule)
     return _schedule_response(schedule)
+
+
+@router.delete("/{schedule_id}", response_model=StatusResponse)
+def delete_schedule(schedule_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    schedule = db.get(Schedule, schedule_id)
+    if not schedule or schedule.tenant_id != user.tenant_id:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    db.delete(schedule)
+    db.commit()
+    return StatusResponse(message="Schedule deleted")

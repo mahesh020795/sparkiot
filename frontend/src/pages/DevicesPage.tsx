@@ -43,7 +43,7 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
   }
 
   async function createDevice() {
-    if (!onCreateDevice || isAtLimit) return;
+    if (!onCreateDevice || (accountMode && isAtLimit)) return;
     const projectId = newDevice.project_id || projects[0]?.id || templates[0]?.dashboard.project_id || "";
     const name = newDevice.name.trim();
     if (!projectId || name.length < 2) {
@@ -81,8 +81,8 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
         </div>
         <button
           className="primary"
-          disabled={isAtLimit || !onCreateDevice}
-          aria-disabled={isAtLimit || !onCreateDevice}
+          disabled={(accountMode && isAtLimit) || !onCreateDevice}
+          aria-disabled={(accountMode && isAtLimit) || !onCreateDevice}
           title={isAtLimit ? "Starter plan device limit reached" : accountMode ? "Provision device" : "Sign in to provision real devices"}
           onClick={() => setProvisionOpen((current) => !current)}
         >
