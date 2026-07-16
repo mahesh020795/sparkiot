@@ -588,6 +588,30 @@ describe("App", () => {
     expect(screen.getAllByDisplayValue("Voltage Alert").length).toBe(beforeRules + 1);
   });
 
+  it("keeps Template Studio creation buttons working when browser randomUUID is unavailable", async () => {
+    const originalRandomUuid = crypto.randomUUID;
+    Object.defineProperty(crypto, "randomUUID", { configurable: true, value: undefined });
+    try {
+      render(<App />);
+      fireEvent.click(await screen.findByText("Templates"));
+      fireEvent.click(within(screen.getByRole("article", { name: /Energy Monitor template/i })).getByRole("button", { name: /Edit template/i }));
+
+      fireEvent.click(screen.getByText("Datastreams"));
+      fireEvent.click(screen.getByRole("button", { name: /Add V pin/i }));
+      expect(screen.getByDisplayValue("Datastream V3")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
+      fireEvent.click(screen.getByRole("button", { name: /camera.*Output widget/i }));
+      expect(screen.getByRole("status")).toHaveTextContent(/Camera Snapshot widget added to canvas/i);
+
+      fireEvent.click(screen.getAllByText("Notifications")[1]);
+      fireEvent.click(screen.getByRole("button", { name: /Add rule/i }));
+      expect(screen.getAllByDisplayValue("Voltage Alert").length).toBeGreaterThan(1);
+    } finally {
+      Object.defineProperty(crypto, "randomUUID", { configurable: true, value: originalRandomUuid });
+    }
+  });
+
 
   it("exports demo data history with a real CSV download action", async () => {
     const { click } = stubCsvDownload();

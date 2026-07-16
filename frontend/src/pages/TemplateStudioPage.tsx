@@ -112,11 +112,11 @@ export function TemplateStudioPage({
   function applyMigration() {
     const imported = parseMigration(migrationText);
     if (!imported.length) return;
-    const datastreams = imported.map((item) => ({ ...item, id: `ds-${crypto.randomUUID()}`, color: item.color ?? colorForType(item.dataType) }));
+    const datastreams = imported.map((item) => ({ ...item, id: clientId("ds"), color: item.color ?? colorForType(item.dataType) }));
     const widgets = datastreams.slice(0, 10).map((stream, index) => {
       const type = widgetForType(stream.dataType);
       const isWide = type === "gps" || type === "camera";
-      return hydrateWidget({ id: `w-${crypto.randomUUID()}`, type, title: stream.name, datastreamId: stream.id, x: (index % 4) * 3, y: Math.floor(index / 4) * 3, w: isWide ? 6 : 3, h: isWide ? 3 : 2, deviceId: "", channel: "" }, stream, device);
+      return hydrateWidget({ id: clientId("w"), type, title: stream.name, datastreamId: stream.id, x: (index % 4) * 3, y: Math.floor(index / 4) * 3, w: isWide ? 6 : 3, h: isWide ? 3 : 2, deviceId: "", channel: "" }, stream, device);
     });
     onChange({ ...template, datastreams, dashboard: { ...template.dashboard, widgets } });
     setActiveStep("Dashboard");
@@ -145,7 +145,7 @@ export function TemplateStudioPage({
       color: colorForType(preferredType)
     });
     const datastreams = existingStream ? template.datastreams : [...template.datastreams, stream];
-    const widget = hydrateWidget({ id: `w-${crypto.randomUUID()}`, type, title: stream.name, x: 0, y: nextWidgetRow(template.dashboard.widgets), w: type === "chart" || type === "gps" || type === "camera" ? 6 : 3, h: type === "chart" || type === "gps" || type === "camera" ? 3 : 2, deviceId: "", channel: "" }, stream, device);
+    const widget = hydrateWidget({ id: clientId("w"), type, title: stream.name, x: 0, y: nextWidgetRow(template.dashboard.widgets), w: type === "chart" || type === "gps" || type === "camera" ? 6 : 3, h: type === "chart" || type === "gps" || type === "camera" ? 3 : 2, deviceId: "", channel: "" }, stream, device);
     onChange({ ...template, datastreams, dashboard: { ...template.dashboard, widgets: [...template.dashboard.widgets, widget] } });
     setSelectedWidgetId(widget.id);
     setWidgetAddStatus(`${widget.title} widget added to canvas. Save the template to keep it.`);
@@ -158,7 +158,7 @@ export function TemplateStudioPage({
 
   function duplicateWidget() {
     if (!selectedWidget) return;
-    const copy = { ...selectedWidget, id: `w-${crypto.randomUUID()}`, x: selectedWidget.x + 1, y: selectedWidget.y + 1, title: `${selectedWidget.title} Copy` };
+    const copy = { ...selectedWidget, id: clientId("w"), x: selectedWidget.x + 1, y: selectedWidget.y + 1, title: `${selectedWidget.title} Copy` };
     onChange({ ...template, dashboard: { ...template.dashboard, widgets: [...template.dashboard.widgets, copy] } });
     setSelectedWidgetId(copy.id);
   }
@@ -182,7 +182,7 @@ export function TemplateStudioPage({
     const existingStream = template.datastreams.find((item) => item.id === seed?.datastreamId) ?? template.datastreams[0];
     const stream = existingStream ?? createDatastream(template.datastreams, { name: "Alert Value", dataType: "float", min: 0, max: 100, color: "#2563eb" });
     const notification: TemplateNotification = {
-      id: `rule-${crypto.randomUUID()}`,
+      id: clientId("rule"),
       name: seed?.name ?? `${stream.name} Alert`,
       datastreamId: stream.id,
       operator: seed?.operator ?? ">",
@@ -655,7 +655,7 @@ function createDatastream(existing: Datastream[], seed?: Partial<Datastream>): D
   const nextPin = `V${nextIndex}` as Datastream["pin"];
   const dataType = seed?.dataType ?? "float";
   return {
-    id: `ds-${crypto.randomUUID()}`,
+    id: clientId("ds"),
     name: seed?.name ?? `Datastream ${seed?.pin ?? nextPin}`,
     pin: seed?.pin ?? nextPin,
     dataType,
@@ -664,6 +664,14 @@ function createDatastream(existing: Datastream[], seed?: Partial<Datastream>): D
     max: seed?.max ?? (dataType === "gps" || dataType === "image" || dataType === "string" ? undefined : dataType === "boolean" ? 1 : 100),
     color: seed?.color ?? colorForType(dataType)
   };
+}
+
+function clientId(prefix: string) {
+  const uuid =
+    typeof globalThis.crypto?.randomUUID === "function"
+      ? globalThis.crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${prefix}-${uuid}`;
 }
 
 function dataTypeForWidgetType(type: string): Datastream["dataType"] {
