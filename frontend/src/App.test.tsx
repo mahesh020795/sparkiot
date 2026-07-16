@@ -79,6 +79,39 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /View demo dashboard/i })).toBeInTheDocument();
   });
 
+  it("opens the simulated demo dashboard from the verified starter workspace", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
+    vi.spyOn(api, "me").mockResolvedValue({
+      full_name: "Acme Owner",
+      email: "owner@acme.test",
+      tenant_id: "tenant-1",
+      plan_code: "starter",
+      email_verified: true,
+      onboarding_step: "starter_workspace",
+    });
+    vi.spyOn(api, "usage").mockResolvedValue({ users: 1, max_users: 1, projects: 0, max_projects: 3, devices: 0, max_devices: 3, retention_days: 30 });
+    vi.spyOn(api, "projects").mockResolvedValue([]);
+    vi.spyOn(api, "devices").mockResolvedValue([]);
+    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "notifications").mockResolvedValue([]);
+    vi.spyOn(api, "schedules").mockResolvedValue([]);
+    vi.spyOn(api, "onboarding").mockResolvedValue({
+      current_step: "starter_workspace",
+      completed_steps: ["verify_email"],
+      demo_viewed: false,
+      first_project_id: null,
+    });
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /View demo dashboard/i }));
+
+    expect(await screen.findByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
+    const demoBanner = screen.getByRole("status");
+    expect(within(demoBanner).getByText(/Demo dashboard/i)).toBeInTheDocument();
+    expect(within(demoBanner).getByText(/Simulated telemetry/i)).toBeInTheDocument();
+    expect(screen.getByText("Temperature")).toBeInTheDocument();
+  });
+
   it("opens directly on the Spark IoT dashboard without login", async () => {
     render(<App />);
     expect(await screen.findByText("Live control cockpit")).toBeInTheDocument();

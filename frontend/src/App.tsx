@@ -43,7 +43,7 @@ export function App() {
   const [templateSaveStates, setTemplateSaveStates] = useState<Record<string, SaveState>>(() => Object.fromEntries(demoTemplates.map((template) => [template.id, "saved"])));
   const [templateSaveError, setTemplateSaveError] = useState<string>("");
 
-  const isAccountMode = Boolean(session);
+  const isAccountMode = Boolean(session) && !demoPreviewMode;
   const activeProjects = isAccountMode ? accountProjects : demoProjects;
   const activeDevices = isAccountMode ? accountDevices : demoDevices;
   const activeLatest = isAccountMode ? accountLatest : demoLatest;
@@ -355,9 +355,9 @@ export function App() {
           </ol>
         </div>
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
-          <span className="section-kicker">{session ? "Account mode active" : "Demo mode active"}</span>
-          <div><UserCircle size={16} /><strong>{session ? "Authenticated workspace" : "No-login preview"}</strong></div>
-          <small>{session ? "Tenant API session connected. Starter limits and protected endpoints are available." : "Default sales/demo dashboard remains open before account signup."}</small>
+          <span className="section-kicker">{isAccountMode ? "Account mode active" : demoPreviewMode ? "Demo preview active" : "Demo mode active"}</span>
+          <div><UserCircle size={16} /><strong>{isAccountMode ? "Authenticated workspace" : demoPreviewMode ? "Simulated dashboard preview" : "No-login preview"}</strong></div>
+          <small>{isAccountMode ? "Tenant API session connected. Starter limits and protected endpoints are available." : demoPreviewMode ? "Previewing Spark IoT with simulated telemetry before creating real tenant data." : "Default sales/demo dashboard remains open before account signup."}</small>
           {session ? (
             <button type="button" onClick={signOut}><LogOut size={16} />Sign out</button>
           ) : (
@@ -408,6 +408,13 @@ export function App() {
           </div>
           </div>
         </header>
+        {demoPreviewMode && (
+          <div className="demo-preview-banner" role="status">
+            <strong>Demo dashboard</strong>
+            <span>Simulated telemetry. Create your first project to connect real hardware.</span>
+            <button type="button" onClick={() => setDemoPreviewMode(false)}>Back to workspace</button>
+          </div>
+        )}
         {view === "dashboard" && (
           <SetupSummaryCard
             projectCount={activeProjects.length}
