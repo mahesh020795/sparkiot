@@ -149,7 +149,6 @@ function ScheduleWidget({ config, value }: { config: WidgetConfig; value: any })
   const [selectedDays, setSelectedDays] = useState<Set<string>>(() => new Set(defaultDays));
   const [times, setTimes] = useState<string[]>(defaultTimes);
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0);
-  const [duration, setDuration] = useState(Number(value?.duration ?? 25));
   const days = [
     { key: "mon", short: "M", label: "Monday" },
     { key: "tue", short: "T", label: "Tuesday" },
@@ -216,18 +215,6 @@ function ScheduleWidget({ config, value }: { config: WidgetConfig; value: any })
           type="time"
           value={times[selectedTimeIndex] ?? "06:00"}
           onChange={(event) => updateSelectedTime(event.target.value)}
-        />
-        <label>3. Cycle duration <strong>{duration} min</strong></label>
-        <input
-          aria-label="Cycle duration minutes"
-          className="schedule-duration-input"
-          type="range"
-          min="5"
-          max="60"
-          step="5"
-          value={duration}
-          onChange={(event) => setDuration(Number(event.target.value))}
-          style={{ ["--schedule-duration-percent" as string]: `${((duration - 5) / 55) * 100}%` }}
         />
       </div>
       <WidgetFooter config={config} value="bypasses schedule on rain" label="SMART TRIGGER" />

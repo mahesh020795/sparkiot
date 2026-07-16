@@ -18,7 +18,7 @@ const scheduleConfig: WidgetConfig = {
 };
 
 describe("Schedule dashboard widget", () => {
-  it("lets users edit days, time cycles and duration inside the dashboard card", () => {
+  it("lets users edit days and time cycles inside the dashboard card", () => {
     render(<Widget config={scheduleConfig} devices={[]} />);
 
     const widget = screen.getByText("Irrigation Schedule").closest("article")!;
@@ -33,8 +33,7 @@ describe("Schedule dashboard widget", () => {
     fireEvent.change(timeInput, { target: { value: "07:15" } });
     expect(within(widget).getByRole("button", { name: /Edit 07:15 AM cycle/i })).toBeInTheDocument();
 
-    const duration = within(widget).getByLabelText("Cycle duration minutes");
-    fireEvent.change(duration, { target: { value: "40" } });
-    expect(within(widget).getByText("40 min")).toBeInTheDocument();
+    expect(within(widget).queryByLabelText("Cycle duration minutes")).not.toBeInTheDocument();
+    expect(within(widget).queryByText(/Cycle duration/i)).not.toBeInTheDocument();
   });
 });

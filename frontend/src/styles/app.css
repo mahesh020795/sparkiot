@@ -1326,32 +1326,6 @@ main {
   font-weight: 900;
   padding: 0 14px;
 }
-.schedule-duration-input {
-  width: 100%;
-  height: 12px;
-  appearance: none;
-  border: 0;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #2563eb var(--schedule-duration-percent, 36%), #eef2f7 var(--schedule-duration-percent, 36%));
-  cursor: pointer;
-}
-.schedule-duration-input::-webkit-slider-thumb {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border: 3px solid #ffffff;
-  border-radius: 999px;
-  background: #2563eb;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
-}
-.schedule-duration-input::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border: 3px solid #ffffff;
-  border-radius: 999px;
-  background: #2563eb;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
-}
 .capacity-bar {
   height: 8px;
   overflow: hidden;
