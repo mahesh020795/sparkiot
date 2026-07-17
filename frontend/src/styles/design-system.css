@@ -4317,7 +4317,7 @@ body {
   grid-template-columns: minmax(16rem, 0.82fr) minmax(0, 1.6fr);
   gap: 1rem;
   align-items: stretch;
-  margin: 0 0 1.25rem;
+  margin: 1.35rem 0 1.25rem;
   padding: clamp(1rem, 1.2vw, 1.35rem);
   border-radius: 28px;
   background: #ffffff;
@@ -4487,14 +4487,15 @@ body {
   padding-right: 1.2rem;
 }
 
-.spark-ui .launch-wizard-step strong,
+.spark-ui .launch-wizard-step h3,
 .spark-ui .launch-wizard-step small {
   display: block;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.spark-ui .launch-wizard-step strong {
+.spark-ui .launch-wizard-step h3 {
+  margin: 0;
   color: #0f172a;
   font-size: 0.88rem;
   line-height: 1.18;

@@ -119,6 +119,13 @@ describe("App", () => {
     expect(screen.getByText(/View live dashboard/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Create first project/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /View demo dashboard/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Create first project/i }));
+    expect(await screen.findByTestId("launch-wizard-panel")).toBeInTheDocument();
+    expect(screen.queryByText("Select option")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Project selector")).not.toBeInTheDocument();
+    const wizardSteps = screen.getAllByTestId("launch-wizard-step").map((step) => within(step).getByRole("heading").textContent);
+    expect(wizardSteps.slice(0, 4)).toEqual(["Choose template", "Create project", "Add datastreams", "Add device"]);
   });
 
   it("opens the simulated demo dashboard from the verified starter workspace", async () => {
@@ -1809,7 +1816,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
 
     expect(await screen.findByText("Customer Greenhouse Dashboard")).toBeInTheDocument();
-    expect(screen.getByLabelText("Dashboard project selector")).toHaveTextContent("Customer Greenhouse");
+    expect(await screen.findByLabelText("Dashboard project selector")).toHaveTextContent("Customer Greenhouse");
     expect(await screen.findByText("Greenhouse Temperature")).toBeInTheDocument();
     expect(await screen.findByText(/28\.6/)).toBeInTheDocument();
 

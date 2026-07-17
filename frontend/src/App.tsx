@@ -73,6 +73,10 @@ export function App() {
   const selectedProject = useMemo(() => activeProjects.find((project) => project.id === selectedProjectId), [activeProjects, selectedProjectId]);
   const selectedDevice = useMemo(() => activeDevices.find((device) => device.project_id === selectedProjectId), [activeDevices, selectedProjectId]);
   const selectedTemplate = useMemo(() => activeTemplates.find((template) => template.dashboard.project_id === selectedProjectId) ?? activeTemplates[0] ?? templates[0], [activeTemplates, selectedProjectId, templates]);
+  const dashboardSelectorProjects = useMemo(
+    () => isAccountMode ? activeProjects.filter((project) => (accountDashboards[project.id]?.widgets.length ?? 0) > 0) : activeProjects,
+    [accountDashboards, activeProjects, isAccountMode]
+  );
 
   const nav = [
     ["dashboard", LayoutDashboard, "Dashboard"],
@@ -620,9 +624,9 @@ export function App() {
             <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
           </div>
           <div className="top-actions">
-            {view === "dashboard" && (
+            {view === "dashboard" && dashboardSelectorProjects.length > 0 && (
               <DashboardProjectSelector
-                projects={activeProjects}
+                projects={dashboardSelectorProjects}
                 selectedProjectId={selectedProjectId}
                 open={dashboardSelectorOpen}
                 onToggle={() => setDashboardSelectorOpen((current) => !current)}
@@ -632,7 +636,7 @@ export function App() {
                 }}
               />
             )}
-            {view !== "dashboard" && <SparkSelect ariaLabel="Project selector" value={selectedProjectId} onChange={setSelectedProjectId} options={activeProjects.map((project) => ({ value: project.id, label: project.name }))} />}
+            {view !== "dashboard" && activeProjects.length > 0 && <SparkSelect ariaLabel="Project selector" value={selectedProjectId} onChange={setSelectedProjectId} options={activeProjects.map((project) => ({ value: project.id, label: project.name }))} />}
           </div>
           </div>
         </header>
@@ -859,8 +863,8 @@ function LaunchWizardPanel({
   const [quickStartState, setQuickStartState] = useState<"idle" | "building" | "error">("idle");
   const [quickStartError, setQuickStartError] = useState("");
   const steps = [
-    { title: "Create project", detail: `${projectCount}/10 projects ready`, action: "Open project setup", onClick: onOpenProjects, icon: MapPinned },
     { title: "Choose template", detail: `${templateCount}/10 templates ready`, action: "Open template studio", onClick: onOpenTemplate, icon: Workflow },
+    { title: "Create project", detail: `${projectCount}/10 projects ready`, action: "Open project setup", onClick: onOpenProjects, icon: MapPinned },
     { title: "Add datastreams", detail: `${datastreamCount} virtual pins mapped`, action: "Edit datastreams", onClick: onOpenDatastreams, icon: Database },
     { title: "Add device", detail: `${deviceCount}/10 devices provisioned`, action: "Open devices", onClick: onOpenDevices, icon: Cpu },
     { title: "Generate Arduino code", detail: `Sketch targets ${selectedDeviceName}`, action: "Open code generator", onClick: onOpenCode, icon: TerminalSquare },
@@ -885,7 +889,7 @@ function LaunchWizardPanel({
       <div className="launch-wizard-copy">
         <span className="section-kicker">Customer onboarding</span>
         <h2>Spark IoT Launch Wizard</h2>
-        <p>Follow the same professional flow customers expect from Blynk, but faster for Rectronx boards: project, template, V-pins, device token, Arduino code and live proof.</p>
+        <p>Start from a reusable template, create the customer project, map V-pins, then provision the board token, Arduino code and live proof.</p>
         <div className="launch-wizard-status">
           <span><CheckCircle2 size={16} /><strong>6/6 ready</strong></span>
           <small>{selectedProjectName} is ready for ESP32 / NodeMCU testing.</small>
@@ -948,11 +952,11 @@ function LaunchWizardPanel({
         {steps.map((step, index) => {
           const Icon = step.icon;
           return (
-            <article key={step.title} className="launch-wizard-step">
+            <article key={step.title} className="launch-wizard-step" data-testid="launch-wizard-step">
               <span className="launch-wizard-step-number">{index + 1}</span>
               <Icon size={18} />
               <div>
-                <strong>{step.title}</strong>
+                <h3>{step.title}</h3>
                 <small>{step.detail}</small>
               </div>
               <button type="button" onClick={step.onClick}>{step.action}<ArrowRight size={14} /></button>
