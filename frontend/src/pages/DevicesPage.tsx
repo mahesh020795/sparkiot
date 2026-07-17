@@ -1,6 +1,7 @@
 import { Clipboard, Copy, KeyRound, Lock, Pencil, Plus, RadioTower, Router, TerminalSquare, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { SparkSelect } from "../components/SparkSelect";
 import type { BoardType, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, Project } from "../lib/types";
 
 type Props = {
@@ -101,15 +102,12 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
           <div className="device-create-grid">
             <label>
               Project
-              <select
-                aria-label="Project"
+              <SparkSelect
+                ariaLabel="Project"
                 value={newDevice.project_id}
-                onChange={(event) => setNewDevice((current) => ({ ...current, project_id: event.target.value }))}
-              >
-                {(projects.length ? projects : templates.map((template) => ({ id: template.dashboard.project_id, name: template.name }))).map((project) => (
-                  <option key={project.id} value={project.id}>{project.name}</option>
-                ))}
-              </select>
+                onChange={(value) => setNewDevice((current) => ({ ...current, project_id: value }))}
+                options={(projects.length ? projects : templates.map((template) => ({ id: template.dashboard.project_id, name: template.name }))).map((project) => ({ value: project.id, label: project.name }))}
+              />
             </label>
             <label>
               Device name
@@ -122,13 +120,12 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
             </label>
             <label>
               Board type
-              <select
-                aria-label="Board type"
+              <SparkSelect
+                ariaLabel="Board type"
                 value={newDevice.board}
-                onChange={(event) => setNewDevice((current) => ({ ...current, board: event.target.value as BoardType }))}
-              >
-                {boardOptions.map((board) => <option key={board} value={board}>{board}</option>)}
-              </select>
+                onChange={(value) => setNewDevice((current) => ({ ...current, board: value as BoardType }))}
+                options={boardOptions.map((board) => ({ value: board, label: board }))}
+              />
             </label>
           </div>
           <div className="provisioning-actions">
@@ -161,15 +158,21 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
                       </label>
                       <label>
                         Project
-                        <select aria-label="Edit device project" value={editDeviceDraft.project_id} onChange={(event) => setEditDeviceDraft((current) => ({ ...current, project_id: event.target.value }))}>
-                          {(projects.length ? projects : templates.map((item) => ({ id: item.dashboard.project_id, name: item.name }))).map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
-                        </select>
+                        <SparkSelect
+                          ariaLabel="Edit device project"
+                          value={editDeviceDraft.project_id}
+                          onChange={(value) => setEditDeviceDraft((current) => ({ ...current, project_id: value }))}
+                          options={(projects.length ? projects : templates.map((item) => ({ id: item.dashboard.project_id, name: item.name }))).map((project) => ({ value: project.id, label: project.name }))}
+                        />
                       </label>
                       <label>
                         Board
-                        <select aria-label="Edit device board" value={editDeviceDraft.board} onChange={(event) => setEditDeviceDraft((current) => ({ ...current, board: event.target.value as BoardType }))}>
-                          {boardOptions.map((board) => <option key={board} value={board}>{board}</option>)}
-                        </select>
+                        <SparkSelect
+                          ariaLabel="Edit device board"
+                          value={editDeviceDraft.board ?? "ESP32"}
+                          onChange={(value) => setEditDeviceDraft((current) => ({ ...current, board: value as BoardType }))}
+                          options={boardOptions.map((board) => ({ value: board, label: board }))}
+                        />
                       </label>
                     </div>
                   ) : (

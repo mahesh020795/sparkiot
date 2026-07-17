@@ -10,6 +10,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { StarterWorkspacePage } from "./pages/StarterWorkspacePage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { SparkSelect } from "./components/SparkSelect";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api, clearSession, getSession, type Session } from "./lib/api";
 import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ProjectUpdate, ScheduleCreate, ScheduleItem, Telemetry, UserProfile } from "./lib/types";
@@ -561,7 +562,7 @@ export function App() {
                 }}
               />
             )}
-            {view !== "dashboard" && <select aria-label="Project selector" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>{activeProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>}
+            {view !== "dashboard" && <SparkSelect ariaLabel="Project selector" value={selectedProjectId} onChange={setSelectedProjectId} options={activeProjects.map((project) => ({ value: project.id, label: project.name }))} />}
           </div>
           </div>
         </header>
@@ -797,23 +798,21 @@ function LaunchWizardPanel({
               </label>
               <label>
                 Board
-                <select
-                  aria-label="Quick start board"
+                <SparkSelect
+                  ariaLabel="Quick start board"
                   value={quickStartDraft.board}
-                  onChange={(event) => setQuickStartDraft((current) => ({ ...current, board: event.target.value as DeviceTemplate["board"] }))}
-                >
-                  {["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"].map((board) => <option key={board}>{board}</option>)}
-                </select>
+                  onChange={(value) => setQuickStartDraft((current) => ({ ...current, board: value as DeviceTemplate["board"] }))}
+                  options={["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"].map((board) => ({ value: board, label: board }))}
+                />
               </label>
               <label>
                 Preset
-                <select
-                  aria-label="Quick start preset"
+                <SparkSelect
+                  ariaLabel="Quick start preset"
                   value={quickStartDraft.preset}
-                  onChange={(event) => setQuickStartDraft((current) => ({ ...current, preset: event.target.value as TemplatePreset }))}
-                >
-                  {["Smart Irrigation", "Smart Home", "Energy Monitor", "Blank"].map((preset) => <option key={preset}>{preset}</option>)}
-                </select>
+                  onChange={(value) => setQuickStartDraft((current) => ({ ...current, preset: value as TemplatePreset }))}
+                  options={["Smart Irrigation", "Smart Home", "Energy Monitor", "Blank"].map((preset) => ({ value: preset, label: preset }))}
+                />
               </label>
               <label>
                 Device name
@@ -1360,15 +1359,21 @@ function TemplateLibrary({
           <div className="project-create-grid">
             <label>
               Board
-              <select aria-label="Template board" value={draftBoard} onChange={(event) => setDraftBoard(event.target.value as DeviceTemplate["board"])}>
-                {["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"].map((board) => <option key={board}>{board}</option>)}
-              </select>
+              <SparkSelect
+                ariaLabel="Template board"
+                value={draftBoard}
+                onChange={(value) => setDraftBoard(value as DeviceTemplate["board"])}
+                options={["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"].map((board) => ({ value: board, label: board }))}
+              />
             </label>
             <label>
               Starter design
-              <select aria-label="Template starter design" value={draftPreset} onChange={(event) => setDraftPreset(event.target.value as TemplatePreset)}>
-                {["Smart Irrigation", "Smart Home", "Energy Monitor", "Blank"].map((preset) => <option key={preset}>{preset}</option>)}
-              </select>
+              <SparkSelect
+                ariaLabel="Template starter design"
+                value={draftPreset}
+                onChange={(value) => setDraftPreset(value as TemplatePreset)}
+                options={["Smart Irrigation", "Smart Home", "Energy Monitor", "Blank"].map((preset) => ({ value: preset, label: preset }))}
+              />
             </label>
             <div className="template-starter-help">
               <strong>What this does</strong>
@@ -1509,10 +1514,12 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
             </label>
             <label>
               Start from template
-              <select aria-label="Project template" value={selectedTemplateId} onChange={(event) => setSelectedTemplateId(event.target.value)}>
-                <option value="">Blank project</option>
-                {templates.map((template) => <option key={template.id} value={template.id}>{template.name} ({template.board})</option>)}
-              </select>
+              <SparkSelect
+                ariaLabel="Project template"
+                value={selectedTemplateId}
+                onChange={setSelectedTemplateId}
+                options={[{ value: "", label: "Blank project" }, ...templates.map((template) => ({ value: template.id, label: template.name, hint: template.board }))]}
+              />
             </label>
           </div>
           <div className="provisioning-actions">

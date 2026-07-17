@@ -1,5 +1,6 @@
 import { CalendarClock, Clock3, Cpu, Globe2, Hash, Repeat2, ToggleLeft, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { SparkSelect } from "../components/SparkSelect";
 import type { Device, Project, ScheduleCreate, ScheduleItem } from "../lib/types";
 
 type Props = {
@@ -105,9 +106,12 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
             <label className="premium-schedule-field">
               <span className="schedule-field-icon"><Cpu size={16} /></span>
               <span className="schedule-field-copy"><small>Device</small></span>
-              <select aria-label="Device" value={deviceId} onChange={(event) => setDeviceId(event.target.value)}>
-                {(availableDevices.length ? availableDevices : devices).map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}
-              </select>
+              <SparkSelect
+                ariaLabel="Device"
+                value={deviceId}
+                onChange={setDeviceId}
+                options={(availableDevices.length ? availableDevices : devices).map((device) => ({ value: device.id, label: device.name, hint: device.board }))}
+              />
             </label>
             <label className="premium-schedule-field">
               <span className="schedule-field-icon"><Hash size={16} /></span>
@@ -117,12 +121,12 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
             <label className="premium-schedule-field">
               <span className="schedule-field-icon"><ToggleLeft size={16} /></span>
               <span className="schedule-field-copy"><small>Command value</small></span>
-              <select aria-label="Command value" value={commandValue} onChange={(event) => setCommandValue(event.target.value)}>
-                <option value="true">true</option>
-                <option value="false">false</option>
-                <option value="1">1</option>
-                <option value="0">0</option>
-              </select>
+              <SparkSelect
+                ariaLabel="Command value"
+                value={commandValue}
+                onChange={setCommandValue}
+                options={["true", "false", "1", "0"].map((value) => ({ value, label: value }))}
+              />
             </label>
             <label className="premium-schedule-field">
               <span className="schedule-field-icon"><Clock3 size={16} /></span>
@@ -132,13 +136,18 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
             <label className="premium-schedule-field">
               <span className="schedule-field-icon"><Repeat2 size={16} /></span>
               <span className="schedule-field-copy"><small>Repeat</small></span>
-              <select aria-label="Repeat" value={recurrence} onChange={(event) => setRecurrence(event.target.value)}>
-                <option value="daily">Daily</option>
-                <option value="weekdays">Weekdays</option>
-                <option value="weekends">Weekends</option>
-                <option value="mon,wed,fri">Mon, Wed, Fri</option>
-                <option value="tue,thu,sat">Tue, Thu, Sat</option>
-              </select>
+              <SparkSelect
+                ariaLabel="Repeat"
+                value={recurrence}
+                onChange={setRecurrence}
+                options={[
+                  { value: "daily", label: "Daily" },
+                  { value: "weekdays", label: "Weekdays" },
+                  { value: "weekends", label: "Weekends" },
+                  { value: "mon,wed,fri", label: "Mon, Wed, Fri" },
+                  { value: "tue,thu,sat", label: "Tue, Thu, Sat" }
+                ]}
+              />
             </label>
             <label className="premium-schedule-field">
               <span className="schedule-field-icon"><Globe2 size={16} /></span>

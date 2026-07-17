@@ -4658,6 +4658,7 @@ body {
 }
 
 .spark-ui .spark-select {
+  position: relative;
   display: grid;
   gap: 0.55rem;
 }
@@ -4692,6 +4693,28 @@ body {
   font-size: 1rem;
   font-weight: 900;
   letter-spacing: -0.025em;
+}
+
+.spark-ui .spark-select-trigger > span,
+.spark-ui .spark-select-option > span {
+  min-width: 0;
+  display: grid;
+  gap: 0.08rem;
+  text-align: left;
+}
+
+.spark-ui .spark-select-trigger small,
+.spark-ui .spark-select-option small {
+  min-width: 0;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 0.68rem;
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-weight: 850;
 }
 
 .spark-ui .spark-select-trigger svg {
@@ -4745,6 +4768,22 @@ body {
 
 .spark-ui .spark-select-option svg {
   color: #2563eb;
+}
+
+.spark-ui .spark-select-native-proxy {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
 }
 
 .spark-ui.dashboard-shell .product-header-grid .spark-page-header-selector select {

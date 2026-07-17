@@ -1,5 +1,6 @@
 import { Download, History, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { SparkSelect } from "../components/SparkSelect";
 import { api, getSession } from "../lib/api";
 import type { Device, Telemetry } from "../lib/types";
 
@@ -95,8 +96,24 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
       </div>
 
       <div className="history-controls" aria-label="History filters">
-        <label>Device<select value={selectedDevice?.id ?? ""} onChange={(event) => { setSelectedDeviceId(event.target.value); setSelectedChannel("all"); }}>{devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}</select></label>
-        <label>Datastream<select value={selectedChannel} onChange={(event) => setSelectedChannel(event.target.value)}><option value="all">All channels</option>{channels.map((channel) => <option key={channel} value={channel}>{channel}</option>)}</select></label>
+        <label>
+          Device
+          <SparkSelect
+            ariaLabel="History device"
+            value={selectedDevice?.id ?? ""}
+            onChange={(value) => { setSelectedDeviceId(value); setSelectedChannel("all"); }}
+            options={devices.map((device) => ({ value: device.id, label: device.name, hint: device.board }))}
+          />
+        </label>
+        <label>
+          Datastream
+          <SparkSelect
+            ariaLabel="History datastream"
+            value={selectedChannel}
+            onChange={setSelectedChannel}
+            options={[{ value: "all", label: "All channels" }, ...channels.map((channel) => ({ value: channel, label: channel }))]}
+          />
+        </label>
         <button className="action-button primary" type="button" onClick={() => void exportCsv()}><Download size={16} />Export CSV</button>
       </div>
       {exportStatus && <p className="history-export-status" role="status">{exportStatus}</p>}

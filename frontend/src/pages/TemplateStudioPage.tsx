@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type React from "react";
+import { SparkSelect } from "../components/SparkSelect";
 import type { Datastream, Device, DeviceTemplate, TemplateNotification, WidgetConfig } from "../lib/types";
 import { Widget } from "../components/widgets/Widget";
 import type { Telemetry } from "../lib/types";
@@ -316,7 +317,15 @@ export function TemplateStudioPage({
             <div className="section-title"><h2>Template setup</h2><button onClick={autoGenerateFromPrompt}><Sparkles size={16} />AI suggest pins</button></div>
             <div className="template-fields">
               <label>Name<input aria-label="Template name" value={template.name} onChange={(event) => patchTemplate({ name: event.target.value })} /></label>
-              <label>Board<select value={template.board} onChange={(event) => patchTemplate({ board: event.target.value as DeviceTemplate["board"] })}>{boards.map((board) => <option key={board}>{board}</option>)}</select></label>
+              <label>
+                Board
+                <SparkSelect
+                  ariaLabel="Template setup board"
+                  value={template.board}
+                  onChange={(value) => patchTemplate({ board: value as DeviceTemplate["board"] })}
+                  options={boards.map((board) => ({ value: board, label: board }))}
+                />
+              </label>
             </div>
             <label>Description<input value={template.description} onChange={(event) => patchTemplate({ description: event.target.value })} /></label>
           </div>
@@ -612,26 +621,41 @@ function DashboardBuilder({ template, device, latest, layout, widgetAddStatus, s
                 <span>{selectedWidget.type.replace("_", " ")} · {selectedWidget.channel}</span>
               </div>
               <label>Widget title<input value={selectedWidget.title} onChange={(event) => onUpdateWidget(selectedWidget.id, { title: event.target.value })} /></label>
-              <label>Datastream<select value={selectedWidget.datastreamId} onChange={(event) => {
-                const stream = template.datastreams.find((item) => item.id === event.target.value);
-                if (stream) onUpdateWidget(selectedWidget.id, { datastreamId: stream.id, title: stream.name, channel: stream.pin, unit: stream.unit, min: stream.min, max: stream.max, color: stream.color });
-              }}>{template.datastreams.map((stream) => <option key={stream.id} value={stream.id}>{stream.pin} - {stream.name}</option>)}</select></label>
+              <label>
+                Datastream
+                <SparkSelect
+                  ariaLabel="Selected widget datastream"
+                  value={selectedWidget.datastreamId ?? ""}
+                  onChange={(value) => {
+                    const stream = template.datastreams.find((item) => item.id === value);
+                    if (stream) onUpdateWidget(selectedWidget.id, { datastreamId: stream.id, title: stream.name, channel: stream.pin, unit: stream.unit, min: stream.min, max: stream.max, color: stream.color });
+                  }}
+                  options={template.datastreams.map((stream) => ({ value: stream.id, label: `${stream.pin} - ${stream.name}`, hint: stream.dataType }))}
+                />
+              </label>
               <label>Colour<input type="color" value={selectedWidget.color ?? selectedDatastream?.color ?? "#f26a21"} onChange={(event) => onUpdateWidget(selectedWidget.id, { color: event.target.value })} /></label>
-              <label>Align<select value={selectedWidget.align ?? "center"} onChange={(event) => onUpdateWidget(selectedWidget.id, { align: event.target.value as WidgetConfig["align"] })}><option>left</option><option>center</option><option>right</option></select></label>
+              <label>
+                Align
+                <SparkSelect
+                  ariaLabel="Selected widget align"
+                  value={selectedWidget.align ?? "center"}
+                  onChange={(value) => onUpdateWidget(selectedWidget.id, { align: value as WidgetConfig["align"] })}
+                  options={["left", "center", "right"].map((value) => ({ value, label: value }))}
+                />
+              </label>
               {selectedWidget.type === "schedule" && (
                 <label>
                   Time slots
-                  <select
-                    aria-label="Schedule time slot count"
-                    value={selectedWidget.maxTimeSlots ?? selectedWidget.timeSlots?.length ?? 3}
-                    onChange={(event) => {
-                      const maxTimeSlots = Number(event.target.value);
+                  <SparkSelect
+                    ariaLabel="Schedule time slot count"
+                    value={String(selectedWidget.maxTimeSlots ?? selectedWidget.timeSlots?.length ?? 3)}
+                    onChange={(value) => {
+                      const maxTimeSlots = Number(value);
                       const currentSlots = normalizeWidgetTimeSlots(selectedWidget.timeSlots, maxTimeSlots);
                       onUpdateWidget(selectedWidget.id, { maxTimeSlots, timeSlots: currentSlots });
                     }}
-                  >
-                    {[1, 2, 3, 4, 5, 6].map((count) => <option key={count} value={count}>{count}</option>)}
-                  </select>
+                    options={[1, 2, 3, 4, 5, 6].map((count) => ({ value: String(count), label: `${count} slot${count === 1 ? "" : "s"}` }))}
+                  />
                 </label>
               )}
               <div className="inspector-actions"><button onClick={onDuplicate}><Copy size={16} />Duplicate</button><button onClick={onDelete}><Trash2 size={16} />Delete</button></div>
@@ -660,8 +684,24 @@ function DatastreamEditor({ streams, onChange }: { streams: Datastream[]; onChan
             </div>
           </div>
           <div className="stream-fields">
-            <label>Pin<select aria-label={`${stream.pin} pin`} value={stream.pin} onChange={(event) => onChange(stream.id, { pin: event.target.value as Datastream["pin"] })}>{Array.from({ length: 64 }, (_, index) => <option key={index}>V{index}</option>)}</select></label>
-            <label>Type<select aria-label={`${stream.pin} type`} value={stream.dataType} onChange={(event) => onChange(stream.id, { dataType: event.target.value as Datastream["dataType"] })}>{dataTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
+            <label>
+              Pin
+              <SparkSelect
+                ariaLabel={`${stream.pin} pin`}
+                value={stream.pin}
+                onChange={(value) => onChange(stream.id, { pin: value as Datastream["pin"] })}
+                options={Array.from({ length: 64 }, (_, index) => ({ value: `V${index}`, label: `V${index}` }))}
+              />
+            </label>
+            <label>
+              Type
+              <SparkSelect
+                ariaLabel={`${stream.pin} type`}
+                value={stream.dataType}
+                onChange={(value) => onChange(stream.id, { dataType: value as Datastream["dataType"] })}
+                options={dataTypes.map((type) => ({ value: type, label: type }))}
+              />
+            </label>
             <label>Unit<input aria-label={`${stream.pin} unit`} value={stream.unit ?? ""} placeholder="Unit" onChange={(event) => onChange(stream.id, { unit: event.target.value })} /></label>
             <label>Min<input aria-label={`${stream.pin} min`} type="number" value={stream.min ?? ""} placeholder="Min" onChange={(event) => onChange(stream.id, { min: Number(event.target.value) })} /></label>
             <label>Max<input aria-label={`${stream.pin} max`} type="number" value={stream.max ?? ""} placeholder="Max" onChange={(event) => onChange(stream.id, { max: Number(event.target.value) })} /></label>
@@ -689,10 +729,38 @@ function NotificationRule({ rule, streams, onChange }: { rule: TemplateNotificat
         </div>
       </div>
       <div className="rule-flow">
-        <label><span>IF datastream</span><select value={rule.datastreamId} onChange={(event) => onChange(rule.id, { datastreamId: event.target.value })}>{streams.map((stream) => <option key={stream.id} value={stream.id}>{stream.pin} - {stream.name}</option>)}</select></label>
-        <label><span>Condition</span><select value={rule.operator} onChange={(event) => onChange(rule.id, { operator: event.target.value as TemplateNotification["operator"] })}><option>&gt;</option><option>&gt;=</option><option>&lt;</option><option>&lt;=</option><option>==</option><option>changes</option></select></label>
+        <label>
+          <span>IF datastream</span>
+          <SparkSelect
+            ariaLabel={`${rule.name} datastream`}
+            value={rule.datastreamId}
+            onChange={(value) => onChange(rule.id, { datastreamId: value })}
+            options={streams.map((stream) => ({ value: stream.id, label: `${stream.pin} - ${stream.name}`, hint: stream.dataType }))}
+          />
+        </label>
+        <label>
+          <span>Condition</span>
+          <SparkSelect
+            ariaLabel={`${rule.name} condition`}
+            value={rule.operator}
+            onChange={(value) => onChange(rule.id, { operator: value as TemplateNotification["operator"] })}
+            options={[">", ">=", "<", "<=", "==", "changes"].map((operator) => ({ value: operator, label: operator }))}
+          />
+        </label>
         <label><span>Value</span><input type="number" value={rule.threshold ?? ""} onChange={(event) => onChange(rule.id, { threshold: Number(event.target.value) })} /></label>
-        <label><span>THEN notify</span><select value={rule.channel} onChange={(event) => onChange(rule.id, { channel: event.target.value as TemplateNotification["channel"] })}><option>push</option><option>in_app</option><option>email</option></select></label>
+        <label>
+          <span>THEN notify</span>
+          <SparkSelect
+            ariaLabel={`${rule.name} notify channel`}
+            value={rule.channel}
+            onChange={(value) => onChange(rule.id, { channel: value as TemplateNotification["channel"] })}
+            options={[
+              { value: "push", label: "push" },
+              { value: "in_app", label: "in app" },
+              { value: "email", label: "email" }
+            ]}
+          />
+        </label>
         <label><span>Cooldown</span><input type="number" value={rule.cooldownMinutes} onChange={(event) => onChange(rule.id, { cooldownMinutes: Number(event.target.value) })} /></label>
       </div>
     </article>
