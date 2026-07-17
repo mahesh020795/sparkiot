@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from email.message import EmailMessage as SmtpEmailMessage
 import json
 import smtplib
+from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -103,13 +104,23 @@ def _send_resend_email(message: EmailMessage) -> dict[str, str]:
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {settings.resend_api_key}",
+            "Accept": "application/json",
             "Content-Type": "application/json",
+            "User-Agent": f"SparkIoT/0.1 ({settings.app_public_url})",
         },
         method="POST",
     )
     try:
         with urlopen(request, timeout=15) as response:
             response.read()
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace").strip()
+        return {
+            "status": "failed",
+            "provider": "resend",
+            "error": exc.__class__.__name__,
+            "detail": detail[:500],
+        }
     except Exception as exc:
         return {"status": "failed", "provider": "resend", "error": exc.__class__.__name__}
     return {"status": "sent", "provider": "resend"}

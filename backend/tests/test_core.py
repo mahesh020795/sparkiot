@@ -380,9 +380,44 @@ def test_send_email_uses_resend_api_when_configured(monkeypatch):
     request, timeout = calls[0]
     assert request.full_url == "https://api.resend.com/emails"
     assert request.headers["Authorization"] == "Bearer re_test_key"
+    assert request.get_header("Accept") == "application/json"
+    assert request.get_header("User-agent") == "SparkIoT/0.1 (http://localhost:5173)"
     assert timeout == 15
     assert b"no-reply@rectronx.com" in request.data
     assert b"owner@example.com" in request.data
+    get_settings.cache_clear()
+
+
+def test_send_email_returns_resend_http_error_detail(monkeypatch):
+    from io import BytesIO
+    from urllib.error import HTTPError
+
+    def fake_urlopen(request, timeout):
+        raise HTTPError(
+            url=request.full_url,
+            code=403,
+            msg="Forbidden",
+            hdrs={},
+            fp=BytesIO(b"error code: 1010"),
+        )
+
+    monkeypatch.setenv("RESEND_API_KEY", "re_test_key")
+    monkeypatch.setenv("SMTP_HOST", "")
+    monkeypatch.setattr("app.services.email.urlopen", fake_urlopen)
+    get_settings.cache_clear()
+
+    result = send_email(EmailMessage(
+        to_email="owner@example.com",
+        subject="Spark IoT test",
+        text="Hello from Spark IoT",
+    ))
+
+    assert result == {
+        "status": "failed",
+        "provider": "resend",
+        "error": "HTTPError",
+        "detail": "error code: 1010",
+    }
     get_settings.cache_clear()
 
 
