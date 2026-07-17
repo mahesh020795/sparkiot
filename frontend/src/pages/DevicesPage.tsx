@@ -1,7 +1,9 @@
 import { Clipboard, Copy, KeyRound, Lock, Pencil, Plus, RadioTower, Router, TerminalSquare, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { SparkSelect } from "../components/SparkSelect";
+import { copyText } from "../lib/clipboard";
 import type { BoardType, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, Project } from "../lib/types";
 
 type Props = {
@@ -31,6 +33,8 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
   });
   const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
   const [editDeviceDraft, setEditDeviceDraft] = useState<DeviceUpdate>({ project_id: "", name: "", board: "ESP32" });
+  const [deleteDeviceDraft, setDeleteDeviceDraft] = useState<Device | null>(null);
+  const [copyStates, setCopyStates] = useState<Record<string, "idle" | "copied" | "error">>({});
 
   async function regenerateToken(deviceId: string) {
     if (!onRegenerateToken) return;
@@ -71,6 +75,14 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
     if (!editDeviceDraft.project_id || name.length < 2) return;
     await onUpdateDevice(deviceId, { ...editDeviceDraft, name });
     setEditingDeviceId(null);
+  }
+
+  async function copyDeviceValue(key: string, value: string) {
+    const copied = await copyText(value);
+    setCopyStates((current) => ({ ...current, [key]: copied ? "copied" : "error" }));
+    window.setTimeout(() => {
+      setCopyStates((current) => ({ ...current, [key]: "idle" }));
+    }, 1600);
   }
 
   return (
@@ -145,6 +157,8 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
           const firstWritable = template?.datastreams.find((stream) => stream.dataType === "boolean") ?? template?.datastreams[0];
           const tokenValue = device.token ?? (accountMode ? "Token hidden after first issue" : "spk_dev_demo_pending");
           const tokenState = tokenStates[device.id] ?? "idle";
+          const telemetryCopyKey = `${device.id}:telemetry`;
+          const tokenCopyKey = `${device.id}:token`;
           return (
             <article className="panel provisioning-card device-system-card" key={device.id} aria-label={`${device.name} provisioning card`}>
               <div className="provisioning-card-head">
@@ -203,8 +217,8 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
               </div>
 
               <div className="provisioning-actions">
-                <button onClick={() => navigator.clipboard?.writeText(device.telemetry_topic)}><Copy size={16} />Copy telemetry</button>
-                <button onClick={() => navigator.clipboard?.writeText(device.token ?? "")} disabled={!device.token}><KeyRound size={16} />Copy token</button>
+                <button onClick={() => void copyDeviceValue(telemetryCopyKey, device.telemetry_topic)}><Copy size={16} />{formatCopyLabel(copyStates[telemetryCopyKey], "Copy telemetry")}</button>
+                <button onClick={() => void copyDeviceValue(tokenCopyKey, device.token ?? "")} disabled={!device.token}><KeyRound size={16} />{formatCopyLabel(copyStates[tokenCopyKey], "Copy token")}</button>
                 <button onClick={() => void regenerateToken(device.id)} disabled={!onRegenerateToken || tokenState === "saving"}>
                   <KeyRound size={16} />{tokenState === "saving" ? "Rotating..." : "Regenerate token"}
                 </button>
@@ -218,7 +232,7 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
                 ) : (
                   <>
                     <button className="entity-edit-button" type="button" aria-label={`Edit device ${device.name}`} onClick={() => { setEditingDeviceId(device.id); setEditDeviceDraft({ project_id: device.project_id, name: device.name, board: device.board as BoardType }); }}><Pencil size={16} />Edit device</button>
-                    <button className="entity-delete-button" type="button" aria-label={`Delete device ${device.name}`} onClick={() => { if (window.confirm(`Delete device "${device.name}"?`)) void onDeleteDevice(device.id); }}><Trash2 size={16} />Delete device</button>
+                    <button className="entity-delete-button" type="button" aria-label={`Delete device ${device.name}`} onClick={() => setDeleteDeviceDraft(device)}><Trash2 size={16} />Delete device</button>
                   </>
                 )}
               </div>
@@ -228,16 +242,39 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
         })}
       </section>
 
+      <ConfirmDialog
+        open={Boolean(deleteDeviceDraft)}
+        title="Delete device?"
+        body={`This will remove "${deleteDeviceDraft?.name ?? "this device"}" from the workspace. The board token will no longer be valid for new connections.`}
+        confirmLabel="Delete device"
+        onCancel={() => setDeleteDeviceDraft(null)}
+        onConfirm={() => {
+          const deviceId = deleteDeviceDraft?.id;
+          setDeleteDeviceDraft(null);
+          if (deviceId) void onDeleteDevice(deviceId);
+        }}
+      />
     </section>
   );
 }
 
 function formatTokenState(state: "idle" | "saving" | "saved" | "error", accountMode: boolean) {
-  if (!accountMode) return "Sign in to rotate real device credentials";
+  if (!accountMode) {
+    if (state === "saving") return "Rotating demo token...";
+    if (state === "saved") return "Demo token rotated locally. Copy it into your test sketch.";
+    if (state === "error") return "Demo token rotation failed. Try again.";
+    return "Demo mode rotates a local test token";
+  }
   if (state === "saving") return "Rotating token...";
   if (state === "saved") return "New token shown once. Copy it into the Arduino sketch now.";
   if (state === "error") return "Token rotation failed. Check the API session and try again.";
   return "Rotate token to reveal a new one-time credential";
+}
+
+function formatCopyLabel(state: "idle" | "copied" | "error" | undefined, fallback: string) {
+  if (state === "copied") return "Copied";
+  if (state === "error") return "Copy failed";
+  return fallback;
 }
 
 function ProvisioningSecret({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {

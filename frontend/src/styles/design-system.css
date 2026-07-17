@@ -1237,13 +1237,14 @@ body {
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
 }
 
-.spark-ui .entity-card-actions .entity-delete-button {
+.spark-ui .entity-delete-button {
   color: #b42318;
 }
 
-.spark-ui .entity-card-actions .entity-delete-button:hover {
+.spark-ui .entity-delete-button:hover {
   border-color: #fecaca;
   background: #fff5f5;
+  color: #b42318;
 }
 
 .spark-ui .entity-edit-form {
@@ -4916,4 +4917,110 @@ body {
   border-color: #93c5fd !important;
   outline: none;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.spark-ui .confirm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: var(--spark-space-4);
+  background: rgba(15, 23, 42, 0.44);
+  backdrop-filter: blur(10px);
+}
+
+.spark-ui .confirm-dialog {
+  position: relative;
+  width: min(100%, 31rem);
+  display: grid;
+  gap: var(--spark-space-4);
+  padding: 1.35rem;
+  border: 1px solid #fee2e2;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(254, 242, 242, 0.92), transparent 44%),
+    #ffffff;
+  box-shadow: 0 34px 80px rgba(15, 23, 42, 0.26);
+}
+
+.spark-ui .confirm-dialog-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--spark-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--spark-muted);
+  box-shadow: none;
+}
+
+.spark-ui .confirm-dialog-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #fecaca;
+  border-radius: 18px;
+  background: #fff5f5;
+  color: #b42318;
+  box-shadow: 0 18px 34px rgba(180, 35, 24, 0.14);
+}
+
+.spark-ui .confirm-dialog h2 {
+  margin: 0;
+  color: var(--spark-text);
+  font-size: var(--spark-text-2xl);
+  letter-spacing: -0.04em;
+}
+
+.spark-ui .confirm-dialog p {
+  margin: 0.45rem 0 0;
+  color: var(--spark-muted);
+  line-height: 1.55;
+  font-weight: 650;
+}
+
+.spark-ui .confirm-dialog-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .confirm-dialog-actions button {
+  min-height: 3.2rem;
+  border: 1px solid var(--spark-border-strong);
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--spark-text);
+  font-weight: 900;
+  box-shadow: none;
+}
+
+.spark-ui .confirm-dialog-actions button.danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-color: #b42318;
+  background: #b42318;
+  color: #ffffff;
+  box-shadow: 0 18px 38px rgba(180, 35, 24, 0.22);
+}
+
+.spark-ui .confirm-dialog-actions button.danger:hover {
+  background: #991b1b;
+  border-color: #991b1b;
+}
+
+.spark-ui .confirm-dialog-actions button:disabled,
+.spark-ui .confirm-dialog-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
 }

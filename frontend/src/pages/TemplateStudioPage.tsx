@@ -26,6 +26,7 @@ import {
 import { useMemo, useState } from "react";
 import type React from "react";
 import { SparkSelect } from "../components/SparkSelect";
+import { copyText } from "../lib/clipboard";
 import type { Datastream, Device, DeviceTemplate, TemplateNotification, WidgetConfig } from "../lib/types";
 import { Widget } from "../components/widgets/Widget";
 import type { Telemetry } from "../lib/types";
@@ -216,7 +217,8 @@ export function TemplateStudioPage({
   }
 
   async function copySketch() {
-    await navigator.clipboard?.writeText(code);
+    const copied = await copyText(code);
+    if (!copied) return;
     setCopyState("copied");
     window.setTimeout(() => setCopyState("idle"), 1600);
   }

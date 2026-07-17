@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App, templateSaveErrorMessage } from "./App";
 import { api, realtimeUrl } from "./lib/api";
+import { copyText } from "./lib/clipboard";
 
 vi.mock("echarts", () => ({
   init: () => ({ setOption: vi.fn(), dispose: vi.fn() })
@@ -754,7 +755,6 @@ describe("App", () => {
   });
 
   it("edits and deletes projects, templates and devices from their card actions", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<App />);
 
     fireEvent.click(await screen.findByText("Projects"));
@@ -766,11 +766,13 @@ describe("App", () => {
 
     const homeProject = screen.getByRole("article", { name: /Smart Home project/i });
     fireEvent.click(within(homeProject).getByRole("button", { name: /Delete project/i }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: /Delete project/i })).getByRole("button", { name: /^Delete project$/i }));
     expect(screen.queryByRole("article", { name: /Smart Home project/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Templates"));
     const energyTemplate = screen.getByRole("article", { name: /Energy Monitor template/i });
     fireEvent.click(within(energyTemplate).getByRole("button", { name: /Delete template/i }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: /Delete template/i })).getByRole("button", { name: /^Delete template$/i }));
     expect(screen.queryByRole("article", { name: /Energy Monitor template/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Devices"));
@@ -782,7 +784,27 @@ describe("App", () => {
 
     const energyDevice = screen.getByRole("article", { name: /ESP32 Energy Node provisioning card/i });
     fireEvent.click(within(energyDevice).getByRole("button", { name: /Delete device/i }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: /Delete device/i })).getByRole("button", { name: /^Delete device$/i }));
     expect(screen.queryByRole("article", { name: /ESP32 Energy Node provisioning card/i })).not.toBeInTheDocument();
+  });
+
+  it("copies device values with a fallback and rotates demo device tokens locally", async () => {
+    const execCommand = vi.fn(() => true);
+    Object.defineProperty(document, "execCommand", { configurable: true, value: execCommand });
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: vi.fn().mockRejectedValue(new Error("blocked on http")) } });
+
+    await expect(copyText("spark/v1/demo-tenant/device-irrigation/telemetry/V0")).resolves.toBe(true);
+    expect(execCommand).toHaveBeenCalledWith("copy");
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Devices"));
+    const irrigationDevice = screen.getByRole("article", { name: /ESP32 Irrigation Node provisioning card/i });
+    const rotateButton = within(irrigationDevice).getByRole("button", { name: /Regenerate token/i });
+    expect(rotateButton).toBeEnabled();
+    fireEvent.click(rotateButton);
+
+    await within(irrigationDevice).findAllByText(/spk_demo_rotated_/);
+    expect(within(irrigationDevice).getByText(/Demo token rotated locally/i)).toBeInTheDocument();
   });
 
   it("regenerates account device tokens and updates the Arduino bind block", async () => {
@@ -1126,8 +1148,8 @@ describe("App", () => {
 
     expect(await screen.findByText("schedule-new")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/schedules"), expect.objectContaining({ method: "POST" }));
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     fireEvent.click(screen.getByRole("button", { name: /Delete schedule Customer Greenhouse fan/i }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: /Delete schedule/i })).getByRole("button", { name: /^Delete schedule$/i }));
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/schedules/schedule-greenhouse-fan"), expect.objectContaining({ method: "DELETE" })));
   });
 

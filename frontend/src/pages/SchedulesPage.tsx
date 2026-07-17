@@ -1,5 +1,6 @@
 import { CalendarClock, Clock3, Cpu, Globe2, Hash, Repeat2, ToggleLeft, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { SparkSelect } from "../components/SparkSelect";
 import type { Device, Project, ScheduleCreate, ScheduleItem } from "../lib/types";
 
@@ -51,6 +52,7 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
   const [recurrence, setRecurrence] = useState("mon,wed,fri");
   const [timezone, setTimezone] = useState("Asia/Kuala_Lumpur");
   const [createState, setCreateState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [deleteScheduleDraft, setDeleteScheduleDraft] = useState<ScheduleItem | null>(null);
 
   const currentDevice = devices.find((device) => device.id === deviceId) ?? firstDevice;
   const currentProject = projects.find((project) => project.id === currentDevice?.project_id) ?? firstProject;
@@ -85,7 +87,6 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
   }
 
   async function handleDelete(scheduleId: string) {
-    if (!window.confirm("Delete this schedule?")) return;
     if (!accountMode) {
       setLocalDemoSchedules((current) => current.filter((schedule) => schedule.id !== scheduleId));
       return;
@@ -175,7 +176,7 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
             schedule={schedule}
             project={projects.find((project) => project.id === schedule.project_id)}
             device={devices.find((device) => device.id === schedule.device_id)}
-            onDelete={() => void handleDelete(schedule.id)}
+            onDelete={() => setDeleteScheduleDraft(schedule)}
           />
         )) : (
           <article className="panel empty-state">
@@ -184,6 +185,18 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
           </article>
         )}
       </section>
+      <ConfirmDialog
+        open={Boolean(deleteScheduleDraft)}
+        title="Delete schedule?"
+        body={`This will remove "${deleteScheduleDraft ? scheduleTitle(deleteScheduleDraft, projects.find((project) => project.id === deleteScheduleDraft.project_id)) : "this schedule"}" and stop that timed command from running.`}
+        confirmLabel="Delete schedule"
+        onCancel={() => setDeleteScheduleDraft(null)}
+        onConfirm={() => {
+          const scheduleId = deleteScheduleDraft?.id;
+          setDeleteScheduleDraft(null);
+          if (scheduleId) void handleDelete(scheduleId);
+        }}
+      />
     </section>
   );
 }

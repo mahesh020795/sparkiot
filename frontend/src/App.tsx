@@ -11,8 +11,10 @@ import { StarterWorkspacePage } from "./pages/StarterWorkspacePage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { SparkSelect } from "./components/SparkSelect";
+import { ConfirmDialog } from "./components/ConfirmDialog";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api, clearSession, getSession, type Session } from "./lib/api";
+import { copyText } from "./lib/clipboard";
 import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ProjectUpdate, ScheduleCreate, ScheduleItem, Telemetry, UserProfile } from "./lib/types";
 
 type View = "dashboard" | "setup" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
@@ -242,6 +244,14 @@ export function App() {
     const updated = await api.regenerateDeviceToken(deviceId);
     setAccountDevices((current) => current.map((device) => device.id === updated.id ? updated : device));
     return updated;
+  }
+
+  async function regenerateDemoDeviceToken(deviceId: string) {
+    const updated = demoDeviceRows.find((device) => device.id === deviceId);
+    if (!updated) throw new Error("Device not found");
+    const rotated = { ...updated, token: `spk_demo_rotated_${Date.now().toString(36)}` };
+    setDemoDeviceRows((current) => current.map((device) => device.id === deviceId ? rotated : device));
+    return rotated;
   }
 
   async function updateDevice(deviceId: string, device: DeviceUpdate) {
@@ -636,7 +646,7 @@ export function App() {
             projects={activeProjects}
             accountMode={isAccountMode}
             onCreateDevice={isAccountMode ? createAccountDevice : createDemoDevice}
-            onRegenerateToken={isAccountMode ? regenerateAccountDeviceToken : undefined}
+            onRegenerateToken={isAccountMode ? regenerateAccountDeviceToken : regenerateDemoDeviceToken}
             onUpdateDevice={updateDevice}
             onDeleteDevice={deleteDevice}
           />
@@ -1093,7 +1103,7 @@ function ProofStep({ state, title, body }: { state: "complete" | "waiting"; titl
 }
 
 function ConnectionLine({ label, value }: { label: string; value: string }) {
-  return <div className="connection-line"><span>{label}</span><code>{value}</code><button onClick={() => navigator.clipboard?.writeText(value)} aria-label={`Copy ${label}`}><Copy size={14} /></button></div>;
+  return <div className="connection-line"><span>{label}</span><code>{value}</code><button onClick={() => void copyText(value)} aria-label={`Copy ${label}`}><Copy size={14} /></button></div>;
 }
 
 function formatLiveValue(value: unknown) {
@@ -1309,6 +1319,7 @@ function TemplateLibrary({
   const [draftPreset, setDraftPreset] = useState<TemplatePreset>("Smart Irrigation");
   const [createState, setCreateState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [createMessage, setCreateMessage] = useState("");
+  const [deleteTemplateDraft, setDeleteTemplateDraft] = useState<DeviceTemplate | null>(null);
 
   useEffect(() => {
     if (!draftProjectId && templateProjectOptions[0]) setDraftProjectId(templateProjectOptions[0].id);
@@ -1418,9 +1429,7 @@ function TemplateLibrary({
                 className="entity-delete-button"
                 type="button"
                 aria-label={`Delete template ${template.name}`}
-                onClick={() => {
-                  if (window.confirm(`Delete template "${template.name}"?`)) void onDeleteTemplate(template.id);
-                }}
+                onClick={() => setDeleteTemplateDraft(template)}
               >
                 <Trash2 size={16} />Delete template
               </button>
@@ -1428,6 +1437,18 @@ function TemplateLibrary({
           </article>
         ))}
       </section>
+      <ConfirmDialog
+        open={Boolean(deleteTemplateDraft)}
+        title="Delete template?"
+        body={`This will remove "${deleteTemplateDraft?.name ?? "this template"}" from the template library. Existing saved demo state can be recreated from the starter presets.`}
+        confirmLabel="Delete template"
+        onCancel={() => setDeleteTemplateDraft(null)}
+        onConfirm={() => {
+          const templateId = deleteTemplateDraft?.id;
+          setDeleteTemplateDraft(null);
+          if (templateId) void onDeleteTemplate(templateId);
+        }}
+      />
     </section>
   );
 }
@@ -1442,6 +1463,7 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
   const [editProjectDraft, setEditProjectDraft] = useState<ProjectUpdate>({ name: "", description: "" });
   const [createState, setCreateState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [createMessage, setCreateMessage] = useState("");
+  const [deleteProjectDraft, setDeleteProjectDraft] = useState<Project | null>(null);
 
   useEffect(() => {
     if (!selectedTemplateId && templates[0]) setSelectedTemplateId(templates[0].id);
@@ -1566,11 +1588,23 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
             </div>
             <div className="entity-card-actions">
               <button className="entity-edit-button" type="button" aria-label={`Edit project ${project.name}`} onClick={() => { setEditingProjectId(project.id); setEditProjectDraft({ name: project.name, description: project.description }); }}><Pencil size={16} />Edit project</button>
-              <button className="entity-delete-button" type="button" aria-label={`Delete project ${project.name}`} onClick={() => { if (window.confirm(`Delete project "${project.name}"?`)) void onDeleteProject(project.id); }}><Trash2 size={16} />Delete project</button>
+              <button className="entity-delete-button" type="button" aria-label={`Delete project ${project.name}`} onClick={() => setDeleteProjectDraft(project)}><Trash2 size={16} />Delete project</button>
             </div>
           </article>
         );
       })}<article className="panel starter-capacity-card"><span className="section-kicker">Starter plan capacity</span><h2>RM25 plan limits</h2><p>3 projects, 3 devices and one template dashboard per project with 30-day data, GPS and camera access.</p></article></section>
+      <ConfirmDialog
+        open={Boolean(deleteProjectDraft)}
+        title="Delete project?"
+        body={`This will remove "${deleteProjectDraft?.name ?? "this project"}" and its dashboard workspace from this starter account.`}
+        confirmLabel="Delete project"
+        onCancel={() => setDeleteProjectDraft(null)}
+        onConfirm={() => {
+          const projectId = deleteProjectDraft?.id;
+          setDeleteProjectDraft(null);
+          if (projectId) void onDeleteProject(projectId);
+        }}
+      />
     </section>
   );
 }
