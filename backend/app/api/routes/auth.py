@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.security import create_access_token, hash_secret, issue_refresh_token, refresh_token_digest, verify_secret
 from app.models.domain import EmailVerificationToken, Notification, OnboardingState, PasswordResetToken, RefreshToken, Tenant, User
 from app.schemas.api import EmailVerificationConfirmRequest, LoginRequest, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, StatusResponse, TokenResponse, UserResponse
+from app.services.email import build_password_reset_email, build_verification_email, send_email
 from app.services.plans import normalize_plan_code
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -62,6 +63,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     ))
     db.commit()
     db.refresh(user)
+    send_email(build_verification_email(user.email, user.full_name, verification_token))
     tokens = _token_pair(db, user)
     tokens.verification_token = verification_token
     return tokens
@@ -96,6 +98,7 @@ def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(
         body="A password reset link was requested. Use the latest reset token within 30 minutes. If this was not you, rotate your account password.",
     ))
     db.commit()
+    send_email(build_password_reset_email(user.email, user.full_name, raw_token))
     return StatusResponse(message=message, reset_token=raw_token)
 
 
@@ -135,6 +138,7 @@ def resend_email_verification(user: User = Depends(current_user), db: Session = 
         body="Use the latest verification token within 24 hours.",
     ))
     db.commit()
+    send_email(build_verification_email(user.email, user.full_name, raw_token))
     return StatusResponse(message="Verification instructions are ready.", verification_token=raw_token)
 
 

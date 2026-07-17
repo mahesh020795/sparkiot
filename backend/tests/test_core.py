@@ -4,18 +4,19 @@ from app.services.telemetry import evaluate_alerts, ingest, normalize_value
 from app.services.schedules import due_occurrence_key, run_due_schedules_once
 from app.services.demo_live import build_board_test_payload, build_demo_command_response, build_history_csv, history_row_payload
 from app.services.plans import usage
-from app.schemas.api import EmailVerificationConfirmRequest, OnboardingUpdate, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
+from app.schemas.api import CommandRequest, EmailVerificationConfirmRequest, OnboardingUpdate, PasswordResetConfirmRequest, PasswordResetRequest, RegisterRequest, ScheduleCreate, TelemetryIngestRequest, TemplateStudioUpdate
 from app.core.database import Base, ensure_runtime_indexes, make_engine
 from app.core.security import create_access_token, hash_secret, verify_secret
 from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, EmailVerificationToken, Notification, OnboardingState, PasswordResetToken, Project, RefreshToken, Schedule, Telemetry, Tenant, User
 from app.api.routes.auth import confirm_email_verification, confirm_password_reset, me, register, request_password_reset, resend_email_verification
 from app.api.routes.onboarding import get_onboarding, update_onboarding
 from app.api.routes.templates import create_template, list_templates, update_template
-from app.api.routes.devices import command_logs
+from app.api.routes.devices import command_logs, send_command
 from app.api.routes.schedules import delete_schedule
 from app.api.routes.notifications import mark_notification_read
 from app.api.routes.realtime import realtime_subscription_scope
 from app.api.routes.telemetry import history_csv
+from app.services.email import EmailMessage, build_password_reset_email, build_verification_email, send_email
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, text
 from datetime import UTC, datetime
@@ -279,6 +280,41 @@ def test_password_reset_request_creates_hashed_one_time_token_and_notification()
     assert "reset link" in notification.body
 
 
+def test_email_messages_are_smtp_ready_without_exposing_hashes():
+    verification = build_verification_email(
+        to_email="owner@example.com",
+        full_name="Mahesh Rajagopal",
+        token="verify-token-123",
+        app_url="https://sparkiot.com",
+    )
+    reset = build_password_reset_email(
+        to_email="owner@example.com",
+        full_name="Mahesh Rajagopal",
+        token="reset-token-123",
+        app_url="https://sparkiot.com",
+    )
+
+    assert verification.to_email == "owner@example.com"
+    assert verification.subject == "Verify your Spark IoT account"
+    assert "https://sparkiot.com/verify-email?token=verify-token-123" in verification.text
+    assert "verify-token-123" in verification.text
+    assert "token_hash" not in verification.text
+    assert reset.subject == "Reset your Spark IoT password"
+    assert "https://sparkiot.com/reset-password?token=reset-token-123" in reset.text
+
+
+def test_send_email_returns_dev_mode_when_smtp_is_not_configured(monkeypatch):
+    monkeypatch.setenv("SMTP_HOST", "")
+
+    result = send_email(EmailMessage(
+        to_email="owner@example.com",
+        subject="Spark IoT test",
+        text="Hello from Spark IoT",
+    ))
+
+    assert result == {"status": "dev_skipped", "provider": "smtp"}
+
+
 def test_password_reset_confirm_updates_password_revokes_sessions_and_prevents_reuse():
     db = memory_session()
     token_pair = register(
@@ -313,6 +349,40 @@ def test_password_reset_confirm_updates_password_revokes_sessions_and_prevents_r
         assert exc.detail["code"] == "invalid_reset_token"
     else:
         raise AssertionError("expected reset token reuse to fail")
+
+
+def test_account_command_persists_dashboard_input_as_latest_telemetry(monkeypatch):
+    engine = make_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    db = Session()
+    published = []
+
+    def fake_publish(tenant_id, device_id, channel, value):
+        published.append((tenant_id, device_id, channel, value))
+
+    monkeypatch.setattr("app.api.routes.devices.publish_command", fake_publish)
+
+    tenant = Tenant(id="tenant-dashboard-input", name="Input Tenant")
+    user = User(id="user-dashboard-input", tenant_id=tenant.id, email="input@example.com", full_name="Input User", password_hash=hash_secret("SparkDemo123!"))
+    project = Project(id="project-dashboard-input", tenant_id=tenant.id, name="Input Project")
+    device = Device(id="device-dashboard-input", tenant_id=tenant.id, project_id=project.id, name="Input Device", board="ESP32", secret_hash=hash_secret("device-token"))
+    db.add_all([tenant, user, project, device])
+    db.commit()
+
+    response = send_command(
+        device.id,
+        payload=CommandRequest(channel="V12", value={"days": ["mon", "wed"], "timeSlots": ["06:00", "18:00"]}),
+        user=user,
+        db=db,
+    )
+
+    latest = db.scalar(select(Telemetry).where(Telemetry.tenant_id == tenant.id, Telemetry.device_id == device.id, Telemetry.channel == "V12"))
+    assert response["status"] == "published"
+    assert published == [(tenant.id, device.id, "V12", {"days": ["mon", "wed"], "timeSlots": ["06:00", "18:00"]})]
+    assert latest is not None
+    assert latest.project_id == project.id
+    assert latest.value == {"raw": {"days": ["mon", "wed"], "timeSlots": ["06:00", "18:00"]}}
 
 
 def test_parse_topic_accepts_valid_telemetry_topic():

@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -5,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import current_user
 from app.core.database import get_db
 from app.core.security import hash_secret, issue_device_secret
-from app.models.domain import CommandLog, Device, Project, User
+from app.models.domain import CommandLog, Device, Project, Telemetry, User
 from app.schemas.api import CommandRequest, DeviceCreate, DeviceResponse, DeviceUpdate, StatusResponse
 from app.services.mqtt import command_topic, publish_command, telemetry_topic
 from app.services.plans import PlanLimitError, assert_can_create_device
@@ -88,7 +90,18 @@ def send_command(device_id: str, payload: CommandRequest, user: User = Depends(c
         status = "published"
     except Exception:
         status = "queued"
-    db.add(CommandLog(tenant_id=user.tenant_id, device_id=device_id, channel=payload.channel, value={"raw": payload.value}, status=status))
+    now = datetime.now(UTC)
+    db.add(CommandLog(tenant_id=user.tenant_id, device_id=device_id, channel=payload.channel, value={"raw": payload.value}, status=status, created_at=now))
+    db.add(Telemetry(
+        tenant_id=user.tenant_id,
+        project_id=device.project_id,
+        device_id=device_id,
+        channel=payload.channel,
+        value={"raw": payload.value},
+        unit=None,
+        observed_at=now,
+        server_at=now,
+    ))
     db.commit()
     return {"status": status, "topic": command_topic(user.tenant_id, device_id, payload.channel)}
 

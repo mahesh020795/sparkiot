@@ -52,15 +52,29 @@ Spark IoT includes production-shaped SaaS auth surfaces:
 
 Password reset tokens are stored only as SHA-256 hashes and expire after 30 minutes. Confirming a reset updates the Argon2 password hash and revokes the user's existing refresh tokens so old sessions are signed out.
 
-For MVP/VPS testing, `/api/v1/auth/password-reset/request` returns the one-time reset token directly so the flow can be tested before email is configured. Before selling to public customers, connect SMTP or a transactional email provider and stop exposing raw reset tokens in API responses.
+Spark IoT is SMTP-ready. Configure these values in `.env` to send real verification and reset emails:
 
-For the same MVP testing reason, signup/resend email verification can surface a one-time verification token directly in the API/UI. This lets the first-login flow be tested on the VPS before SMTP is connected. Before public customer launch, send verification links by email and stop returning raw verification tokens to the browser.
+```env
+APP_PUBLIC_URL=https://sparkiot.com
+SMTP_HOST=smtp.your-provider.com
+SMTP_PORT=587
+SMTP_USERNAME=your-smtp-user
+SMTP_PASSWORD=your-smtp-password
+SMTP_FROM_EMAIL=Spark IoT <no-reply@sparkiot.com>
+SMTP_USE_TLS=true
+```
+
+For MVP/VPS testing, `/api/v1/auth/password-reset/request` returns the one-time reset token directly so the flow can be tested before a domain and SMTP sender are configured. Before selling to public customers, hide raw reset tokens from API responses and rely on emailed links only.
+
+For the same MVP testing reason, signup/resend email verification can surface a one-time verification token directly in the API/UI. The backend also sends verification emails when SMTP is configured. Before public customer launch, hide raw verification tokens from the browser and rely on emailed links only.
 
 ### First-login SaaS onboarding
 
 New accounts start in a guided Starter Workspace. Spark IoT creates the tenant, owner user, Starter plan and onboarding state, but it does not create a real project/device/dashboard until the user chooses a project and board.
 
 The demo dashboard remains available from the Starter Workspace as a clearly labelled preview using simulated telemetry. It is separate from customer-owned tenant data.
+
+Signed-in dashboard input widgets publish commands and are also persisted as latest telemetry for the same device and virtual pin. That means time-only and schedule widgets survive refresh and can be restored on another browser session through `/api/v1/telemetry/projects/{project_id}/latest`.
 
 ## Publish Demo Telemetry
 

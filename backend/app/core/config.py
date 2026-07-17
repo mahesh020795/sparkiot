@@ -25,6 +25,13 @@ class Settings(BaseSettings):
     vapid_private_key: str = ""
     vapid_public_key: str = ""
     vapid_subject: str = "mailto:admin@rectronx.local"
+    app_public_url: str = "http://localhost:5173"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = "Spark IoT <no-reply@sparkiot.local>"
+    smtp_use_tls: bool = True
     starter_max_users: int = 1
     starter_max_devices: int = 3
     starter_max_projects: int = 3

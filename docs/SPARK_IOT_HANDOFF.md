@@ -64,6 +64,8 @@ Purpose:
 
 Design rule: login, signup, and reset forms should use the same card width, logo block, tabs, input styling, button hierarchy, and typography. Any future field should reuse the same form classes instead of creating one-off layouts.
 
+Verification and password reset emails are routed through `backend/app/services/email.py`. If `SMTP_HOST` is empty, the backend returns a safe `dev_skipped` status and still exposes one-time tokens for MVP testing. If SMTP env values are configured, signup, verification resend, and password reset request send real email links based on `APP_PUBLIC_URL`.
+
 ### Dashboard
 
 Main file: `frontend/src/App.tsx`; widgets in `frontend/src/components/widgets/`.
@@ -96,6 +98,8 @@ Important widgets:
 - Schedule input with day and time slots.
 
 Standalone day/date widgets were intentionally removed from the product direction. Keep “Time only” and “Schedule” as the main user input widgets.
+
+Signed-in dashboard input widgets call the protected command API and the backend persists that command value as latest telemetry for the same device/channel. This keeps time and schedule values after refresh and makes them visible from another browser without relying only on localStorage.
 
 ### Templates
 
@@ -325,10 +329,10 @@ Before claiming a change is complete:
 
 ## Known next improvements
 
-- Replace remaining demo-only persistence with real backend persistence for dashboard inputs and template studio save edge cases.
+- Replace remaining demo-only persistence with real backend persistence for template studio save edge cases.
 - Continue simplifying dashboard and settings surfaces to reduce cognitive load.
 - Add billing provider later for Free/Plus/Pro/Enterprise.
-- Add robust email provider configuration for verification and reset emails.
+- Remove raw verification/reset token exposure from API responses once real SMTP/domain onboarding is ready for public customers.
 - Add production-grade map tile provider and video streaming cost strategy later.
 - Improve drag handle discoverability for dashboard widgets.
 - Add stronger end-to-end browser tests for template creation, widget add, project creation, device provisioning, board test, schedule creation, CSV export, and delete confirmations.
