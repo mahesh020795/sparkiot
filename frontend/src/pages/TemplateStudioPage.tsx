@@ -37,7 +37,7 @@ const widgetLibraryGroups = [
   { title: "Output widgets", kind: "Output", caption: "Display telemetry, media and board status", types: ["gauge", "meter", "value", "led", "chart", "gps", "camera", "serial_lcd", "battery", "signal"] }
 ] as const;
 const STARTER_WIDGET_LIMIT = 18;
-const PUBLIC_MQTT_HOST = import.meta.env.VITE_MQTT_HOST ?? "iot.rectronx.com";
+const PUBLIC_MQTT_HOST = import.meta.env.VITE_MQTT_HOST ?? "mqtt.rectronx.com";
 const PUBLIC_MQTT_PORT = Number(import.meta.env.VITE_MQTT_PORT ?? 1883);
 const dataTypes: Datastream["dataType"][] = ["integer", "float", "string", "boolean", "gps", "image", "time", "date"];
 const boards: DeviceTemplate["board"][] = ["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"];

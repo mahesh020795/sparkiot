@@ -5,7 +5,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 ARG VITE_API_BASE=/api/v1
-ARG VITE_MQTT_HOST=iot.rectronx.com
+ARG VITE_MQTT_HOST=mqtt.rectronx.com
 ARG VITE_MQTT_PORT=1883
 ARG VITE_MAP_TILE_URL=https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
 ARG VITE_MAP_ATTRIBUTION=OpenStreetMap contributors

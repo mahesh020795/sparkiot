@@ -69,10 +69,10 @@ Find your WiFi adapter IPv4 address, for example:
 
 Use that value as `BROKER_HOST` in the Arduino sketch.
 
-For the current Rectronx subdomain test, use the domain as the broker host:
+For the current Rectronx MQTT subdomain test, use the MQTT domain as the broker host:
 
 ```cpp
-const char* mqtt_server = "iot.rectronx.com";
+const char* mqtt_server = "mqtt.rectronx.com";
 const int mqtt_port = 1883;
 ```
 

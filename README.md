@@ -179,7 +179,7 @@ Included examples:
 - `examples/arduino/SparkIoT_ESP32/SparkIoT_ESP32.ino`
 - `examples/arduino/SparkIoT_ESP8266/SparkIoT_ESP8266.ino`
 
-Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Rectronx subdomain test, use `iot.rectronx.com`.
+Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Rectronx MQTT subdomain test, use `mqtt.rectronx.com`.
 
 For authenticated customer workspaces, open `Projects` to create up to three Starter plan project spaces. Then open `Templates`, click `Create template`, select the project, board and starter preset, and save the generated Blynk-style virtual-pin model. After that, open `Devices`, click `Provision device`, select the project and board, and copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Spark IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
 
@@ -257,7 +257,7 @@ For the current demo VPS:
 CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://iot.rectronx.com,http://iot.rectronx.com:5173,https://iot.rectronx.com,https://iot.rectronx.com:5173
 APP_PUBLIC_URL=http://iot.rectronx.com
 VITE_API_BASE=/api/v1
-VITE_MQTT_HOST=iot.rectronx.com
+VITE_MQTT_HOST=mqtt.rectronx.com
 VITE_MQTT_PORT=1883
 ```
 

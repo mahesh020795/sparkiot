@@ -52,7 +52,7 @@ Set these values for the current demo VPS:
 CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://iot.rectronx.com,http://iot.rectronx.com:5173,https://iot.rectronx.com,https://iot.rectronx.com:5173
 APP_PUBLIC_URL=http://iot.rectronx.com
 VITE_API_BASE=/api/v1
-VITE_MQTT_HOST=iot.rectronx.com
+VITE_MQTT_HOST=mqtt.rectronx.com
 VITE_MQTT_PORT=1883
 ```
 
@@ -144,7 +144,7 @@ ENVIRONMENT=production
 CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://iot.rectronx.com,http://iot.rectronx.com:5173,https://iot.rectronx.com,https://iot.rectronx.com:5173
 VITE_API_BASE=/api/v1
 APP_PUBLIC_URL=http://iot.rectronx.com
-VITE_MQTT_HOST=iot.rectronx.com
+VITE_MQTT_HOST=mqtt.rectronx.com
 VITE_MQTT_PORT=1883
 JWT_SECRET=<long-random-secret>
 ```

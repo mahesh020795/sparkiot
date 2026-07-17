@@ -65,7 +65,7 @@ def test_sparkiot_library_documents_json_safe_payloads_vps_hosting_and_external_
     for content in [docs, library_readme]:
         assert "quotes, backslashes, and newlines" in content
         assert "Do not use `localhost` from a real board" in content
-        assert "iot.rectronx.com" in content
+        assert "mqtt.rectronx.com" in content
         assert "Client adapter mode" in content
         assert "EthernetClient" in content
         assert "WiFiNINA" in content

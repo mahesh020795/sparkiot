@@ -2,7 +2,7 @@
 
 const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* BROKER_HOST = "iot.rectronx.com";
+const char* BROKER_HOST = "mqtt.rectronx.com";
 const int BROKER_PORT = 1883;
 
 const char* SPARK_TENANT_ID = "demo-tenant";
