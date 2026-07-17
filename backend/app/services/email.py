@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from email.message import EmailMessage as SmtpEmailMessage
+import json
 import smtplib
 from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 from app.core.config import get_settings
 
@@ -11,6 +13,7 @@ class EmailMessage:
     to_email: str
     subject: str
     text: str
+    html: str | None = None
 
 
 def build_verification_email(to_email: str, full_name: str, token: str, app_url: str | None = None) -> EmailMessage:
@@ -27,6 +30,13 @@ def build_verification_email(to_email: str, full_name: str, token: str, app_url:
             f"Verify email: {verify_url}\n\n"
             f"Testing token: {token}\n\n"
             "If you did not create this account, you can ignore this email.\n"
+        ),
+        html=(
+            f"<p>Hi {first_name},</p>"
+            "<p>Welcome to <strong>Spark IoT</strong>. Verify your email to start creating real projects, "
+            "device tokens, Arduino sketches and live dashboards.</p>"
+            f'<p><a href="{verify_url}">Verify your Spark IoT account</a></p>'
+            "<p>If you did not create this account, you can ignore this email.</p>"
         ),
     )
 
@@ -45,11 +55,19 @@ def build_password_reset_email(to_email: str, full_name: str, token: str, app_ur
             f"Testing token: {token}\n\n"
             "If this was not you, ignore this email and rotate your password from Settings.\n"
         ),
+        html=(
+            f"<p>Hi {first_name},</p>"
+            "<p>Use this one-time link to reset your Spark IoT password. The token expires in 30 minutes.</p>"
+            f'<p><a href="{reset_url}">Reset your Spark IoT password</a></p>'
+            "<p>If this was not you, ignore this email and rotate your password from Settings.</p>"
+        ),
     )
 
 
 def send_email(message: EmailMessage) -> dict[str, str]:
     settings = get_settings()
+    if settings.resend_api_key:
+        return _send_resend_email(message)
     if not settings.smtp_host:
         return {"status": "dev_skipped", "provider": "smtp"}
 
@@ -69,6 +87,32 @@ def send_email(message: EmailMessage) -> dict[str, str]:
     except Exception as exc:
         return {"status": "failed", "provider": "smtp", "error": exc.__class__.__name__}
     return {"status": "sent", "provider": "smtp"}
+
+
+def _send_resend_email(message: EmailMessage) -> dict[str, str]:
+    settings = get_settings()
+    payload = {
+        "from": settings.smtp_from_email,
+        "to": [message.to_email],
+        "subject": message.subject,
+        "text": message.text,
+        "html": message.html or message.text.replace("\n", "<br />"),
+    }
+    request = Request(
+        settings.resend_api_url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=15) as response:
+            response.read()
+    except Exception as exc:
+        return {"status": "failed", "provider": "resend", "error": exc.__class__.__name__}
+    return {"status": "sent", "provider": "resend"}
 
 
 def _clean_app_url(app_url: str | None) -> str:

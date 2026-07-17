@@ -17,15 +17,27 @@ function AuthField({ icon, label, children }: { icon: ReactNode; label: string; 
   );
 }
 
-export function LoginPage({ onLogin, onCancel }: { onLogin: (session: Session) => void; onCancel?: () => void }) {
-  const [mode, setMode] = useState<AuthMode>("login");
+export function LoginPage({
+  onLogin,
+  onCancel,
+  initialMode = "login",
+  initialEmail = "",
+  initialResetToken = "",
+}: {
+  onLogin: (session: Session) => void;
+  onCancel?: () => void;
+  initialMode?: AuthMode;
+  initialEmail?: string;
+  initialResetToken?: string;
+}) {
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [tenantName, setTenantName] = useState("Rectronx Customer Lab");
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
-  const [resetToken, setResetToken] = useState("");
-  const [resetMessage, setResetMessage] = useState("");
-  const [resetRequested, setResetRequested] = useState(false);
+  const [resetToken, setResetToken] = useState(initialResetToken);
+  const [resetMessage, setResetMessage] = useState(initialResetToken ? "Reset link loaded. Set a new password to continue." : "");
+  const [resetRequested, setResetRequested] = useState(Boolean(initialResetToken));
   const [error, setError] = useState("");
 
   async function submit(event: FormEvent) {
@@ -36,9 +48,14 @@ export function LoginPage({ onLogin, onCancel }: { onLogin: (session: Session) =
       if (mode === "reset") {
         if (!resetRequested) {
           const response = await api.requestPasswordReset(email.trim());
-          setResetRequested(true);
-          setResetToken(response.reset_token ?? "");
-          setResetMessage(response.reset_token ? "Reset token ready for testing" : response.message);
+          if (response.reset_token) {
+            setResetRequested(true);
+            setResetToken(response.reset_token);
+            setResetMessage("Reset token ready for local testing.");
+          } else {
+            setResetRequested(false);
+            setResetMessage("Check your email for the reset link, then open it to set a new password.");
+          }
           return;
         }
         const response = await api.confirmPasswordReset(resetToken.trim(), password);
@@ -83,7 +100,7 @@ export function LoginPage({ onLogin, onCancel }: { onLogin: (session: Session) =
   const intro = mode === "register"
     ? "Create a real Pro account for board testing: more projects, more devices, 90-day history, GPS, camera and push-ready notifications."
     : mode === "reset"
-      ? "Request a one-time reset token, set a new password, then sign in again. Existing sessions are revoked after reset."
+      ? "Request a one-time reset link, set a new password, then sign in again. Existing sessions are revoked after reset."
       : "Sign in to your Spark IoT workspace, or create a Pro account when you are ready to test real boards.";
 
   return (
@@ -117,7 +134,7 @@ export function LoginPage({ onLogin, onCancel }: { onLogin: (session: Session) =
           <button className="primary auth-primary-action" data-testid="auth-primary-action">{mode === "register" ? "Create account" : mode === "reset" ? (resetRequested ? "Update password" : "Send reset link") : "Sign in"}</button>
           {onCancel && <button type="button" className="auth-secondary-action" onClick={onCancel}>Continue demo mode</button>}
         </form>
-        <p className="muted-text auth-footnote">{mode === "register" ? "After signup, verify your email, create your first project, add a device and generate Arduino code." : mode === "reset" ? "For production, connect SMTP later. During MVP testing, the API returns a reset token directly." : "Use the account you registered. Demo mode stays available as a separate testing shortcut."}</p>
+        <p className="muted-text auth-footnote">{mode === "register" ? "After signup, verify your email, create your first project, add a device and generate Arduino code." : mode === "reset" ? "Reset links are sent through the configured email provider. Local mode can still show a testing token." : "Use the account you registered. Demo mode stays available as a separate testing shortcut."}</p>
       </section>
     </main>
   );

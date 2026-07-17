@@ -17,6 +17,11 @@ from app.services.plans import normalize_plan_code
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def _should_expose_email_tokens() -> bool:
+    settings = get_settings()
+    return settings.expose_dev_email_tokens and settings.environment.lower() in {"local", "development", "test"}
+
+
 def _token_pair(db: Session, user: User, family_id: str | None = None) -> TokenResponse:
     settings = get_settings()
     refresh = issue_refresh_token()
@@ -65,7 +70,8 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.refresh(user)
     send_email(build_verification_email(user.email, user.full_name, verification_token))
     tokens = _token_pair(db, user)
-    tokens.verification_token = verification_token
+    if _should_expose_email_tokens():
+        tokens.verification_token = verification_token
     return tokens
 
 
@@ -99,7 +105,7 @@ def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(
     ))
     db.commit()
     send_email(build_password_reset_email(user.email, user.full_name, raw_token))
-    return StatusResponse(message=message, reset_token=raw_token)
+    return StatusResponse(message=message, reset_token=raw_token if _should_expose_email_tokens() else None)
 
 
 @router.post("/password-reset/confirm", response_model=StatusResponse)
@@ -139,7 +145,7 @@ def resend_email_verification(user: User = Depends(current_user), db: Session = 
     ))
     db.commit()
     send_email(build_verification_email(user.email, user.full_name, raw_token))
-    return StatusResponse(message="Verification instructions are ready.", verification_token=raw_token)
+    return StatusResponse(message="Verification instructions are ready.", verification_token=raw_token if _should_expose_email_tokens() else None)
 
 
 @router.post("/email-verification/confirm", response_model=StatusResponse)

@@ -64,7 +64,7 @@ Purpose:
 
 Design rule: login, signup, and reset forms should use the same card width, logo block, tabs, input styling, button hierarchy, and typography. Any future field should reuse the same form classes instead of creating one-off layouts.
 
-Verification and password reset emails are routed through `backend/app/services/email.py`. If `SMTP_HOST` is empty, the backend returns a safe `dev_skipped` status and still exposes one-time tokens for MVP testing. If SMTP env values are configured, signup, verification resend, and password reset request send real email links based on `APP_PUBLIC_URL`.
+Verification and password reset emails are routed through `backend/app/services/email.py`. Resend is the preferred provider: set `RESEND_API_KEY`, `APP_PUBLIC_URL`, and `SMTP_FROM_EMAIL` in the VPS `.env`. If `RESEND_API_KEY` is absent, the service falls back to SMTP when `SMTP_HOST` is configured; if neither provider is configured, it returns a safe `dev_skipped` status. Local development can expose one-time testing tokens when `EXPOSE_DEV_EMAIL_TOKENS=true`; production should set `EXPOSE_DEV_EMAIL_TOKENS=false` and rely on emailed `/verify-email?token=...` and `/reset-password?token=...` links.
 
 ### Dashboard
 

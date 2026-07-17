@@ -23,11 +23,26 @@ type TemplatePreset = "Smart Irrigation" | "Smart Home" | "Energy Monitor" | "Bl
 type StudioLaunchStep = "Setup" | "Migrate" | "Datastreams" | "Dashboard" | "Notifications" | "Code" | "Simulator";
 type QuickStartDraft = { projectName: string; projectDescription: string; board: DeviceTemplate["board"]; preset: TemplatePreset; deviceName: string };
 type ProjectCreateWithTemplate = ProjectCreate & { template_id?: string };
+type AuthLinkRoute = { kind: "reset"; token: string; email: string } | { kind: "verify"; token: string } | null;
+
+function currentAuthLinkRoute(): AuthLinkRoute {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token") ?? "";
+  if (window.location.pathname === "/reset-password" && token) {
+    return { kind: "reset", token, email: params.get("email") ?? "" };
+  }
+  if (window.location.pathname === "/verify-email" && token) {
+    return { kind: "verify", token };
+  }
+  return null;
+}
 
 export function App() {
   const [view, setView] = useState<View>("dashboard");
   const [session, setSession] = useState<Session | null>(() => getSession());
   const [authScreenOpen, setAuthScreenOpen] = useState(false);
+  const [authLinkRoute, setAuthLinkRoute] = useState<AuthLinkRoute>(() => currentAuthLinkRoute());
   const [selectedProjectId, setSelectedProjectId] = useState<string>(demoProjects[0].id);
   const [demoProjectRows, setDemoProjectRows] = useState<Project[]>(demoProjects);
   const [demoDeviceRows, setDemoDeviceRows] = useState<Device[]>(demoDevices);
@@ -220,6 +235,10 @@ export function App() {
   function handleLogin(nextSession: Session) {
     setSession(nextSession);
     setAuthScreenOpen(false);
+    setAuthLinkRoute(null);
+    if (typeof window !== "undefined" && ["/reset-password", "/verify-email"].includes(window.location.pathname)) {
+      window.history.pushState({}, "", "/");
+    }
     setDemoPreviewMode(false);
     setView("dashboard");
   }
@@ -527,6 +546,30 @@ export function App() {
     return <LoginPage onLogin={handleLogin} onCancel={() => setAuthScreenOpen(false)} />;
   }
 
+  if (authLinkRoute?.kind === "reset") {
+    return (
+      <LoginPage
+        onLogin={handleLogin}
+        onCancel={() => {
+          setAuthLinkRoute(null);
+          window.history.pushState({}, "", "/");
+          setAuthScreenOpen(false);
+        }}
+        initialMode="reset"
+        initialEmail={authLinkRoute.email}
+        initialResetToken={authLinkRoute.token}
+      />
+    );
+  }
+
+  if (authLinkRoute?.kind === "verify") {
+    return <EmailVerificationLink token={authLinkRoute.token} onSignIn={() => {
+      setAuthLinkRoute(null);
+      window.history.pushState({}, "", "/");
+      setAuthScreenOpen(true);
+    }} />;
+  }
+
   const onboardingStep = onboarding?.current_step ?? userProfile?.onboarding_step;
 
   if (session && userProfile && !userProfile.email_verified && !demoPreviewMode) {
@@ -685,6 +728,42 @@ export function App() {
         {view === "settings" && <SettingsPage />}
       </main>
     </div>
+  );
+}
+
+function EmailVerificationLink({ token, onSignIn }: { token: string; onSignIn: () => void }) {
+  const [state, setState] = useState<"loading" | "success" | "error">("loading");
+  const [message, setMessage] = useState("Verifying your Spark IoT email...");
+
+  useEffect(() => {
+    let mounted = true;
+    async function confirm() {
+      try {
+        const response = await api.confirmEmailVerification(token);
+        if (!mounted) return;
+        setMessage(response.message);
+        setState("success");
+      } catch {
+        if (!mounted) return;
+        setMessage("Verification failed. Use the latest email link or resend verification after signing in.");
+        setState("error");
+      }
+    }
+    void confirm();
+    return () => {
+      mounted = false;
+    };
+  }, [token]);
+
+  return (
+    <main className="login-screen">
+      <section className="login-panel auth-card">
+        <div className="brand large auth-brand"><CheckCircle2 size={28} /><div><strong>Spark IoT</strong><span>Rectronx Cloud</span></div></div>
+        <h1 className="auth-title">Email verification</h1>
+        <p className={state === "error" ? "error" : state === "success" ? "success" : "muted-text auth-intro"}>{message}</p>
+        <button type="button" className="primary auth-primary-action" onClick={onSignIn}>Sign in to your workspace</button>
+      </section>
+    </main>
   );
 }
 

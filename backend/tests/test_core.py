@@ -16,6 +16,7 @@ from app.api.routes.schedules import delete_schedule
 from app.api.routes.notifications import mark_notification_read
 from app.api.routes.realtime import realtime_subscription_scope
 from app.api.routes.telemetry import history_csv
+from app.core.config import get_settings
 from app.services.email import EmailMessage, build_password_reset_email, build_verification_email, send_email
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, text
@@ -280,6 +281,33 @@ def test_password_reset_request_creates_hashed_one_time_token_and_notification()
     assert "reset link" in notification.body
 
 
+def test_production_auth_token_responses_do_not_expose_email_tokens(monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("EXPOSE_DEV_EMAIL_TOKENS", "false")
+    get_settings.cache_clear()
+    db = memory_session()
+
+    register_response = register(
+        RegisterRequest(
+            tenant_name="Production Lab",
+            full_name="Production User",
+            email="prod@example.com",
+            password="SparkDemo123!",
+        ),
+        db,
+    )
+    reset_response = request_password_reset(PasswordResetRequest(email="prod@example.com"), db)
+
+    assert register_response.verification_token is None
+    assert reset_response.reset_token is None
+    assert db.scalar(select(EmailVerificationToken)) is not None
+    assert db.scalar(select(PasswordResetToken)) is not None
+
+    monkeypatch.delenv("ENVIRONMENT", raising=False)
+    monkeypatch.delenv("EXPOSE_DEV_EMAIL_TOKENS", raising=False)
+    get_settings.cache_clear()
+
+
 def test_email_messages_are_smtp_ready_without_exposing_hashes():
     verification = build_verification_email(
         to_email="owner@example.com",
@@ -305,6 +333,8 @@ def test_email_messages_are_smtp_ready_without_exposing_hashes():
 
 def test_send_email_returns_dev_mode_when_smtp_is_not_configured(monkeypatch):
     monkeypatch.setenv("SMTP_HOST", "")
+    monkeypatch.setenv("RESEND_API_KEY", "")
+    get_settings.cache_clear()
 
     result = send_email(EmailMessage(
         to_email="owner@example.com",
@@ -313,6 +343,47 @@ def test_send_email_returns_dev_mode_when_smtp_is_not_configured(monkeypatch):
     ))
 
     assert result == {"status": "dev_skipped", "provider": "smtp"}
+    get_settings.cache_clear()
+
+
+def test_send_email_uses_resend_api_when_configured(monkeypatch):
+    calls = []
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self):
+            return b'{"id":"email_123"}'
+
+    def fake_urlopen(request, timeout):
+        calls.append((request, timeout))
+        return FakeResponse()
+
+    monkeypatch.setenv("RESEND_API_KEY", "re_test_key")
+    monkeypatch.setenv("SMTP_HOST", "")
+    monkeypatch.setenv("SMTP_FROM_EMAIL", "Spark IoT <no-reply@rectronx.com>")
+    monkeypatch.setattr("app.services.email.urlopen", fake_urlopen)
+    get_settings.cache_clear()
+
+    result = send_email(EmailMessage(
+        to_email="owner@example.com",
+        subject="Spark IoT test",
+        text="Hello from Spark IoT",
+        html="<p>Hello from Spark IoT</p>",
+    ))
+
+    assert result == {"status": "sent", "provider": "resend"}
+    request, timeout = calls[0]
+    assert request.full_url == "https://api.resend.com/emails"
+    assert request.headers["Authorization"] == "Bearer re_test_key"
+    assert timeout == 15
+    assert b"no-reply@rectronx.com" in request.data
+    assert b"owner@example.com" in request.data
+    get_settings.cache_clear()
 
 
 def test_password_reset_confirm_updates_password_revokes_sessions_and_prevents_reuse():

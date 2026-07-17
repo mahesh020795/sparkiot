@@ -52,10 +52,21 @@ Spark IoT includes production-shaped SaaS auth surfaces:
 
 Password reset tokens are stored only as SHA-256 hashes and expire after 30 minutes. Confirming a reset updates the Argon2 password hash and revokes the user's existing refresh tokens so old sessions are signed out.
 
-Spark IoT is SMTP-ready. Configure these values in `.env` to send real verification and reset emails:
+Spark IoT is Resend-ready for real verification and reset emails. For the current Rectronx test domain, put the Resend API key only in the VPS `.env` file, never in Git:
 
 ```env
-APP_PUBLIC_URL=https://iot.rectronx.com
+ENVIRONMENT=production
+APP_PUBLIC_URL=http://iot.rectronx.com
+RESEND_API_KEY=re_your_resend_key
+SMTP_FROM_EMAIL=Spark IoT <no-reply@rectronx.com>
+EXPOSE_DEV_EMAIL_TOKENS=false
+```
+
+In Resend, verify `rectronx.com` or the exact sender/domain before using `no-reply@rectronx.com`. Until the sender is verified, use a Resend-approved test sender from your Resend dashboard.
+
+SMTP fallback is still supported if you later use another provider:
+
+```env
 SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
 SMTP_USERNAME=your-smtp-user
@@ -64,9 +75,7 @@ SMTP_FROM_EMAIL=Spark IoT <no-reply@rectronx.com>
 SMTP_USE_TLS=true
 ```
 
-For MVP/VPS testing, `/api/v1/auth/password-reset/request` returns the one-time reset token directly so the flow can be tested before a domain and SMTP sender are configured. Before selling to public customers, hide raw reset tokens from API responses and rely on emailed links only.
-
-For the same MVP testing reason, signup/resend email verification can surface a one-time verification token directly in the API/UI. The backend also sends verification emails when SMTP is configured. Before public customer launch, hide raw verification tokens from the browser and rely on emailed links only.
+For local development only, `EXPOSE_DEV_EMAIL_TOKENS=true` allows `/api/v1/auth/password-reset/request`, signup, and verification resend to expose one-time testing tokens in API responses. Production should keep `EXPOSE_DEV_EMAIL_TOKENS=false` and rely on emailed links.
 
 ### First-login SaaS onboarding
 

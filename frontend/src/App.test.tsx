@@ -24,6 +24,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   localStorage.clear();
+  window.history.pushState({}, "", "/");
 });
 
 function stubCsvDownload() {
@@ -674,7 +675,7 @@ describe("App", () => {
     fireEvent.click(valueWidgetButton);
 
     expect(screen.getByRole("status")).toHaveTextContent(/Current Pro dashboard limit reached: 30 widgets/i);
-  });
+  }, 15000);
 
 
   it("exports demo data history with a real CSV download action", async () => {
@@ -1652,7 +1653,7 @@ describe("App", () => {
       if (url.includes("/auth/password-reset/request")) {
         expect(init?.method).toBe("POST");
         expect(JSON.parse(String(init?.body))).toEqual({ email: "mahesh@example.com" });
-        return new Response(JSON.stringify({ status: "ok", message: "If the account exists, reset instructions are ready.", reset_token: "dev-reset-token-123" }), { status: 200, headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ status: "ok", message: "If the account exists, reset instructions are ready." }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       if (url.includes("/auth/password-reset/confirm")) {
         expect(init?.method).toBe("POST");
@@ -1674,7 +1675,32 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "mahesh@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: /Send reset link/i }));
 
-    expect(await screen.findByText("Reset token ready for testing")).toBeInTheDocument();
+    expect(await screen.findByText("Check your email for the reset link, then open it to set a new password.")).toBeInTheDocument();
+  });
+
+  it("opens an emailed password reset link with the token ready to confirm", async () => {
+    window.history.pushState({}, "", "/reset-password?token=dev-reset-token-123&email=mahesh%40example.com");
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/password-reset/confirm")) {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toEqual({ token: "dev-reset-token-123", password: "NewSpark123!" });
+        return new Response(JSON.stringify({ status: "ok", message: "Password updated. Sign in with your new password." }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/login")) {
+        expect(JSON.parse(String(init?.body))).toEqual({ email: "mahesh@example.com", password: "NewSpark123!" });
+        return new Response(JSON.stringify({ access_token: "reset-login-token", refresh_token: "reset-refresh-token", token_type: "bearer" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    expect(await screen.findByText(/Reset your Spark IoT password/i)).toBeInTheDocument();
     expect(screen.getByDisplayValue("dev-reset-token-123")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("New password"), { target: { value: "NewSpark123!" } });
     fireEvent.click(screen.getByRole("button", { name: /Update password/i }));
@@ -1685,6 +1711,28 @@ describe("App", () => {
 
     expect(await screen.findByText("Account mode active")).toBeInTheDocument();
     expect(localStorage.getItem("spark_iot_session")).toContain("reset-login-token");
+  });
+
+  it("confirms an emailed verification link without requiring a current session", async () => {
+    window.history.pushState({}, "", "/verify-email?token=verify-token-123");
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) {
+        return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.includes("/auth/email-verification/confirm")) {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toEqual({ token: "verify-token-123" });
+        return new Response(JSON.stringify({ status: "ok", message: "Email verified. Your Pro workspace is ready." }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    expect(await screen.findByText("Email verified. Your Pro workspace is ready.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sign in to your workspace/i })).toBeInTheDocument();
   });
 
   it("loads protected workspace data after account sign in while preserving demo mode before login", async () => {

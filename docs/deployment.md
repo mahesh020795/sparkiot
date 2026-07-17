@@ -51,10 +51,15 @@ Set these values for the current demo VPS:
 ```env
 CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://iot.rectronx.com,http://iot.rectronx.com:5173,https://iot.rectronx.com,https://iot.rectronx.com:5173
 APP_PUBLIC_URL=http://iot.rectronx.com
+RESEND_API_KEY=<your-resend-api-key>
+SMTP_FROM_EMAIL=Spark IoT <no-reply@rectronx.com>
+EXPOSE_DEV_EMAIL_TOKENS=false
 VITE_API_BASE=/api/v1
 VITE_MQTT_HOST=mqtt.rectronx.com
 VITE_MQTT_PORT=1883
 ```
+
+Verify `rectronx.com` or the exact sender in Resend before using `no-reply@rectronx.com`. If Resend has not verified the sender yet, use the approved test sender shown in the Resend dashboard.
 
 The Docker frontend image serves the built React app with Nginx. Vite dev server is not used in the production Compose stack.
 Open the current Rectronx subdomain test at `http://iot.rectronx.com`. The compatibility URL `http://iot.rectronx.com:5173` is also mapped to the same Nginx container during testing.
@@ -147,6 +152,9 @@ APP_PUBLIC_URL=http://iot.rectronx.com
 VITE_MQTT_HOST=mqtt.rectronx.com
 VITE_MQTT_PORT=1883
 JWT_SECRET=<long-random-secret>
+RESEND_API_KEY=<your-resend-api-key>
+SMTP_FROM_EMAIL=Spark IoT <no-reply@rectronx.com>
+EXPOSE_DEV_EMAIL_TOKENS=false
 ```
 
 For a domain deployment, point the domain or reverse proxy to the frontend container on port 80 and keep `VITE_API_BASE=/api/v1` so browser API and WebSocket calls stay same-origin through Nginx.
