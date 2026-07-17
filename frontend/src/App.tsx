@@ -606,9 +606,10 @@ export function App() {
         <div className="brand"><span className="brand-icon"><span className="material-symbols-outlined" aria-hidden="true">edgesensor_high</span></span><div><strong>Spark IoT</strong><span>Rectronx Cloud</span></div></div>
         <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
-          <span className="section-kicker">{isAccountMode ? "Account mode active" : demoPreviewMode ? "Demo preview active" : "Demo mode active"}</span>
-          <div><UserCircle size={16} /><strong>{isAccountMode ? "Authenticated workspace" : demoPreviewMode ? "Simulated dashboard preview" : "No-login preview"}</strong></div>
-          <small>{isAccountMode ? "Tenant API session connected. Pro limits and protected endpoints are available." : demoPreviewMode ? "Previewing Spark IoT with simulated telemetry before creating real tenant data." : "Default sales/demo dashboard remains open before account signup."}</small>
+          <span className="section-kicker">{isAccountMode ? "Pro account" : demoPreviewMode ? "Demo preview" : "Demo workspace"}</span>
+          <div><UserCircle size={16} /><strong>{isAccountMode ? userProfile?.full_name ?? userProfile?.email ?? "Spark IoT account" : demoPreviewMode ? "Preview dashboard" : "Sample workspace"}</strong></div>
+          <small>{isAccountMode ? userProfile?.email ?? "Signed in workspace" : demoPreviewMode ? "Simulated telemetry only" : "Explore the platform before sign in"}</small>
+          {isAccountMode && <small className="session-plan-line">Package: Pro · 10 projects · 10 devices</small>}
           {session ? (
             <button type="button" onClick={signOut}><LogOut size={16} />Sign out</button>
           ) : (
@@ -674,13 +675,6 @@ export function App() {
             onPreviewDemo={() => setDemoPreviewMode(true)}
           />
         ) : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />)}
-        {view === "setup" && (
-          <section className="setup-flow-note panel">
-            <span className="section-kicker">Setup lives here now</span>
-            <h2>Keep Overview clean, open the full builder only when needed</h2>
-            <p>The Overview stays focused on live telemetry. This setup page keeps the professional Blynk-style onboarding flow available for projects, templates, V-pins, devices, Arduino code and board testing.</p>
-          </section>
-        )}
         {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : createDemoProject} onUpdateProject={updateProject} onDeleteProject={deleteProject} />}
         {view === "templates" && (
           templateStudioId ? (

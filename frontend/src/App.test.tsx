@@ -122,6 +122,8 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Create first project/i }));
     expect(await screen.findByTestId("launch-wizard-panel")).toBeInTheDocument();
+    expect(screen.queryByText("Setup lives here now")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Blynk/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Select option")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Project selector")).not.toBeInTheDocument();
     const wizardSteps = screen.getAllByTestId("launch-wizard-step").map((step) => within(step).getByRole("heading").textContent);
@@ -1184,6 +1186,9 @@ describe("App", () => {
     expect(screen.getByLabelText("Run time")).toHaveValue("06:00");
     expect(screen.getByLabelText("Repeat")).toHaveValue("mon,wed,fri");
     expect(screen.getByRole("button", { name: /Add demo schedule/i })).toBeInTheDocument();
+    const css = readFileSync(resolve(__dirname, "styles/design-system.css"), "utf8");
+    expect(css).toContain(".spark-ui .premium-schedule-field input,");
+    expect(css).toContain("padding: 0 1rem;");
   });
 
   it("loads and creates authenticated schedules with the protected API", async () => {
@@ -1567,13 +1572,16 @@ describe("App", () => {
         expect(init?.body).toContain("demo@sparkiot.dev");
         return new Response(JSON.stringify({ access_token: "account-demo", refresh_token: "refresh-demo", token_type: "bearer" }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
+      if (url.includes("/auth/me")) {
+        return new Response(JSON.stringify({ full_name: "Demo User", email: "demo@sparkiot.dev", tenant_id: "demo-tenant", plan_code: "pro", email_verified: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
       return new Response("not found", { status: 404 });
     });
     vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
 
-    expect(await screen.findByText("Demo mode active")).toBeInTheDocument();
+    expect(await screen.findByText("Demo workspace")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Sign in to account/i }));
 
     expect(screen.getByRole("heading", { name: /Sign in to your IoT control center/i })).toBeInTheDocument();
@@ -1581,12 +1589,16 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "SparkDemo123!" } });
     fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
 
-    expect(await screen.findByText("Account mode active")).toBeInTheDocument();
-    expect(screen.getByText("Authenticated workspace")).toBeInTheDocument();
+    expect(await screen.findByText("Pro account")).toBeInTheDocument();
+    expect(await screen.findByText("Demo User")).toBeInTheDocument();
+    expect(await screen.findByText("demo@sparkiot.dev")).toBeInTheDocument();
+    expect(screen.getByText("Package: Pro · 10 projects · 10 devices")).toBeInTheDocument();
+    expect(screen.queryByText("Authenticated workspace")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Tenant API/i)).not.toBeInTheDocument();
     expect(localStorage.getItem("spark_iot_session")).toContain("account-demo");
 
     fireEvent.click(screen.getByRole("button", { name: /Sign out/i }));
-    expect(screen.getByText("Demo mode active")).toBeInTheDocument();
+    expect(screen.getByText("Demo workspace")).toBeInTheDocument();
     expect(localStorage.getItem("spark_iot_session")).toBeNull();
   });
 
@@ -1635,6 +1647,9 @@ describe("App", () => {
         });
         return new Response(JSON.stringify({ access_token: "new-account-token", refresh_token: "new-refresh-token", token_type: "bearer" }), { status: 201, headers: { "Content-Type": "application/json" } });
       }
+      if (url.includes("/auth/me")) {
+        return new Response(JSON.stringify({ full_name: "Mahesh Rajagopal", email: "mahesh@example.com", tenant_id: "customer-lab", plan_code: "pro", email_verified: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
       return new Response("not found", { status: 404 });
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -1649,8 +1664,10 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "SparkDemo123!" } });
     fireEvent.click(screen.getByRole("button", { name: /Create account/i }));
 
-    expect(await screen.findByText("Account mode active")).toBeInTheDocument();
-    expect(screen.getByText("Authenticated workspace")).toBeInTheDocument();
+    expect(await screen.findByText("Pro account")).toBeInTheDocument();
+    expect(await screen.findByText("Mahesh Rajagopal")).toBeInTheDocument();
+    expect(await screen.findByText("mahesh@example.com")).toBeInTheDocument();
+    expect(screen.queryByText("Authenticated workspace")).not.toBeInTheDocument();
     expect(localStorage.getItem("spark_iot_session")).toContain("new-account-token");
     expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/auth/register"), expect.objectContaining({ method: "POST" }));
   });
@@ -1720,7 +1737,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "NewSpark123!" } });
     fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
 
-    expect(await screen.findByText("Account mode active")).toBeInTheDocument();
+    expect(await screen.findByText("Pro account")).toBeInTheDocument();
     expect(localStorage.getItem("spark_iot_session")).toContain("reset-login-token");
   });
 
