@@ -309,6 +309,11 @@ describe("App", () => {
     fireEvent.click(dashboardSelector);
     expect(screen.getByRole("listbox", { name: "Dashboard projects" })).toHaveClass("spark-select-menu");
     expect(screen.getByRole("option", { name: "Smart Home" })).toHaveClass("spark-select-option");
+    const css = readFileSync(resolve(__dirname, "styles/design-system.css"), "utf8");
+    expect(css).toContain(".spark-ui .product-header-grid {");
+    expect(css).toContain("overflow: visible;");
+    expect(css).toContain(".spark-ui .spark-page-header-selector {\n  position: relative;\n  z-index: 80;");
+    expect(css).toContain(".spark-ui .spark-select-menu {\n  position: absolute;\n  z-index: 120;");
     fireEvent.click(screen.getByRole("option", { name: "Energy Monitor" }));
     expect(await screen.findByRole("heading", { name: "Energy Monitor Dashboard" })).toBeInTheDocument();
     const navigation = screen.getByRole("navigation", { name: "Main navigation" });
@@ -464,6 +469,10 @@ describe("App", () => {
     expect(css).toContain("background: #0f172a");
     expect(css).toContain(".spark-ui .spark-widget-card.cockpit-media-widget .media-frame");
     expect(css).toContain("min-height: clamp(22rem, 28vw, 27rem)");
+    expect(css).toContain("appearance: none");
+    expect(css).toContain("select.spark-native-select");
+    expect(css).toContain(".spark-ui select:not([multiple])");
+    expect(css).toContain("linear-gradient(45deg, transparent 50%, #2563eb 50%)");
   });
 
   it("builds same-origin websocket URLs when the production API base is relative", () => {

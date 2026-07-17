@@ -149,6 +149,36 @@ body {
   font-size: 0.92rem;
 }
 
+.spark-ui select,
+.spark-ui select.spark-native-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 0;
+  padding: 0 2.65rem 0 0.95rem;
+  border-color: #dbe7ff;
+  border-radius: 16px;
+  background:
+    linear-gradient(45deg, transparent 50%, #2563eb 50%) calc(100% - 1.12rem) 52% / 0.42rem 0.42rem no-repeat,
+    linear-gradient(135deg, #2563eb 50%, transparent 50%) calc(100% - 0.82rem) 52% / 0.42rem 0.42rem no-repeat,
+    linear-gradient(180deg, #ffffff, #fbfdff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  font-weight: 850;
+}
+
+.spark-ui select:hover,
+.spark-ui select.spark-native-select:hover {
+  border-color: #bfdbfe;
+}
+
+.spark-ui select:focus,
+.spark-ui select.spark-native-select:focus {
+  border-color: #93c5fd;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
 .spark-ui .brand {
   min-height: 104px;
   padding: var(--spark-space-6);
@@ -243,6 +273,9 @@ body {
 }
 
 .spark-ui .app-page-header {
+  position: relative;
+  z-index: 40;
+  overflow: visible;
   margin: 0;
   padding: 0;
   border-bottom: 1px solid var(--spark-border);
@@ -4013,7 +4046,7 @@ body {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow: clip;
+  overflow: visible;
   box-sizing: border-box;
 }
 
@@ -4047,6 +4080,11 @@ body {
 .spark-ui .product-header-grid .spark-page-header-selector select {
   max-width: 100%;
   min-width: 0;
+}
+
+.spark-ui .spark-page-header-selector {
+  position: relative;
+  z-index: 80;
 }
 
 .spark-ui .product-header-grid .spark-page-header-metrics {
@@ -4668,7 +4706,7 @@ body {
 
 .spark-ui .spark-select-menu {
   position: absolute;
-  z-index: 60;
+  z-index: 120;
   top: calc(100% + 0.45rem);
   left: 0.95rem;
   right: 0.95rem;
@@ -4813,4 +4851,30 @@ body {
   .spark-ui .account-quickstart-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/*
+  Final native dropdown normalization.
+  Keep every remaining browser select visually aligned with Spark's custom
+  dashboard selector until each screen graduates to the fully custom menu.
+*/
+.spark-ui select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 46px;
+  padding-right: 2.65rem !important;
+  border-color: #dbe7ff !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(45deg, transparent 50%, #2563eb 50%) calc(100% - 1.12rem) 52% / 0.42rem 0.42rem no-repeat,
+    linear-gradient(135deg, #2563eb 50%, transparent 50%) calc(100% - 0.82rem) 52% / 0.42rem 0.42rem no-repeat,
+    linear-gradient(180deg, #ffffff, #fbfdff) !important;
+  color: #0f172a;
+  font-weight: 850;
+}
+
+.spark-ui select:not([multiple]):focus {
+  border-color: #93c5fd !important;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
