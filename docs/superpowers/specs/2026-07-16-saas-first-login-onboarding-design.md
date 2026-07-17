@@ -29,7 +29,7 @@ The first-login experience must not feel empty or broken. It also must not prete
 After email verification, the backend should create:
 
 - Tenant/workspace.
-- Starter plan subscription record.
+- Pro plan subscription record for the current test phase.
 - Owner membership.
 - User profile.
 - Onboarding progress state.
@@ -142,7 +142,7 @@ System shows:
 - Keep Overview clean and calm; move detailed setup into Quick Start Wizard.
 - Use consistent SaaS language: workspace, project, template, device, datastream, dashboard.
 - Demo data must be visibly separated from customer data.
-- Starter limits should be visible but not noisy:
+- Pro limits should be visible but not noisy:
   - 1 user.
   - 3 projects.
   - 3 devices.

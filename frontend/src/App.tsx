@@ -561,7 +561,7 @@ export function App() {
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
           <span className="section-kicker">{isAccountMode ? "Account mode active" : demoPreviewMode ? "Demo preview active" : "Demo mode active"}</span>
           <div><UserCircle size={16} /><strong>{isAccountMode ? "Authenticated workspace" : demoPreviewMode ? "Simulated dashboard preview" : "No-login preview"}</strong></div>
-          <small>{isAccountMode ? "Tenant API session connected. Starter limits and protected endpoints are available." : demoPreviewMode ? "Previewing Spark IoT with simulated telemetry before creating real tenant data." : "Default sales/demo dashboard remains open before account signup."}</small>
+          <small>{isAccountMode ? "Tenant API session connected. Pro limits and protected endpoints are available." : demoPreviewMode ? "Previewing Spark IoT with simulated telemetry before creating real tenant data." : "Default sales/demo dashboard remains open before account signup."}</small>
           {session ? (
             <button type="button" onClick={signOut}><LogOut size={16} />Sign out</button>
           ) : (
@@ -772,10 +772,10 @@ function LaunchWizardPanel({
   const [quickStartState, setQuickStartState] = useState<"idle" | "building" | "error">("idle");
   const [quickStartError, setQuickStartError] = useState("");
   const steps = [
-    { title: "Create project", detail: `${projectCount}/3 projects ready`, action: "Open project setup", onClick: onOpenProjects, icon: MapPinned },
-    { title: "Choose template", detail: `${templateCount}/3 templates ready`, action: "Open template studio", onClick: onOpenTemplate, icon: Workflow },
+    { title: "Create project", detail: `${projectCount}/10 projects ready`, action: "Open project setup", onClick: onOpenProjects, icon: MapPinned },
+    { title: "Choose template", detail: `${templateCount}/10 templates ready`, action: "Open template studio", onClick: onOpenTemplate, icon: Workflow },
     { title: "Add datastreams", detail: `${datastreamCount} virtual pins mapped`, action: "Edit datastreams", onClick: onOpenDatastreams, icon: Database },
-    { title: "Add device", detail: `${deviceCount}/3 devices provisioned`, action: "Open devices", onClick: onOpenDevices, icon: Cpu },
+    { title: "Add device", detail: `${deviceCount}/10 devices provisioned`, action: "Open devices", onClick: onOpenDevices, icon: Cpu },
     { title: "Generate Arduino code", detail: `Sketch targets ${selectedDeviceName}`, action: "Open code generator", onClick: onOpenCode, icon: TerminalSquare },
     { title: "Board test", detail: "MQTT telemetry and command ACK", action: "Open board test", onClick: onOpenLiveTest, icon: PlugZap }
   ] as const;
@@ -789,7 +789,7 @@ function LaunchWizardPanel({
       setQuickStartState("idle");
     } catch (error) {
       setQuickStartState("error");
-      setQuickStartError(error instanceof Error ? error.message : "Quick start failed. Check Starter plan limits and try again.");
+      setQuickStartError(error instanceof Error ? error.message : "Quick start failed. Check Pro limits and try again.");
     }
   }
 
@@ -1338,7 +1338,7 @@ function TemplateLibrary({
   onDeleteTemplate: (templateId: string) => Promise<void>;
   onOpen: (template: DeviceTemplate) => void;
 }) {
-  const templateLimit = 3;
+  const templateLimit = 10;
   const isAtLimit = templates.length >= templateLimit;
   const availableProjects = projects.filter((project) => !templates.some((template) => template.dashboard.project_id === project.id));
   const templateProjectOptions = accountMode ? availableProjects : (availableProjects.length ? availableProjects : projects);
@@ -1374,14 +1374,14 @@ function TemplateLibrary({
     <section className="support-page template-library-page">
       <div className="library-toolbar">
         <div>
-          <strong>{templates.length}/3 templates used</strong>
-          <span>Reusable starter designs. Apply one when creating a project.</span>
+          <strong>{templates.length}/10 templates used</strong>
+          <span>Reusable Pro workspace designs. Apply one when creating a project.</span>
         </div>
         <button
           className="primary"
           disabled={(accountMode && isAtLimit) || !onCreateTemplate || (accountMode && !availableProjects.length)}
           aria-disabled={(accountMode && isAtLimit) || !onCreateTemplate || (accountMode && !availableProjects.length)}
-          title={isAtLimit ? "Starter plan limit reached" : accountMode ? "Create reusable template" : "Create reusable demo template"}
+          title={isAtLimit ? "Pro plan template limit reached" : accountMode ? "Create reusable template" : "Create reusable demo template"}
           onClick={() => setCreateOpen((current) => !current)}
         >
           {isAtLimit ? <Lock size={16} /> : <Plus size={16} />}
@@ -1483,7 +1483,7 @@ function TemplateLibrary({
 }
 
 function ProjectsView({ projects, templates, accountMode = false, onCreateProject, onUpdateProject, onDeleteProject }: { projects: Project[]; templates: DeviceTemplate[]; accountMode?: boolean; onCreateProject?: (project: ProjectCreateWithTemplate) => Promise<Project>; onUpdateProject: (projectId: string, project: ProjectUpdate) => Promise<Project>; onDeleteProject: (projectId: string) => Promise<void> }) {
-  const projectLimit = 3;
+  const projectLimit = 10;
   const isAtLimit = projects.length >= projectLimit;
   const [createOpen, setCreateOpen] = useState(false);
   const [projectDraft, setProjectDraft] = useState<ProjectCreate>({ name: "", description: "" });
@@ -1517,7 +1517,7 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
       setCreateMessage(selectedTemplateId ? "Project created with the selected template. Next: provision a board." : "Project created. Next: choose a template and provision a board.");
     } catch {
       setCreateState("error");
-      setCreateMessage("Project creation failed. Check Starter limits and API session.");
+      setCreateMessage("Project creation failed. Check Pro limits and API session.");
     }
   }
 
@@ -1532,14 +1532,14 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
     <section className="support-page">
       <div className="library-toolbar project-create-toolbar">
         <div>
-          <strong>{projects.length}/3 projects used</strong>
-          <span>Starter plan supports three separate dashboards/projects.</span>
+          <strong>{projects.length}/10 projects used</strong>
+          <span>Pro access supports ten separate dashboards/projects for current testing.</span>
         </div>
         <button
           className="primary"
           disabled={(accountMode && isAtLimit) || !onCreateProject}
           aria-disabled={(accountMode && isAtLimit) || !onCreateProject}
-          title={isAtLimit ? "Starter plan project limit reached" : accountMode ? "Create project" : "Sign in to create real projects"}
+          title={isAtLimit ? "Pro plan project limit reached" : accountMode ? "Create project" : "Sign in to create real projects"}
           onClick={() => setCreateOpen((current) => !current)}
         >
           {isAtLimit ? <Lock size={16} /> : <Plus size={16} />}
@@ -1621,11 +1621,11 @@ function ProjectsView({ projects, templates, accountMode = false, onCreateProjec
             </div>
           </article>
         );
-      })}<article className="panel starter-capacity-card"><span className="section-kicker">Starter plan capacity</span><h2>RM25 plan limits</h2><p>3 projects, 3 devices and one template dashboard per project with 30-day data, GPS and camera access.</p></article></section>
+      })}<article className="panel starter-capacity-card"><span className="section-kicker">Pro account capacity</span><h2>RM49 plan access</h2><p>10 projects, 10 devices and one template dashboard per project with 90-day data, GPS and camera access.</p></article></section>
       <ConfirmDialog
         open={Boolean(deleteProjectDraft)}
         title="Delete project?"
-        body={`This will remove "${deleteProjectDraft?.name ?? "this project"}" and its dashboard workspace from this starter account.`}
+        body={`This will remove "${deleteProjectDraft?.name ?? "this project"}" and its dashboard workspace from this account.`}
         confirmLabel="Delete project"
         onCancel={() => setDeleteProjectDraft(null)}
         onConfirm={() => {

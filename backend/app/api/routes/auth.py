@@ -39,11 +39,11 @@ def _create_email_verification(db: Session, user: User) -> str:
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     if db.scalar(select(User).where(User.email == payload.email.lower())):
         raise HTTPException(status_code=409, detail={"code": "duplicate_email", "message": "Email already exists"})
-    tenant = Tenant(name=payload.tenant_name, plan_code="free")
+    tenant = Tenant(name=payload.tenant_name, plan_code="pro")
     db.add(tenant)
     db.flush()
     if db.scalar(select(User).where(User.tenant_id == tenant.id, User.is_active)):
-        raise HTTPException(status_code=409, detail={"code": "plan_user_limit", "message": "Free plan allows 1 active user"})
+        raise HTTPException(status_code=409, detail={"code": "plan_user_limit", "message": "Pro plan allows 3 active users"})
     user = User(tenant_id=tenant.id, email=payload.email.lower(), full_name=payload.full_name, password_hash=hash_secret(payload.password))
     db.add(user)
     db.flush()
@@ -59,7 +59,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         tenant_id=tenant.id,
         user_id=user.id,
         title="Welcome to Spark IoT",
-        body="Free workspace is ready. Create a project, choose a template, add your first board, then generate Arduino code.",
+        body="Pro workspace is ready. Create a project, choose a template, add your first board, then generate Arduino code.",
     ))
     db.commit()
     db.refresh(user)
@@ -167,7 +167,7 @@ def confirm_email_verification(payload: EmailVerificationConfirmRequest, db: Ses
         body="Your Spark IoT workspace is ready. Create your first project to connect a board.",
     ))
     db.commit()
-    return StatusResponse(message="Email verified. Your Free workspace is ready.")
+    return StatusResponse(message="Email verified. Your Pro workspace is ready.")
 
 
 @router.post("/refresh", response_model=TokenResponse)

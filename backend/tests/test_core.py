@@ -156,7 +156,7 @@ def test_topic_helpers_create_spark_namespace():
     assert telemetry_topic("tenant-1", "device-1", "temperature") == "spark/v1/tenant-1/device-1/telemetry/temperature"
 
 
-def test_register_creates_free_tenant_user_refresh_token_and_welcome_notification():
+def test_register_creates_pro_tenant_user_refresh_token_and_welcome_notification():
     db = memory_session()
 
     response = register(
@@ -171,7 +171,7 @@ def test_register_creates_free_tenant_user_refresh_token_and_welcome_notificatio
 
     tenant = db.scalar(select(Tenant).where(Tenant.name == "Rectronx Lab"))
     assert tenant is not None
-    assert tenant.plan_code == "free"
+    assert tenant.plan_code == "pro"
     user = db.scalar(select(User).where(User.email == "mahesh@example.com"))
     assert user is not None
     assert user.tenant_id == tenant.id
@@ -183,7 +183,7 @@ def test_register_creates_free_tenant_user_refresh_token_and_welcome_notificatio
     notification = db.scalar(select(Notification).where(Notification.tenant_id == tenant.id, Notification.user_id == user.id))
     assert notification is not None
     assert notification.title == "Welcome to Spark IoT"
-    assert "Free workspace is ready" in notification.body
+    assert "Pro workspace is ready" in notification.body
 
 
 def test_usage_returns_free_plus_pro_enterprise_plan_metadata_and_legacy_starter_mapping():
@@ -724,19 +724,19 @@ def test_template_studio_rejects_rule_for_unknown_datastream():
         raise AssertionError("expected invalid notification target to fail")
 
 
-def test_template_studio_rejects_more_than_starter_widget_limit():
+def test_template_studio_rejects_more_than_current_widget_limit():
     payload = valid_template_payload()
     payload["dashboard"]["widgets"] = [
         {"id": f"w-{index}", "type": "value", "title": f"Value {index}", "x": 0, "y": index, "w": 3, "h": 2, "deviceId": "device-irrigation", "channel": "V0"}
-        for index in range(19)
+        for index in range(31)
     ]
 
     try:
         TemplateStudioUpdate(**payload)
     except ValueError as exc:
-        assert "Starter plan allows 18 widgets" in str(exc)
+        assert "Current plan allows 30 widgets" in str(exc)
     else:
-        raise AssertionError("expected starter widget limit to fail")
+        raise AssertionError("expected widget limit to fail")
 
 
 def template_route_db():

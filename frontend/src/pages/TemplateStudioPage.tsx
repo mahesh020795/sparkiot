@@ -36,7 +36,7 @@ const widgetLibraryGroups = [
   { title: "Input widgets", kind: "Input", caption: "Send values or commands to the board", types: ["switch", "push_button", "time", "schedule"] },
   { title: "Output widgets", kind: "Output", caption: "Display telemetry, media and board status", types: ["gauge", "meter", "value", "led", "chart", "gps", "camera", "serial_lcd", "battery", "signal"] }
 ] as const;
-const STARTER_WIDGET_LIMIT = 18;
+const PRO_WIDGET_LIMIT = 30;
 const PUBLIC_MQTT_HOST = import.meta.env.VITE_MQTT_HOST ?? "mqtt.rectronx.com";
 const PUBLIC_MQTT_PORT = Number(import.meta.env.VITE_MQTT_PORT ?? 1883);
 const dataTypes: Datastream["dataType"][] = ["integer", "float", "string", "boolean", "gps", "image", "time", "date"];
@@ -138,8 +138,8 @@ export function TemplateStudioPage({
   }
 
   function addWidget(type: string, datastreamId?: string) {
-    if (template.dashboard.widgets.length >= STARTER_WIDGET_LIMIT) {
-      setWidgetAddStatus(`Starter dashboard limit reached: ${STARTER_WIDGET_LIMIT} widgets. Remove a widget before adding another.`);
+    if (template.dashboard.widgets.length >= PRO_WIDGET_LIMIT) {
+      setWidgetAddStatus(`Current Pro dashboard limit reached: ${PRO_WIDGET_LIMIT} widgets. Remove a widget before adding another.`);
       return;
     }
     const preferredType = dataTypeForWidgetType(type);
@@ -313,7 +313,7 @@ export function TemplateStudioPage({
             </div>
             <div className="setup-metrics">
               <span><strong>{template.board}</strong><small>Board</small></span>
-              <span><strong>3</strong><small>Starter projects</small></span>
+              <span><strong>10</strong><small>Pro projects</small></span>
               <span><strong>30d</strong><small>Data retention</small></span>
             </div>
           </div>

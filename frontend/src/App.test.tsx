@@ -46,18 +46,18 @@ function stubCsvDownload() {
 
 function plusUsage(overrides: Partial<Awaited<ReturnType<typeof api.usage>>> = {}) {
   return {
-    plan_code: "plus",
-    plan_name: "Plus",
-    monthly_price_rm: 25,
+    plan_code: "pro",
+    plan_name: "Pro",
+    monthly_price_rm: 49,
     users: 1,
-    max_users: 1,
+    max_users: 3,
     devices: 0,
-    max_devices: 3,
+    max_devices: 10,
     projects: 0,
-    max_projects: 3,
-    max_widgets: 18,
-    retention_days: 30,
-    features: ["GPS", "Camera URL", "Browser push", "30-day history"],
+    max_projects: 10,
+    max_widgets: 30,
+    retention_days: 90,
+    features: ["GPS", "Camera URL", "Browser push", "90-day history", "Advanced dashboards"],
     ...overrides,
   };
 }
@@ -520,7 +520,7 @@ describe("App", () => {
 
     expect(screen.queryByText("Template library")).not.toBeInTheDocument();
     expect(screen.queryByText("Start from a product model, then build the dashboard")).not.toBeInTheDocument();
-    expect(screen.getByText("3/3 templates used")).toBeInTheDocument();
+    expect(screen.getByText("3/10 templates used")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Create template/i })).toBeEnabled();
 
     const energyTemplateCard = screen.getByRole("article", { name: /Energy Monitor template/i });
@@ -583,7 +583,7 @@ describe("App", () => {
     expect(screen.getByText("GPS and camera cost control")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Projects"));
     expect(screen.queryByText("Project command center")).not.toBeInTheDocument();
-    expect(screen.getByText("Starter plan capacity")).toBeInTheDocument();
+    expect(screen.getByText("Pro account capacity")).toBeInTheDocument();
     const irrigationProject = screen.getByRole("article", { name: /Smart Irrigation project/i });
     expect(within(irrigationProject).getByText("Active")).toBeInTheDocument();
     expect(within(irrigationProject).getByRole("button", { name: /Edit project/i })).toBeInTheDocument();
@@ -659,21 +659,21 @@ describe("App", () => {
     }
   });
 
-  it("stops Template Studio widget additions at the Starter dashboard limit", async () => {
+  it("stops Template Studio widget additions at the Pro dashboard limit", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Templates"));
     fireEvent.click(within(screen.getByRole("article", { name: /Smart Irrigation template/i })).getByRole("button", { name: /Edit template/i }));
     fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
 
     const valueWidgetButton = screen.getByRole("button", { name: /value.*Output widget/i });
-    for (let index = 0; index < 6; index += 1) {
+    for (let index = 0; index < 18; index += 1) {
       fireEvent.click(valueWidgetButton);
     }
     expect(screen.getByRole("status")).toHaveTextContent(/widget added to canvas/i);
 
     fireEvent.click(valueWidgetButton);
 
-    expect(screen.getByRole("status")).toHaveTextContent(/Starter dashboard limit reached: 18 widgets/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/Current Pro dashboard limit reached: 30 widgets/i);
   });
 
 
@@ -738,7 +738,7 @@ describe("App", () => {
     expect(screen.queryByText("Bind boards to templates and ship firmware-ready credentials")).not.toBeInTheDocument();
     expect(screen.queryByText("Production rule")).not.toBeInTheDocument();
     expect(screen.queryByText(/raw device token only once/i)).not.toBeInTheDocument();
-    expect(screen.getByText("3/3 devices used")).toBeInTheDocument();
+    expect(screen.getByText("3/10 devices used")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Provision device/i })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: /Provision device/i }));
     expect(screen.getByTestId("device-create-form")).toBeInTheDocument();
@@ -910,7 +910,7 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Devices"));
 
-    expect(await screen.findByText("1/3 devices used")).toBeInTheDocument();
+    expect(await screen.findByText("1/10 devices used")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Provision device/i }));
     fireEvent.change(screen.getByLabelText("Device name"), { target: { value: "Greenhouse Node 2" } });
     fireEvent.change(screen.getByLabelText("Board type"), { target: { value: "ESP8266" } });
@@ -947,7 +947,7 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Projects"));
 
-    expect(await screen.findByText("1/3 projects used")).toBeInTheDocument();
+    expect(await screen.findByText("1/10 projects used")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Create project/i }));
     fireEvent.change(screen.getByLabelText("Project name"), { target: { value: "Aquaponics Lab" } });
     fireEvent.change(screen.getByLabelText("Project description"), { target: { value: "Fish tank and plant bed monitoring" } });
@@ -1106,7 +1106,7 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Templates"));
 
-    expect(await screen.findByText("0/3 templates used")).toBeInTheDocument();
+    expect(await screen.findByText("0/10 templates used")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Create template/i }));
     fireEvent.click(screen.getByRole("button", { name: /Save template/i }));
 
@@ -1438,17 +1438,17 @@ describe("App", () => {
       if (url.includes("/tenant/usage")) {
         return new Response(JSON.stringify({
           users: 1,
-          max_users: 1,
+          max_users: 3,
           devices: 2,
-          max_devices: 3,
+          max_devices: 10,
           projects: 2,
-          max_projects: 3,
-          max_widgets: 18,
-          retention_days: 30,
-          plan_code: "plus",
-          plan_name: "Plus",
-          monthly_price_rm: 25,
-          features: ["GPS", "Camera URL", "Browser push", "30-day history"]
+          max_projects: 10,
+          max_widgets: 30,
+          retention_days: 90,
+          plan_code: "pro",
+          plan_name: "Pro",
+          monthly_price_rm: 49,
+          features: ["GPS", "Camera URL", "Browser push", "90-day history", "Advanced dashboards"]
         }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       return new Response("not found", { status: 404 });
@@ -1474,10 +1474,10 @@ describe("App", () => {
     expect(await screen.findByText("Demo User")).toBeInTheDocument();
     expect(screen.getByText(/demo@sparkiot\.dev/)).toBeInTheDocument();
     expect(screen.getAllByText(/Email verified/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Plus/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/RM25\/month/).length).toBeGreaterThan(0);
-    expect(screen.getByText("2 / 3 projects")).toBeInTheDocument();
-    expect(screen.getByText("2 / 3 devices")).toBeInTheDocument();
+    expect(screen.getAllByText(/Pro/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/RM49\/month/).length).toBeGreaterThan(0);
+    expect(screen.getByText("2 / 10 projects")).toBeInTheDocument();
+    expect(screen.getByText("2 / 10 devices")).toBeInTheDocument();
     expect(screen.getByText(/demo-tenant/)).toBeInTheDocument();
     expect(localStorage.getItem("spark_iot_session")).toContain("access-demo");
 
@@ -1565,6 +1565,8 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Sign in to account/i }));
 
     expect(screen.getByRole("heading", { name: /Sign in to your IoT control center/i })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "demo@sparkiot.dev" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "SparkDemo123!" } });
     fireEvent.click(screen.getByRole("button", { name: /^Sign in$/i }));
 
     expect(await screen.findByText("Account mode active")).toBeInTheDocument();
@@ -1590,7 +1592,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /Continue demo mode/i })).toHaveClass("auth-secondary-action");
     expect(screen.getAllByTestId("auth-field").length).toBeGreaterThanOrEqual(2);
 
-    fireEvent.click(screen.getByRole("button", { name: /Create Starter account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Create Pro account/i }));
     expect(screen.getByTestId("auth-card")).toHaveClass("auth-card");
     expect(screen.getByTestId("auth-tabs")).toHaveClass("auth-mode-tabs");
     expect(screen.getByTestId("auth-form")).toHaveClass("auth-form");
@@ -1605,7 +1607,7 @@ describe("App", () => {
     expect(screen.getByTestId("auth-primary-action")).toHaveClass("primary", "auth-primary-action");
   });
 
-  it("lets a new customer create a Starter account from the auth screen", async () => {
+  it("lets a new customer create a Pro account from the auth screen", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.includes("/demo/templates")) {
@@ -1628,7 +1630,7 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /Sign in to account/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Create Starter account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Create Pro account/i }));
     fireEvent.change(screen.getByLabelText("Company or workspace name"), { target: { value: "Rectronx Customer Lab" } });
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Mahesh Rajagopal" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "mahesh@example.com" } });

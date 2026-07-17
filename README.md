@@ -46,7 +46,7 @@ ESP32 irrigation token: spk_dev_irrigation_demo_9f3a
 Spark IoT includes production-shaped SaaS auth surfaces:
 
 - Existing account login
-- Starter workspace signup
+- Pro workspace signup
 - Password reset request
 - Password reset confirmation
 
@@ -70,9 +70,9 @@ For the same MVP testing reason, signup/resend email verification can surface a 
 
 ### First-login SaaS onboarding
 
-New accounts start in a guided Starter Workspace. Spark IoT creates the tenant, owner user, Starter plan and onboarding state, but it does not create a real project/device/dashboard until the user chooses a project and board.
+New accounts start in a guided Pro Workspace. Spark IoT creates the tenant, owner user, Pro plan and onboarding state, but it does not create a real project/device/dashboard until the user chooses a project and board.
 
-The demo dashboard remains available from the Starter Workspace as a clearly labelled preview using simulated telemetry. It is separate from customer-owned tenant data.
+The demo dashboard remains available from the Pro Workspace as a clearly labelled preview using simulated telemetry. It is separate from customer-owned tenant data.
 
 Signed-in dashboard input widgets publish commands and are also persisted as latest telemetry for the same device and virtual pin. That means time-only and schedule widgets survive refresh and can be restored on another browser session through `/api/v1/telemetry/projects/{project_id}/latest`.
 
@@ -181,7 +181,7 @@ Included examples:
 
 Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Rectronx MQTT subdomain test, use `mqtt.rectronx.com`.
 
-For authenticated customer workspaces, open `Projects` to create up to three Starter plan project spaces. Then open `Templates`, click `Create template`, select the project, board and starter preset, and save the generated Blynk-style virtual-pin model. After that, open `Devices`, click `Provision device`, select the project and board, and copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Spark IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
+For authenticated customer workspaces, open `Projects` to create Pro plan project spaces. Then open `Templates`, click `Create template`, select the project, board and starter preset, and save the generated Blynk-style virtual-pin model. After that, open `Devices`, click `Provision device`, select the project and board, and copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Spark IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
 
 See:
 

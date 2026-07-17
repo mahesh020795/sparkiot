@@ -15,22 +15,22 @@ const planCatalog = [
 ];
 
 const demoUsage: UsageSummary = {
-  plan_code: "plus",
-  plan_name: "Plus",
-  monthly_price_rm: 25,
+  plan_code: "pro",
+  plan_name: "Pro",
+  monthly_price_rm: 49,
   users: 1,
-  max_users: 1,
+  max_users: 3,
   devices: 3,
-  max_devices: 3,
+  max_devices: 10,
   projects: 3,
-  max_projects: 3,
-  max_widgets: 18,
-  retention_days: 30,
-  features: ["GPS", "Camera URL", "Browser push", "30-day history"],
+  max_projects: 10,
+  max_widgets: 30,
+  retention_days: 90,
+  features: ["GPS", "Camera URL", "Browser push", "90-day history", "Advanced dashboards"],
 };
 
 function normalizePlanCode(code?: string) {
-  return code === "starter" ? "plus" : (code || "free");
+  return code === "starter" ? "plus" : (code || "pro");
 }
 
 function priceLabel(usage: UsageSummary | null, profile: UserProfile | null) {
@@ -155,7 +155,7 @@ export function SettingsPage() {
   }
 
   const signedIn = Boolean(profile);
-  const currentPlanName = usage?.plan_name ?? planCatalog.find((plan) => plan.code === activePlanCode)?.name ?? "Free";
+  const currentPlanName = usage?.plan_name ?? planCatalog.find((plan) => plan.code === activePlanCode)?.name ?? "Pro";
 
   return (
     <section className="support-page settings-page">

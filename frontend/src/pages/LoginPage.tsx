@@ -20,9 +20,9 @@ function AuthField({ icon, label, children }: { icon: ReactNode; label: string; 
 export function LoginPage({ onLogin, onCancel }: { onLogin: (session: Session) => void; onCancel?: () => void }) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [tenantName, setTenantName] = useState("Rectronx Customer Lab");
-  const [fullName, setFullName] = useState("Mahesh Rajagopal");
-  const [email, setEmail] = useState("demo@sparkiot.dev");
-  const [password, setPassword] = useState("SparkDemo123!");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [resetMessage, setResetMessage] = useState("");
   const [resetRequested, setResetRequested] = useState(false);
@@ -72,21 +72,19 @@ export function LoginPage({ onLogin, onCancel }: { onLogin: (session: Session) =
       setResetRequested(false);
       setResetToken("");
     }
-    if (nextMode === "register" && email === "demo@sparkiot.dev") setEmail("mahesh@example.com");
-    if (nextMode === "reset" && email === "demo@sparkiot.dev") setEmail("mahesh@example.com");
   }
 
   const title = mode === "register"
-    ? "Create your Spark IoT Starter workspace"
+    ? "Create your Spark IoT Pro workspace"
     : mode === "reset"
       ? "Reset your Spark IoT password"
       : "Sign in to your IoT control center";
 
   const intro = mode === "register"
-    ? "Start with the RM25-style limits: 1 user, 3 projects, 3 devices, 30-day data, GPS, camera and push-ready notifications."
+    ? "Create a real Pro account for board testing: more projects, more devices, 90-day history, GPS, camera and push-ready notifications."
     : mode === "reset"
       ? "Request a one-time reset token, set a new password, then sign in again. Existing sessions are revoked after reset."
-      : "Use the demo login or create a Starter account when you are ready to test real tenant APIs.";
+      : "Sign in to your Spark IoT workspace, or create a Pro account when you are ready to test real boards.";
 
   return (
     <main className="login-screen">
@@ -96,7 +94,7 @@ export function LoginPage({ onLogin, onCancel }: { onLogin: (session: Session) =
         <p className="muted-text auth-intro">{intro}</p>
         <div className="auth-mode-tabs" role="tablist" aria-label="Authentication mode" data-testid="auth-tabs">
           <button type="button" className={mode === "login" ? "active" : ""} onClick={() => changeMode("login")}>Existing account</button>
-          <button type="button" className={mode === "register" ? "active" : ""} onClick={() => changeMode("register")}>Create Starter account</button>
+          <button type="button" className={mode === "register" ? "active" : ""} onClick={() => changeMode("register")}>Create Pro account</button>
           <button type="button" className={mode === "reset" ? "active" : ""} onClick={() => changeMode("reset")}>Reset password</button>
         </div>
         <form className="auth-form" data-testid="auth-form" onSubmit={submit}>
@@ -119,7 +117,7 @@ export function LoginPage({ onLogin, onCancel }: { onLogin: (session: Session) =
           <button className="primary auth-primary-action" data-testid="auth-primary-action">{mode === "register" ? "Create account" : mode === "reset" ? (resetRequested ? "Update password" : "Send reset link") : "Sign in"}</button>
           {onCancel && <button type="button" className="auth-secondary-action" onClick={onCancel}>Continue demo mode</button>}
         </form>
-        <p className="muted-text auth-footnote">{mode === "register" ? "After signup, use the Launch Wizard to build your first project, template, device and Arduino sketch." : mode === "reset" ? "For production, connect SMTP later. During MVP testing, the API returns a reset token directly." : "Demo: demo@sparkiot.dev / SparkDemo123!"}</p>
+        <p className="muted-text auth-footnote">{mode === "register" ? "After signup, verify your email, create your first project, add a device and generate Arduino code." : mode === "reset" ? "For production, connect SMTP later. During MVP testing, the API returns a reset token directly." : "Use the account you registered. Demo mode stays available as a separate testing shortcut."}</p>
       </section>
     </main>
   );

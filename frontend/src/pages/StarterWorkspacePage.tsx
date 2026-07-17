@@ -26,7 +26,7 @@ export function StarterWorkspacePage({
     <main className="starter-workspace">
       <section className="starter-hero">
         <div>
-          <span className="section-kicker">Starter workspace ready</span>
+          <span className="section-kicker">Pro workspace ready</span>
           <h1>Welcome to Spark IoT{user?.full_name ? `, ${user.full_name.split(" ")[0]}` : ""}</h1>
           <p>Connect your first board in under 5 minutes. Your workspace is ready, but no real project, device or dashboard has been created yet.</p>
           <div className="starter-actions">
@@ -55,8 +55,8 @@ export function StarterWorkspacePage({
           <button type="button" className="starter-link-button" onClick={onOpenSetupFlow}>Open project builder <ArrowRight size={16} /></button>
         </article>
         <article className="starter-panel compact">
-          <div className="starter-panel-heading"><ShieldCheck size={18} /><span>Starter limits</span></div>
-          <p>1 user, 3 projects, 3 devices, GPS, camera, push-ready notifications and 30-day data history.</p>
+          <div className="starter-panel-heading"><ShieldCheck size={18} /><span>Pro access</span></div>
+          <p>3 users, 10 projects, 10 devices, GPS, camera, push-ready notifications and 90-day data history.</p>
         </article>
         <article className="starter-panel compact">
           <div className="starter-panel-heading"><Cpu size={18} /><span>Board ready</span></div>

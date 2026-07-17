@@ -163,7 +163,7 @@ def seed() -> None:
             ensure_demo_templates(db)
             db.commit()
             return
-        tenant = Tenant(id=DEMO_TENANT_ID, name="Rectronx Demo", plan_code="plus")
+        tenant = Tenant(id=DEMO_TENANT_ID, name="Rectronx Demo", plan_code="pro")
         db.add(tenant)
         db.flush()
         user = User(tenant_id=tenant.id, email=DEMO_EMAIL, full_name="Rectronx Demo", password_hash=hash_secret(DEMO_PASSWORD))

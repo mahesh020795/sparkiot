@@ -86,7 +86,7 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
         <div>
           <span className="section-kicker">Data vault</span>
           <h2>30-day data history</h2>
-          <p>Telemetry, GPS trails and chart data are retained for the Starter plan window and can be exported for reports or board debugging.</p>
+          <p>Telemetry, GPS trails and chart data are retained for the Pro plan window and can be exported for reports or board debugging.</p>
         </div>
         <div className="history-status-card">
           <History size={18} />

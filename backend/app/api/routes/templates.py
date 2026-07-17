@@ -89,7 +89,7 @@ def create_template(payload: TemplateStudioUpdate, user: User = Depends(current_
     if existing:
         raise HTTPException(
             status_code=409,
-            detail={"code": "template_project_exists", "message": "Starter plan allows one template per project"},
+            detail={"code": "template_project_exists", "message": "Current plan allows one template per project"},
         )
     if payload.dashboard.revision != dashboard.revision:
         raise HTTPException(

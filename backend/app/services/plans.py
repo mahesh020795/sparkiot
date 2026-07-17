@@ -76,12 +76,12 @@ class PlanLimitError(ValueError):
 
 
 def normalize_plan_code(plan_code: str | None) -> str:
-    normalized = (plan_code or "free").strip().lower()
+    normalized = (plan_code or "pro").strip().lower()
     return LEGACY_PLAN_ALIASES.get(normalized, normalized)
 
 
 def get_plan(plan_code: str | None) -> PlanDefinition:
-    return PLAN_CATALOG.get(normalize_plan_code(plan_code), PLAN_CATALOG["free"])
+    return PLAN_CATALOG.get(normalize_plan_code(plan_code), PLAN_CATALOG["pro"])
 
 
 def tenant_plan(db: Session, tenant_id: str) -> PlanDefinition:

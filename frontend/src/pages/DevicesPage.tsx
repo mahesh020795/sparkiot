@@ -20,7 +20,7 @@ type Props = {
 const boardOptions: BoardType[] = ["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"];
 
 export function DevicesPage({ devices, templates, projects = [], accountMode = false, onCreateDevice, onRegenerateToken, onUpdateDevice, onDeleteDevice }: Props) {
-  const deviceLimit = 3;
+  const deviceLimit = 10;
   const isAtLimit = devices.length >= deviceLimit;
   const [tokenStates, setTokenStates] = useState<Record<string, "idle" | "saving" | "saved" | "error">>({});
   const [provisionOpen, setProvisionOpen] = useState(false);
@@ -89,14 +89,14 @@ export function DevicesPage({ devices, templates, projects = [], accountMode = f
     <section className="support-page device-provisioning-page device-system-page" data-testid="devices-page">
       <div className="library-toolbar provisioning-toolbar">
         <div>
-          <strong>{devices.length}/3 devices used</strong>
-          <span>Starter plan supports three active boards across three projects.</span>
+          <strong>{devices.length}/10 devices used</strong>
+          <span>Pro access supports ten active boards across customer projects.</span>
         </div>
         <button
           className="primary"
           disabled={(accountMode && isAtLimit) || !onCreateDevice}
           aria-disabled={(accountMode && isAtLimit) || !onCreateDevice}
-          title={isAtLimit ? "Starter plan device limit reached" : accountMode ? "Provision device" : "Sign in to provision real devices"}
+          title={isAtLimit ? "Pro plan device limit reached" : accountMode ? "Provision device" : "Sign in to provision real devices"}
           onClick={() => setProvisionOpen((current) => !current)}
         >
           {isAtLimit ? <Lock size={16} /> : <Plus size={16} />}

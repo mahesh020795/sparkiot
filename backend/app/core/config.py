@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     starter_max_users: int = 1
     starter_max_devices: int = 3
     starter_max_projects: int = 3
-    starter_max_widgets: int = 18
+    starter_max_widgets: int = 30
     starter_retention_days: int = 30
 
     @property

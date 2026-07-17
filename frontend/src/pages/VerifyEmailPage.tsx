@@ -52,7 +52,7 @@ export function VerifyEmailPage({
         <span className="onboarding-icon"><Mail size={24} /></span>
         <span className="section-kicker">Secure workspace setup</span>
         <h1>Verify your email</h1>
-        <p>We created your Spark IoT Starter workspace for <strong>{user?.email}</strong>. Verify the email before creating production projects and device tokens.</p>
+        <p>We created your Spark IoT Pro workspace for <strong>{user?.email}</strong>. Verify the email before creating production projects and device tokens.</p>
         <div className="verify-token-row">
           <input aria-label="Verification token" value={token} onChange={(event) => setToken(event.target.value)} placeholder="Paste verification token" />
           <button className="primary" type="button" onClick={() => void confirm()} disabled={!token.trim() || state === "loading"}><CheckCircle2 size={16} /> Verify</button>

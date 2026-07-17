@@ -15,7 +15,7 @@ class Tenant(Base):
     __tablename__ = "tenants"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     name: Mapped[str] = mapped_column(String(160), nullable=False)
-    plan_code: Mapped[str] = mapped_column(String(40), default="free", nullable=False)
+    plan_code: Mapped[str] = mapped_column(String(40), default="pro", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 

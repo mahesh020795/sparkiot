@@ -146,7 +146,7 @@ class DashboardUpdate(BaseModel):
         allowed = {"gauge", "meter", "value", "led", "text", "push_button", "switch", "slider", "chart", "gps", "camera", "date", "time", "day", "serial_lcd", "battery", "signal", "schedule", "power_hub", "event_monitor"}
         max_widgets = get_settings().starter_max_widgets
         if len(widgets) > max_widgets:
-            raise ValueError(f"Starter plan allows {max_widgets} widgets per dashboard")
+            raise ValueError(f"Current plan allows {max_widgets} widgets per dashboard")
         for widget in widgets:
             if widget.get("type") not in allowed:
                 raise ValueError(f"Unsupported widget type: {widget.get('type')}")
