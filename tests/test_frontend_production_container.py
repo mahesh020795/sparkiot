@@ -44,6 +44,8 @@ def test_compose_exposes_production_frontend_on_port_80_with_5173_compatibility(
     assert '"80:80"' in compose
     assert '"5173:80"' in compose
     assert "VITE_API_BASE: ${VITE_API_BASE:-/api/v1}" in compose
+    assert "VITE_MQTT_HOST: ${VITE_MQTT_HOST:-iot.rectronx.com}" in compose
+    assert "VITE_MQTT_PORT: ${VITE_MQTT_PORT:-1883}" in compose
 
 
 def test_docs_explain_production_frontend_not_vite_dev_server():
@@ -51,8 +53,8 @@ def test_docs_explain_production_frontend_not_vite_dev_server():
 
     for expected in [
         "The Docker frontend image serves the built React app with Nginx",
-        "http://34.73.29.12",
-        "http://34.73.29.12:5173",
+        "http://iot.rectronx.com",
+        "http://iot.rectronx.com:5173",
         "Vite dev server is not used in the production Compose stack",
     ]:
         assert expected in docs

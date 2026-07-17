@@ -48,7 +48,7 @@ Standard Arduino Uno/Nano boards do not have network access by themselves. They 
 
 const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* BROKER_HOST = "34.73.29.12";
+const char* BROKER_HOST = "iot.rectronx.com";
 const int BROKER_PORT = 1883;
 
 const char* SPARK_TENANT_ID = "demo-tenant";
@@ -158,7 +158,7 @@ ACK packets do not include the token because they are used as command-log confir
 ## Notes for production
 
 - Use a domain and TLS before public customer use.
-- Do not use `localhost` from a real board. From ESP32/ESP8266, `localhost` means the board itself; use your VPS IP or production domain, such as `34.73.29.12` for the current test server.
+- Do not use `localhost` from a real board. From ESP32/ESP8266, `localhost` means the board itself; use your VPS IP or production domain, such as `iot.rectronx.com` for the current test server.
 - Do not hard-code production tokens in public repositories.
 - Rotate device tokens from the Spark IoT device provisioning screen when a board is lost or shared.
 - Use the Code tab to generate the correct tenant, device, token, and virtual pin mappings from each customer template.

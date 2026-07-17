@@ -69,10 +69,10 @@ Find your WiFi adapter IPv4 address, for example:
 
 Use that value as `BROKER_HOST` in the Arduino sketch.
 
-For the current Google Cloud VPS test, use the VM external IP as the broker host:
+For the current Rectronx subdomain test, use the domain as the broker host:
 
 ```cpp
-const char* mqtt_server = "34.73.29.12";
+const char* mqtt_server = "iot.rectronx.com";
 const int mqtt_port = 1883;
 ```
 
@@ -231,10 +231,10 @@ Local Docker Compose:
 python scripts/board_loop_smoke.py
 ```
 
-Current Google Cloud VPS:
+Current Rectronx subdomain test:
 
 ```bash
-python scripts/board_loop_smoke.py --api-base http://34.73.29.12/api/v1
+python scripts/board_loop_smoke.py --api-base http://iot.rectronx.com/api/v1
 ```
 
 Use the Nginx-proxied `/api/v1` URL for production-style VPS tests. Direct port `8000` is intentionally not required from the public internet.

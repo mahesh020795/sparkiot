@@ -55,12 +55,12 @@ Password reset tokens are stored only as SHA-256 hashes and expire after 30 minu
 Spark IoT is SMTP-ready. Configure these values in `.env` to send real verification and reset emails:
 
 ```env
-APP_PUBLIC_URL=https://sparkiot.com
+APP_PUBLIC_URL=https://iot.rectronx.com
 SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
 SMTP_USERNAME=your-smtp-user
 SMTP_PASSWORD=your-smtp-password
-SMTP_FROM_EMAIL=Spark IoT <no-reply@sparkiot.com>
+SMTP_FROM_EMAIL=Spark IoT <no-reply@rectronx.com>
 SMTP_USE_TLS=true
 ```
 
@@ -179,7 +179,7 @@ Included examples:
 - `examples/arduino/SparkIoT_ESP32/SparkIoT_ESP32.ino`
 - `examples/arduino/SparkIoT_ESP8266/SparkIoT_ESP8266.ino`
 
-Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Google Cloud VPS test, use `34.73.29.12`.
+Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Rectronx subdomain test, use `iot.rectronx.com`.
 
 For authenticated customer workspaces, open `Projects` to create up to three Starter plan project spaces. Then open `Templates`, click `Create template`, select the project, board and starter preset, and save the generated Blynk-style virtual-pin model. After that, open `Devices`, click `Provision device`, select the project and board, and copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Spark IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
 
@@ -254,11 +254,20 @@ bash scripts/deploy_vps.sh
 For the current demo VPS:
 
 ```env
-CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173
+CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://iot.rectronx.com,http://iot.rectronx.com:5173,https://iot.rectronx.com,https://iot.rectronx.com:5173
+APP_PUBLIC_URL=http://iot.rectronx.com
 VITE_API_BASE=/api/v1
+VITE_MQTT_HOST=iot.rectronx.com
+VITE_MQTT_PORT=1883
 ```
 
-On the current demo VPS, open the production frontend at `http://34.73.29.12`. The old testing URL `http://34.73.29.12:5173` is kept as a temporary compatibility alias that serves the same Nginx-built app, not the Vite dev server.
+For the current Rectronx subdomain test, create this DNS record before switching users to the domain:
+
+| Type | Name | Value | Notes |
+| --- | --- | --- | --- |
+| A | `iot` | Your Google Cloud VM external IP | Use DNS-only if your DNS provider has a proxy option, because raw MQTT on port 1883 must reach the VM directly. |
+
+On the current demo VPS, open the production frontend at `http://iot.rectronx.com`. The old testing URL `http://iot.rectronx.com:5173` is kept as a temporary compatibility alias that serves the same Nginx-built app, not the Vite dev server.
 
 After GitHub is connected, deploy updates on the VPS with:
 

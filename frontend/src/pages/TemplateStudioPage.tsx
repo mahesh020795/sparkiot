@@ -37,6 +37,8 @@ const widgetLibraryGroups = [
   { title: "Output widgets", kind: "Output", caption: "Display telemetry, media and board status", types: ["gauge", "meter", "value", "led", "chart", "gps", "camera", "serial_lcd", "battery", "signal"] }
 ] as const;
 const STARTER_WIDGET_LIMIT = 18;
+const PUBLIC_MQTT_HOST = import.meta.env.VITE_MQTT_HOST ?? "iot.rectronx.com";
+const PUBLIC_MQTT_PORT = Number(import.meta.env.VITE_MQTT_PORT ?? 1883);
 const dataTypes: Datastream["dataType"][] = ["integer", "float", "string", "boolean", "gps", "image", "time", "date"];
 const boards: DeviceTemplate["board"][] = ["ESP32", "ESP8266", "Arduino", "Raspberry Pi Pico", "STM32"];
 const stepConfig = [
@@ -461,7 +463,7 @@ export function TemplateStudioPage({
                 <span><small>Board</small><strong>{template.board}</strong></span>
                 <span><small>Device ID</small><strong>{device?.id ?? "YOUR_DEVICE_ID"}</strong></span>
                 <span><small>Token</small><strong>{tokenLabel}</strong></span>
-                <span><small>Broker</small><strong>34.73.29.12:1883</strong></span>
+                <span><small>Broker</small><strong>{PUBLIC_MQTT_HOST}:{PUBLIC_MQTT_PORT}</strong></span>
               </div>
             </div>
             <div className="section-title"><h2>Arduino IDE code generator</h2><button onClick={copySketch}><ClipboardCopy size={16} />Copy</button></div>
@@ -895,12 +897,12 @@ function buildArduinoSketch(template: DeviceTemplate, device?: Device) {
 // - SparkIoT from arduino/SparkIoT in this repository
 // - PubSubClient by Nick O'Leary
 // IMPORTANT: For local Docker, BROKER_HOST must be your PC LAN IP, not 127.0.0.1.
-// For the current Google Cloud VPS test, use 34.73.29.12.
+// For the current Rectronx test subdomain, use ${PUBLIC_MQTT_HOST}.
 
 const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* BROKER_HOST = "34.73.29.12";
-const int BROKER_PORT = 1883;
+const char* BROKER_HOST = "${PUBLIC_MQTT_HOST}";
+const int BROKER_PORT = ${PUBLIC_MQTT_PORT};
 
 const char* SPARK_TENANT_ID = "${tenantId}";
 const char* SPARK_DEVICE_ID = "${deviceId}";

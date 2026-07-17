@@ -29,7 +29,7 @@ def test_board_testing_docs_explain_one_command_smoke_path():
         "One-command board loop smoke test",
         "python scripts/board_loop_smoke.py",
         "telemetry -> command -> ACK -> command log",
-        "--api-base http://34.73.29.12/api/v1",
+        "--api-base http://iot.rectronx.com/api/v1",
     ]:
         assert expected in docs
 

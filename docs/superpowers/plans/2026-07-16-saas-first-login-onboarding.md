@@ -1224,11 +1224,11 @@ Expected: CI and deploy both complete with `success`.
 Run:
 
 ```powershell
-$health = Invoke-WebRequest -UseBasicParsing 'http://34.73.29.12/health/live' -TimeoutSec 20
-$ready = Invoke-WebRequest -UseBasicParsing 'http://34.73.29.12/health/ready' -TimeoutSec 20
-$page = Invoke-WebRequest -UseBasicParsing 'http://34.73.29.12/' -TimeoutSec 20
+$health = Invoke-WebRequest -UseBasicParsing 'http://iot.rectronx.com/health/live' -TimeoutSec 20
+$ready = Invoke-WebRequest -UseBasicParsing 'http://iot.rectronx.com/health/ready' -TimeoutSec 20
+$page = Invoke-WebRequest -UseBasicParsing 'http://iot.rectronx.com/' -TimeoutSec 20
 $asset = [regex]::Match($page.Content, 'src="([^"]+\.js)"').Groups[1].Value
-$js = Invoke-WebRequest -UseBasicParsing "http://34.73.29.12$asset" -TimeoutSec 30
+$js = Invoke-WebRequest -UseBasicParsing "http://iot.rectronx.com$asset" -TimeoutSec 30
 [PSCustomObject]@{
   Live=$health.StatusCode
   Ready=$ready.StatusCode

@@ -8,7 +8,7 @@ The first-login experience must not feel empty or broken. It also must not prete
 
 ## Customer flow
 
-1. Customer visits `sparkiot.com`.
+1. Customer visits `iot.rectronx.com`.
 2. Customer clicks `Start Free Trial`.
 3. Customer registers an account.
 4. Customer verifies email.

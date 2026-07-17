@@ -49,12 +49,21 @@ docker compose ps
 Set these values for the current demo VPS:
 
 ```env
-CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173
+CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://iot.rectronx.com,http://iot.rectronx.com:5173,https://iot.rectronx.com,https://iot.rectronx.com:5173
+APP_PUBLIC_URL=http://iot.rectronx.com
 VITE_API_BASE=/api/v1
+VITE_MQTT_HOST=iot.rectronx.com
+VITE_MQTT_PORT=1883
 ```
 
 The Docker frontend image serves the built React app with Nginx. Vite dev server is not used in the production Compose stack.
-Open the current demo VPS at `http://34.73.29.12`. The compatibility URL `http://34.73.29.12:5173` is also mapped to the same Nginx container during testing.
+Open the current Rectronx subdomain test at `http://iot.rectronx.com`. The compatibility URL `http://iot.rectronx.com:5173` is also mapped to the same Nginx container during testing.
+
+DNS setup for the temporary Rectronx subdomain:
+
+| Type | Name | Value | Notes |
+| --- | --- | --- | --- |
+| A | `iot` | Your Google Cloud VM external IP | Keep DNS-only if using Cloudflare or another proxy, because MQTT port 1883 is not normal HTTP traffic. |
 
 For VPS use, prefer the deploy script instead of plain Compose. It layers `docker-compose.prod.yml` over `docker-compose.yml`, so PostgreSQL and Valkey are not exposed publicly, and the direct API port 8000 is bound to localhost only. HTTP fallback should use `http://YOUR_VPS_IP/api/v1` through Nginx, while MQTT devices continue to use public port 1883.
 
@@ -94,7 +103,7 @@ The workflow can also be run manually from the GitHub Actions tab.
 Configure these GitHub repository secrets:
 
 ```text
-VPS_HOST=34.73.29.12
+VPS_HOST=iot.rectronx.com
 VPS_USER=maheshvaran_rajagopal
 VPS_SSH_KEY=<private SSH key allowed to access the VM>
 VPS_APP_DIR=/home/maheshvaran_rajagopal/spark-iot
@@ -132,8 +141,11 @@ Keep production-only values in VPS `.env`, never in Git:
 
 ```env
 ENVIRONMENT=production
-CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://34.73.29.12,http://34.73.29.12:5173
+CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://iot.rectronx.com,http://iot.rectronx.com:5173,https://iot.rectronx.com,https://iot.rectronx.com:5173
 VITE_API_BASE=/api/v1
+APP_PUBLIC_URL=http://iot.rectronx.com
+VITE_MQTT_HOST=iot.rectronx.com
+VITE_MQTT_PORT=1883
 JWT_SECRET=<long-random-secret>
 ```
 

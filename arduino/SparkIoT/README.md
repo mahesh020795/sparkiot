@@ -27,7 +27,7 @@ Use the real broker IP or domain from the Spark IoT server. Do not use `localhos
 Current test VPS broker:
 
 ```cpp
-const char* BROKER_HOST = "34.73.29.12";
+const char* BROKER_HOST = "iot.rectronx.com";
 const int BROKER_PORT = 1883;
 ```
 

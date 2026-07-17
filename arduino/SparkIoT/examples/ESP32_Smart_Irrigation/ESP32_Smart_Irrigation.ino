@@ -2,7 +2,7 @@
 
 const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* BROKER_HOST = "34.73.29.12";
+const char* BROKER_HOST = "iot.rectronx.com";
 const int BROKER_PORT = 1883;
 
 const char* SPARK_TENANT_ID = "demo-tenant";
@@ -41,4 +41,3 @@ void loop() {
     SparkIoT.virtualWrite("V7", "Boot OK");
   }
 }
-
