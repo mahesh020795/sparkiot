@@ -315,6 +315,8 @@ describe("App", () => {
     expect(css).toContain("overflow: visible;");
     expect(css).toContain(".spark-ui .spark-page-header-selector {\n  position: relative;\n  z-index: 80;");
     expect(css).toContain(".spark-ui .spark-select-menu {\n  position: absolute;\n  z-index: 120;");
+    expect(css).toContain(".spark-ui.dashboard-shell .spark-page-header-grid.dashboard-header-grid,");
+    expect(css).toContain(".spark-ui.dashboard-shell .project-switcher .spark-select-menu {\n  z-index: 900;");
     fireEvent.click(screen.getByRole("option", { name: "Energy Monitor" }));
     expect(await screen.findByRole("heading", { name: "Energy Monitor Dashboard" })).toBeInTheDocument();
     const navigation = screen.getByRole("navigation", { name: "Main navigation" });

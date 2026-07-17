@@ -5024,3 +5024,32 @@ body {
   cursor: not-allowed;
   opacity: 0.68;
 }
+
+/*
+  Dashboard selector layering.
+  The dashboard header has older responsive rules that use overflow clipping to
+  protect metric cards. The project dropdown is an intentional overlay, so it
+  must opt out of that clipping and sit above the widget canvas.
+*/
+.spark-ui.dashboard-shell .app-page-header {
+  z-index: 500;
+  overflow: visible;
+}
+
+.spark-ui.dashboard-shell .spark-page-header-grid.dashboard-header-grid,
+.spark-ui.dashboard-shell .product-header-grid.dashboard-header-grid {
+  overflow: visible;
+}
+
+.spark-ui.dashboard-shell .product-header-grid .spark-page-header-selector,
+.spark-ui.dashboard-shell .spark-page-header-selector,
+.spark-ui.dashboard-shell .project-switcher {
+  position: relative;
+  z-index: 700;
+  overflow: visible;
+}
+
+.spark-ui.dashboard-shell .spark-page-header-selector .spark-select-menu,
+.spark-ui.dashboard-shell .project-switcher .spark-select-menu {
+  z-index: 900;
+}
