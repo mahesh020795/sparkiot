@@ -42,6 +42,8 @@ A customer workspace/dashboard instance. A project chooses a template, then owns
 
 A physical board credential and MQTT namespace. One project can support more than one device later, but the starter plan currently limits total active devices to three. Devices store topics and a one-time token model. Tokens are revealed once, stored hashed in production, and can be regenerated.
 
+When a device is provisioned for a project that was created from a template, any dashboard widgets in that project template with an empty `deviceId` are automatically bound to the newly created device. In account mode this updated template/dashboard is saved back through the template API, so the generated dashboard is immediately ready for telemetry and command widgets.
+
 ### Datastream / virtual pin
 
 The Blynk-style contract between dashboard widgets and firmware. Examples: `V0` temperature float, `V3` pump boolean, `V7` GPS, `V10` camera URL, `V11` time input, `V12` schedule input.
@@ -149,6 +151,7 @@ Important behavior:
 - Copy must work on HTTP test VPS, so use `copyText()` fallback instead of direct `navigator.clipboard`.
 - Demo mode token regeneration rotates a local demo token.
 - Account mode token regeneration calls the backend and reveals the new one-time token.
+- Provisioning the first device for a template-created project binds unassigned dashboard widgets to that device and persists the updated template in account mode.
 - Delete uses `ConfirmDialog`.
 
 ### Live Test / Board Test

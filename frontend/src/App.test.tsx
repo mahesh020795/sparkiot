@@ -958,6 +958,105 @@ describe("App", () => {
     expect(screen.getByText("Project created. Next: choose a template and provision a board.")).toBeInTheDocument();
   });
 
+  it("binds a newly provisioned account device to a project dashboard cloned from a template", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
+    const sourceProject = { id: "source-project", name: "Source Template Project", description: "Reusable template host", is_active: true };
+    const createdProject = { id: "new-project", name: "Aquaponics Lab", description: "Fish tank monitoring", is_active: true };
+    const sourceTemplate = {
+      id: "template-source",
+      name: "Aquaponics Starter",
+      board: "ESP32",
+      description: "Reusable aquaponics template",
+      revision: 1,
+      datastreams: [
+        { id: "source-temp", name: "Water Temperature", pin: "V0", dataType: "float", unit: "C", min: 0, max: 60, color: "#2563eb" },
+        { id: "source-pump", name: "Pump", pin: "V1", dataType: "boolean", unit: "", min: 0, max: 1, color: "#10b981" }
+      ],
+      notifications: [],
+      dashboard: {
+        id: "source-dashboard",
+        project_id: "source-project",
+        name: "Aquaponics Starter Dashboard",
+        revision: 1,
+        widgets: [
+          { id: "source-widget-temp", type: "gauge", title: "Water Temperature", x: 0, y: 0, w: 3, h: 3, deviceId: "", channel: "V0", datastreamId: "source-temp" },
+          { id: "source-widget-pump", type: "switch", title: "Pump", x: 3, y: 0, w: 3, h: 2, deviceId: "", channel: "V1", datastreamId: "source-pump" }
+        ]
+      }
+    };
+    const createdDashboard = { id: "new-dashboard", project_id: "new-project", name: "Aquaponics Lab Dashboard", revision: 1, widgets: [] };
+    const createdTemplate = {
+      ...sourceTemplate,
+      id: "template-created",
+      name: "Aquaponics Lab",
+      description: "Aquaponics Starter template applied to Aquaponics Lab",
+      datastreams: sourceTemplate.datastreams.map((stream, index) => ({ ...stream, id: index === 0 ? "new-temp" : "new-pump" })),
+      dashboard: {
+        ...createdDashboard,
+        widgets: sourceTemplate.dashboard.widgets.map((widget, index) => ({
+          ...widget,
+          id: `new-widget-${index}`,
+          datastreamId: index === 0 ? "new-temp" : "new-pump",
+          deviceId: ""
+        }))
+      }
+    };
+    const createdDevice = {
+      id: "aquaponics-node",
+      project_id: "new-project",
+      name: "Aquaponics ESP32",
+      board: "ESP32",
+      is_online: false,
+      token: "spk_once_aquaponics",
+      telemetry_topic: "spark/v1/account-tenant/aquaponics-node/telemetry/{channel}",
+      command_topic: "spark/v1/account-tenant/aquaponics-node/command/{channel}"
+    };
+    let boundTemplateBody = "";
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/demo/templates")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/auth/me")) return new Response(JSON.stringify({ full_name: "Demo User", email: "demo@sparkiot.dev", tenant_id: "account-tenant", plan_code: "plus", email_verified: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/onboarding")) return new Response(JSON.stringify({ current_step: "dashboard", completed_steps: [], demo_viewed: true, first_project_id: "source-project" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/tenant/usage")) return new Response(JSON.stringify(plusUsage({ projects: 1, devices: 0 })), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/projects") && init?.method === "POST") return new Response(JSON.stringify(createdProject), { status: 201, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/projects")) return new Response(JSON.stringify([sourceProject]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/dashboards/project/new-project")) return new Response(JSON.stringify(createdDashboard), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/dashboards/project/source-project")) return new Response(JSON.stringify(sourceTemplate.dashboard), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/templates") && init?.method === "POST") return new Response(JSON.stringify(createdTemplate), { status: 201, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/templates")) return new Response(JSON.stringify([sourceTemplate]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/templates/template-created") && init?.method === "PUT") {
+        boundTemplateBody = String(init.body ?? "");
+        return new Response(boundTemplateBody, { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      if (url.endsWith("/devices") && init?.method === "POST") return new Response(JSON.stringify(createdDevice), { status: 201, headers: { "Content-Type": "application/json" } });
+      if (url.endsWith("/devices")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/notifications") || url.includes("/schedules")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (url.includes("/telemetry/projects/")) return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Projects"));
+    fireEvent.click(screen.getByRole("button", { name: /Create project/i }));
+    fireEvent.change(screen.getByLabelText("Project name"), { target: { value: "Aquaponics Lab" } });
+    fireEvent.change(screen.getByLabelText("Project description"), { target: { value: "Fish tank monitoring" } });
+    fireEvent.change(screen.getByLabelText("Project template"), { target: { value: "template-source" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save project/i }));
+
+    expect(await screen.findByRole("article", { name: /Aquaponics Lab project/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Devices"));
+    fireEvent.click(screen.getByRole("button", { name: /Provision device/i }));
+    fireEvent.change(screen.getByLabelText("Project"), { target: { value: "new-project" } });
+    fireEvent.change(screen.getByLabelText("Device name"), { target: { value: "Aquaponics ESP32" } });
+    fireEvent.click(screen.getByRole("button", { name: /Create device/i }));
+
+    expect(await screen.findByRole("article", { name: /Aquaponics ESP32 provisioning card/i })).toBeInTheDocument();
+    await vi.waitFor(() => expect(boundTemplateBody).toContain('"deviceId":"aquaponics-node"'));
+    const savedTemplate = JSON.parse(boundTemplateBody);
+    expect(savedTemplate.dashboard.widgets.every((widget: { deviceId?: string }) => widget.deviceId === "aquaponics-node")).toBe(true);
+  });
+
   it("creates and saves real account templates for signed-in projects", async () => {
     localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "account-token", refresh_token: "refresh-token" }));
     const accountProject = { id: "account-project", name: "Customer Greenhouse", description: "Live protected tenant workspace", is_active: true };

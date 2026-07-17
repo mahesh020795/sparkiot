@@ -280,7 +280,23 @@ export function App() {
 
   async function createAccountDevice(device: DeviceCreate) {
     const created = await api.createDevice(device);
+    const templatesForDevice = accountTemplates.filter((template) => template.dashboard.project_id === created.project_id);
+    const savedTemplates: DeviceTemplate[] = [];
+    for (const template of templatesForDevice) {
+      const bound = bindUnassignedTemplateWidgetsToDevice(template, created);
+      if (bound !== template) {
+        savedTemplates.push(await api.saveTemplate(bound));
+      }
+    }
     setAccountDevices((current) => [created, ...current]);
+    if (savedTemplates.length) {
+      setAccountTemplates((current) => current.map((template) => savedTemplates.find((saved) => saved.id === template.id) ?? template));
+      setAccountDashboards((current) => ({
+        ...current,
+        ...Object.fromEntries(savedTemplates.map((template) => [template.dashboard.project_id, template.dashboard]))
+      }));
+      setTemplateSaveStates((current) => ({ ...current, ...Object.fromEntries(savedTemplates.map((template) => [template.id, "saved" as SaveState])) }));
+    }
     return created;
   }
 
@@ -296,6 +312,7 @@ export function App() {
       telemetry_topic: `spark/v1/demo-tenant/${id}/telemetry/{channel}`,
       command_topic: `spark/v1/demo-tenant/${id}/command/{channel}`
     };
+    setTemplates((current) => current.map((template) => bindUnassignedTemplateWidgetsToDevice(template, created)));
     setDemoDeviceRows((current) => [created, ...current]);
     return created;
   }
@@ -1249,6 +1266,18 @@ function cloneTemplateForProject(source: DeviceTemplate, project: Project, dashb
       ...dashboard,
       name: `${project.name} Dashboard`,
       widgets
+    }
+  };
+}
+
+function bindUnassignedTemplateWidgetsToDevice(template: DeviceTemplate, device: Device): DeviceTemplate {
+  if (template.dashboard.project_id !== device.project_id) return template;
+  if (!template.dashboard.widgets.some((widget) => !widget.deviceId)) return template;
+  return {
+    ...template,
+    dashboard: {
+      ...template.dashboard,
+      widgets: template.dashboard.widgets.map((widget) => widget.deviceId ? widget : { ...widget, deviceId: device.id })
     }
   };
 }
