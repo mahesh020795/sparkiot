@@ -25,6 +25,31 @@ afterEach(() => {
 });
 
 describe("DashboardPage account input persistence", () => {
+  it("shows a guided empty dashboard state when no widgets exist", async () => {
+    vi.stubGlobal("WebSocket", undefined);
+    const dashboard: Dashboard = {
+      id: "dashboard-empty",
+      project_id: "project-empty",
+      name: "Empty Dashboard",
+      revision: 1,
+      widgets: [],
+    };
+    vi.spyOn(api, "dashboard").mockResolvedValue(dashboard);
+    vi.spyOn(api, "latest").mockResolvedValue([]);
+    const createDashboard = vi.fn();
+    const previewDemo = vi.fn();
+
+    render(<DashboardPage projectId="project-empty" devices={[]} onCreateDashboard={createDashboard} onPreviewDemo={previewDemo} />);
+
+    expect(await screen.findByRole("heading", { name: /Create your first dashboard/i })).toBeInTheDocument();
+    expect(screen.getByText(/Start with a project and template/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Create dashboard/i }));
+    fireEvent.click(screen.getByRole("button", { name: /View demo dashboard/i }));
+
+    expect(createDashboard).toHaveBeenCalledTimes(1);
+    expect(previewDemo).toHaveBeenCalledTimes(1);
+  });
+
   it("reloads saved time-only input values from protected latest telemetry after refresh", async () => {
     vi.stubGlobal("WebSocket", undefined);
     const device: Device = {

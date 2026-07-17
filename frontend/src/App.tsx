@@ -661,7 +661,15 @@ export function App() {
             onOpenLiveTest={() => setView("live")}
           />
         )}
-        {view === "dashboard" && (isAccountMode ? <DashboardPage key={selectedProjectId} projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} /> : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />)}
+        {view === "dashboard" && (isAccountMode ? (
+          <DashboardPage
+            key={selectedProjectId}
+            projectId={selectedProjectId}
+            devices={selectedDevice ? [selectedDevice] : activeDevices}
+            onCreateDashboard={() => setView("setup")}
+            onPreviewDemo={() => setDemoPreviewMode(true)}
+          />
+        ) : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />)}
         {view === "setup" && (
           <section className="setup-flow-note panel">
             <span className="section-kicker">Setup lives here now</span>
