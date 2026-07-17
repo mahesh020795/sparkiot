@@ -2434,7 +2434,7 @@ main,
   min-height: 100vh;
   background: #f6f8fc;
   color: var(--text-primary);
-  padding: 32px;
+  padding: 28px;
 }
 
 .onboarding-card,
@@ -2442,7 +2442,7 @@ main,
 .starter-panel {
   background: #ffffff;
   border: 1px solid var(--border-subtle);
-  border-radius: 28px;
+  border-radius: 24px;
   box-shadow: var(--shadow-soft);
 }
 
@@ -2480,35 +2480,91 @@ main,
 
 .starter-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.45fr);
+  align-items: stretch;
   gap: 24px;
-  padding: 36px;
+  padding: 28px;
 }
 
 .starter-hero h1 {
-  max-width: 760px;
-  font-size: clamp(2.2rem, 5vw, 4.8rem);
-  line-height: 0.95;
-  letter-spacing: -0.07em;
-  margin: 12px 0;
+  max-width: 620px;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+  margin: 10px 0 12px;
 }
 
 .starter-hero p {
-  max-width: 680px;
+  max-width: 620px;
   color: var(--text-secondary);
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: 1rem;
+  line-height: 1.62;
 }
 
 .starter-empty-preview {
-  min-height: 280px;
-  border: 1px dashed #bfdbfe;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #f8fbff, #ffffff);
-  display: flex;
-  flex-direction: column;
+  min-height: 190px;
+  border: 1px solid #dbe7ff;
+  border-radius: 22px;
+  background: #f8fbff;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-content: center;
+  gap: 16px;
+  padding: 24px;
+}
+
+.starter-empty-preview h2 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+}
+
+.starter-empty-preview p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.starter-empty-icon {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  padding: 28px;
+  border-radius: 16px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+}
+
+.starter-plan-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.starter-plan-strip span {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid #dbe7ff;
+  border-radius: 999px;
+  background: #f8fbff;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.starter-plan-strip span:first-child {
+  color: #087443;
+  background: #ecfdf5;
+  border-color: #bbf7d0;
 }
 
 .starter-grid {
@@ -2522,26 +2578,70 @@ main,
   padding: 24px;
 }
 
+.starter-quickstart {
+  margin-top: 18px;
+}
+
 .starter-panel-heading {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   font-weight: 800;
   color: #0f172a;
 }
 
+.starter-panel-heading small {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .starter-step-list {
   display: grid;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
   gap: 12px;
+  margin: 18px 0;
   padding-left: 0;
   list-style: none;
 }
 
-.starter-step-list li {
+.starter-step-card {
+  position: relative;
   display: grid;
-  gap: 3px;
-  padding: 12px 0;
-  border-bottom: 1px solid #eef2f7;
+  gap: 8px;
+  min-height: 156px;
+  padding: 16px;
+  border: 1px solid #e4ecf7;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+}
+
+.starter-step-card svg {
+  color: #2563eb;
+}
+
+.starter-step-card strong {
+  font-size: 0.98rem;
+  letter-spacing: -0.025em;
+}
+
+.starter-step-card small {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-weight: 750;
+}
+
+.starter-step-number {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 950;
 }
 
 .starter-step-list span,
@@ -2550,7 +2650,7 @@ main,
 }
 
 .starter-link-button {
-  width: 100%;
+  width: auto;
   justify-content: center;
 }
 
@@ -2575,7 +2675,12 @@ main,
 
 @media (max-width: 1100px) {
   .starter-hero,
-  .starter-grid {
+  .starter-grid,
+  .starter-step-list {
+    grid-template-columns: 1fr;
+  }
+
+  .starter-empty-preview {
     grid-template-columns: 1fr;
   }
 }

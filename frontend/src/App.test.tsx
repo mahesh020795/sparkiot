@@ -111,8 +111,12 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByText(/Welcome to Spark IoT/i)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Welcome, Acme/i })).toBeInTheDocument();
+    expect(screen.getByText(/Your Spark IoT Pro workspace is ready/i)).toBeInTheDocument();
     expect(screen.getByText(/No live dashboard yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/Create project/i)).toBeInTheDocument();
+    expect(screen.getByText(/Provision device/i)).toBeInTheDocument();
+    expect(screen.getByText(/View live dashboard/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Create first project/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /View demo dashboard/i })).toBeInTheDocument();
   });
