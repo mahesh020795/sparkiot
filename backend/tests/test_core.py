@@ -193,6 +193,7 @@ def test_usage_returns_free_plus_pro_enterprise_plan_metadata_and_legacy_starter
         Tenant(id="tenant-free", name="Free Lab", plan_code="free"),
         Tenant(id="tenant-plus", name="Plus Lab", plan_code="plus"),
         Tenant(id="tenant-pro", name="Pro Lab", plan_code="pro"),
+        Tenant(id="tenant-max", name="Max Lab", plan_code="max"),
         Tenant(id="tenant-enterprise", name="Enterprise Lab", plan_code="enterprise"),
         Tenant(id="tenant-starter", name="Starter Legacy Lab", plan_code="starter"),
     ]
@@ -202,6 +203,7 @@ def test_usage_returns_free_plus_pro_enterprise_plan_metadata_and_legacy_starter
     free_usage = usage(db, "tenant-free")
     plus_usage = usage(db, "tenant-plus")
     pro_usage = usage(db, "tenant-pro")
+    max_usage = usage(db, "tenant-max")
     enterprise_usage = usage(db, "tenant-enterprise")
     starter_usage = usage(db, "tenant-starter")
 
@@ -210,17 +212,34 @@ def test_usage_returns_free_plus_pro_enterprise_plan_metadata_and_legacy_starter
     assert free_usage["monthly_price_rm"] == 0
     assert free_usage["max_projects"] == 1
     assert free_usage["max_devices"] == 1
+    assert free_usage["message_quota_monthly"] == 40_000
+    assert free_usage["automation_limit"] == 0
     assert free_usage["retention_days"] == 7
     assert plus_usage["plan_code"] == "plus"
     assert plus_usage["plan_name"] == "Plus"
     assert plus_usage["monthly_price_rm"] == 25
     assert plus_usage["max_projects"] == 3
     assert plus_usage["max_devices"] == 3
+    assert plus_usage["message_quota_monthly"] == 1_000_000
+    assert plus_usage["automation_limit"] == 5
     assert pro_usage["plan_code"] == "pro"
     assert pro_usage["monthly_price_rm"] == 49
     assert pro_usage["max_projects"] > plus_usage["max_projects"]
+    assert pro_usage["message_quota_monthly"] == 10_000_000
+    assert pro_usage["automation_limit"] == 20
+    assert max_usage["plan_code"] == "max"
+    assert max_usage["plan_name"] == "Max"
+    assert max_usage["monthly_price_rm"] == 99
+    assert max_usage["max_users"] == 10
+    assert max_usage["max_projects"] == 30
+    assert max_usage["max_devices"] == 30
+    assert max_usage["message_quota_monthly"] == 50_000_000
+    assert max_usage["automation_limit"] == 100
+    assert max_usage["retention_days"] == 365
     assert enterprise_usage["plan_code"] == "enterprise"
     assert enterprise_usage["monthly_price_rm"] is None
+    assert enterprise_usage["message_quota_monthly"] is None
+    assert enterprise_usage["automation_limit"] is None
     assert starter_usage["plan_code"] == "plus"
     assert starter_usage["plan_name"] == "Plus"
 

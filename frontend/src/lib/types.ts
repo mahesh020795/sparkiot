@@ -89,9 +89,13 @@ export type UsageSummary = {
   max_devices: number;
   projects: number;
   max_projects: number;
+  message_quota_monthly?: number | null;
+  automation_limit?: number | null;
   max_widgets: number;
   retention_days: number;
   features: string[];
+  widget_groups?: string[];
+  support?: string;
 };
 
 export type OnboardingState = {

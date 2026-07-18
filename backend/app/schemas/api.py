@@ -380,6 +380,10 @@ class UsageResponse(BaseModel):
     max_devices: int
     projects: int
     max_projects: int
+    message_quota_monthly: int | None
+    automation_limit: int | None
     max_widgets: int
     retention_days: int
     features: list[str]
+    widget_groups: list[str]
+    support: str

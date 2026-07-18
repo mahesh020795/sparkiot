@@ -157,7 +157,8 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
 .data-history-panel .history-table-wrap table { margin-top: 0; width: 100%; }
 .history-footnote { margin: 0; color: #64748b; font-size: 13px; font-weight: 750; }
 @media (max-width: 760px) { .history-hero { grid-template-columns: 1fr; } .history-controls .action-button { width: 100%; justify-content: center; } }
-.notification-inbox .panel-title { align-items: flex-start; }
+.notification-inbox { display: grid; gap: 18px; }
+.notification-inbox .panel-title { align-items: flex-start; margin-bottom: 0; }
 .notification-inbox .notification { margin-top: 10px; padding: 14px; border: 1px solid #e8edf5; border-radius: 16px; background: #f8fafc; }
 .notification-head, .notification-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
 .notification-head strong { min-width: 0; overflow-wrap: anywhere; }

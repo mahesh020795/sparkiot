@@ -39,6 +39,33 @@ const demoSchedules: ScheduleItem[] = [
   }
 ];
 
+const fallbackTimezoneOptions = [
+  "UTC",
+  "Asia/Kuala_Lumpur",
+  "Asia/Singapore",
+  "Asia/Jakarta",
+  "Asia/Bangkok",
+  "Asia/Manila",
+  "Asia/Tokyo",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Australia/Sydney",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "America/New_York",
+  "America/Chicago",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "Africa/Johannesburg",
+];
+
+function getTimezoneOptions() {
+  const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: "timeZone") => string[] }).supportedValuesOf;
+  const browserZones = supportedValuesOf?.("timeZone") ?? [];
+  return Array.from(new Set(["UTC", "Asia/Kuala_Lumpur", ...browserZones, ...fallbackTimezoneOptions])).sort((a, b) => a.localeCompare(b));
+}
+
 export function SchedulesPage({ accountMode, projects, devices, schedules, selectedProjectId, onCreateSchedule, onDeleteSchedule }: Props) {
   const firstProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
   const availableDevices = devices.filter((device) => !firstProject || device.project_id === firstProject.id);
@@ -153,7 +180,12 @@ export function SchedulesPage({ accountMode, projects, devices, schedules, selec
             <label className="premium-schedule-field">
               <span className="schedule-field-icon"><Globe2 size={16} /></span>
               <span className="schedule-field-copy"><small>Timezone</small></span>
-              <input aria-label="Timezone" value={timezone} onChange={(event) => setTimezone(event.target.value)} />
+              <SparkSelect
+                ariaLabel="Timezone"
+                value={timezone}
+                onChange={setTimezone}
+                options={getTimezoneOptions().map((zone) => ({ value: zone, label: zone }))}
+              />
             </label>
           </div>
           <div className="schedule-topic-preview">

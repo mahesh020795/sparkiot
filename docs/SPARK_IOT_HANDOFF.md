@@ -19,14 +19,15 @@ The MVP keeps the architecture simple and cheap: React/Vite frontend, FastAPI mo
 
 ## Account tiers
 
-The UI and backend are moving toward these SaaS plans:
+Spark IoT now uses this official SaaS plan ladder in both frontend copy and backend usage metadata:
 
-- Free: trial/demo-friendly limits.
-- Plus: RM25/month, starter customer plan.
-- Pro: RM49/month, larger limits.
-- Enterprise: custom limits, support, and deployment needs.
+- Free: RM0/month. 1 user, 1 project, 1 device, 40,000 messages/month, 7-day data retention, no automation, core widgets, Spark IoT branding and community support.
+- Plus: RM25/month. 1 user, 3 projects, 3 devices, 1,000,000 messages/month, 30-day data retention, 5 automations, core + smart widgets, Spark IoT branding and standard support.
+- Pro: RM49/month. 1 user, 10 projects, 10 devices, 10,000,000 messages/month, 90-day data retention, 20 automations, core + smart + advanced widgets, full API access and priority support.
+- Max: RM99/month. 10 users, 30 projects, 30 devices, 50,000,000 messages/month, 365-day data retention, 100 automations, team collaboration, fleet/OTA features and priority support.
+- Enterprise: contact sales. Custom limits, all widgets, white-label platform, custom domain, organization management, advanced security, optional dedicated infrastructure, SLA and custom integrations.
 
-Current starter-style limits used throughout the MVP are 1 user, 3 projects, 3 devices, 3 templates/dashboards, 30-day telemetry retention, GPS, camera URL, browser push, charts, switch/button/LED/gauge/meter/value/serial/time/schedule widgets.
+For MVP testing, signup currently creates a Pro account by default. Billing can later change signup to Free/trial without changing the tenant, plan and usage API shape.
 
 ## Core entities
 
@@ -237,7 +238,7 @@ Purpose:
 
 Direction:
 
-- Show Free, Plus, Pro, Enterprise structure.
+- Show Free, Plus, Pro, Max and Enterprise structure.
 - Keep settings short and useful.
 - Do not overemphasize map tile provider settings in the main customer settings page unless needed for production/admin.
 

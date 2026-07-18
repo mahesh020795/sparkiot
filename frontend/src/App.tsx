@@ -15,6 +15,7 @@ import { ConfirmDialog } from "./components/ConfirmDialog";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
 import { api, clearSession, getSession, type Session } from "./lib/api";
 import { copyText } from "./lib/clipboard";
+import { findPlan } from "./lib/planCatalog";
 import type { CommandLogItem, Dashboard, Device, DeviceCreate, DeviceTemplate, DeviceUpdate, LiveBoardTestPayload, NotificationItem, OnboardingState, Project, ProjectCreate, ProjectUpdate, ScheduleCreate, ScheduleItem, Telemetry, UserProfile } from "./lib/types";
 
 type View = "dashboard" | "setup" | "projects" | "templates" | "devices" | "live" | "schedules" | "history" | "notifications" | "settings";
@@ -80,6 +81,7 @@ export function App() {
   const pageTitle = view === "dashboard"
     ? selectedProject ? `${selectedProject.name} Dashboard` : "Spark IoT Dashboard"
     : selectedProject?.name ?? "Spark IoT Dashboard";
+  const accountPlan = findPlan(userProfile?.plan_code);
 
   const nav = [
     ["dashboard", LayoutDashboard, "Dashboard"],
@@ -612,7 +614,7 @@ export function App() {
           <span className="section-kicker">{isAccountMode ? "Pro account" : demoPreviewMode ? "Demo preview" : "Demo workspace"}</span>
           <div><UserCircle size={16} /><strong>{isAccountMode ? userProfile?.full_name ?? userProfile?.email ?? "Spark IoT account" : demoPreviewMode ? "Preview dashboard" : "Sample workspace"}</strong></div>
           <small>{isAccountMode ? userProfile?.email ?? "Signed in workspace" : demoPreviewMode ? "Simulated telemetry only" : "Explore the platform before sign in"}</small>
-          {isAccountMode && <small className="session-plan-line">Package: Pro · 10 projects · 10 devices</small>}
+          {isAccountMode && <small className="session-plan-line">Package: {accountPlan.name} · {accountPlan.usageHighlights[1]} · {accountPlan.usageHighlights[0]}</small>}
           {session ? (
             <button type="button" onClick={signOut}><LogOut size={16} />Sign out</button>
           ) : (

@@ -4,14 +4,19 @@ Spark IoT is a Rectronx IoT SaaS starter for a lower-cost Blynk-style product. T
 
 The repository also includes the FastAPI modular monolith, PostgreSQL, Valkey, Mosquitto MQTT, WebSocket realtime foundation, seed data, MQTT ingestion bridge, persisted Template Studio data, and an installable SparkIoT Arduino IDE library for real ESP32/ESP8266 testing plus Arduino `Client` adapter boards such as Ethernet and WiFiNINA.
 
-## Starter Plan
+## Official Spark IoT account model
 
-- 1 user
-- 3 devices
-- 3 projects with 1 dashboard each
-- 10 widgets per dashboard
-- 30-day telemetry and GPS retention
-- GPS, camera URL, push notifications, gauges, meters, charts, switch, push button, LED, serial/LCD, date, time, day and numeric panels
+Spark IoT uses a clean SaaS plan ladder. During the current MVP/test phase, new signups default to **Pro** so Rectronx can test real boards, email verification, projects, templates and device provisioning without billing friction.
+
+| Plan | Price | Best for | Limits |
+| --- | ---: | --- | --- |
+| Free | RM0/month | Learning, prototyping and personal IoT projects | 1 user, 1 project, 1 device, 40,000 messages/month, 7-day history, no automation |
+| Plus | RM25/month | Complete student/customer IoT projects | 1 user, 3 projects, 3 devices, 1,000,000 messages/month, 30-day history, 5 automations |
+| Pro | RM49/month | Developers, freelancers and growing businesses | 1 user, 10 projects, 10 devices, 10,000,000 messages/month, 90-day history, 20 automations |
+| Max | RM99/month | Commercial deployments and small teams | 10 users, 30 projects, 30 devices, 50,000,000 messages/month, 365-day history, 100 automations |
+| Enterprise | Contact sales | Organizations, OEMs and large-scale deployments | Custom limits, white-label, custom domain, dedicated support and optional dedicated infrastructure |
+
+Widget access grows by tier: Free includes core widgets, Plus adds smart widgets such as scheduler/GPS/camera/joystick, Pro and Max add advanced widgets and API access, and Enterprise includes the full platform.
 
 ## Local Setup
 
@@ -79,7 +84,7 @@ For local development only, `EXPOSE_DEV_EMAIL_TOKENS=true` allows `/api/v1/auth/
 
 ### First-login SaaS onboarding
 
-New accounts start in a guided Pro Workspace. Spark IoT creates the tenant, owner user, Pro plan and onboarding state, but it does not create a real project/device/dashboard until the user chooses a project and board.
+New accounts start in a guided Pro workspace. Spark IoT creates the tenant, owner user, Pro plan and onboarding state, but it does not create a real template, project, device or dashboard until the user starts setup.
 
 The demo dashboard remains available from the Pro Workspace as a clearly labelled preview using simulated telemetry. It is separate from customer-owned tenant data.
 
@@ -125,7 +130,7 @@ Signed-in customer workspaces use real tenant-scoped template routes:
 - `GET /api/v1/templates/{template_id}`
 - `PUT /api/v1/templates/{template_id}`
 
-The recommended account flow is now `Projects -> Templates -> Devices -> Code -> Board Test`. Create the project first, create one template for that project, configure datastreams/dashboard/notifications in Template Studio, then provision the physical board. Saved data includes template name, board, description, virtual pins/datastreams, notification rules, and dashboard widget layout/config. The API uses optimistic `revision` checks so stale browser tabs cannot silently overwrite newer template changes.
+The recommended account flow is now `Template -> Project -> Datastreams -> Device -> Code -> Board Test -> Live Dashboard`. Create a reusable template first, create a project from that template, configure datastreams/dashboard/notifications in Template Studio, then provision the physical board. Saved data includes template name, board, description, virtual pins/datastreams, notification rules, and dashboard widget layout/config. The API uses optimistic `revision` checks so stale browser tabs cannot silently overwrite newer template changes.
 
 
 ## Data History and CSV Export
@@ -199,7 +204,7 @@ Included examples:
 
 Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Rectronx MQTT subdomain test, use `mqtt.rectronx.com`.
 
-For authenticated customer workspaces, open `Projects` to create Pro plan project spaces. Then open `Templates`, click `Create template`, select the project, board and starter preset, and save the generated Blynk-style virtual-pin model. After that, open `Devices`, click `Provision device`, select the project and board, and copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Spark IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
+For authenticated customer workspaces, open `Templates` first and create the reusable board model. Then create a `Project` from that template, configure its virtual pins/datastreams, and open `Devices` to provision the physical board. Copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Spark IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
 
 See:
 

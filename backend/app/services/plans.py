@@ -14,9 +14,13 @@ class PlanDefinition:
     max_users: int
     max_devices: int
     max_projects: int
+    message_quota_monthly: int | None
+    automation_limit: int | None
     max_widgets: int
     retention_days: int
     features: tuple[str, ...]
+    widget_groups: tuple[str, ...]
+    support: str
 
 
 PLAN_CATALOG: dict[str, PlanDefinition] = {
@@ -27,9 +31,13 @@ PLAN_CATALOG: dict[str, PlanDefinition] = {
         max_users=1,
         max_devices=1,
         max_projects=1,
-        max_widgets=6,
+        message_quota_monthly=40_000,
+        automation_limit=0,
+        max_widgets=10,
         retention_days=7,
-        features=("1 project", "1 device", "7-day data", "Basic dashboard widgets"),
+        features=("1 project", "1 device", "40,000 messages/month", "7-day data retention", "Core widgets", "Web dashboard", "Mobile dashboard", "Spark IoT branding"),
+        widget_groups=("Core widgets",),
+        support="Community support",
     ),
     "plus": PlanDefinition(
         code="plus",
@@ -38,20 +46,43 @@ PLAN_CATALOG: dict[str, PlanDefinition] = {
         max_users=1,
         max_devices=3,
         max_projects=3,
+        message_quota_monthly=1_000_000,
+        automation_limit=5,
         max_widgets=18,
         retention_days=30,
-        features=("3 projects", "3 devices", "GPS", "Camera URL", "Browser push", "30-day history"),
+        features=("3 projects", "3 devices", "1,000,000 messages/month", "30-day data retention", "5 automations", "Core and smart widgets", "GPS map", "Camera", "Web dashboard", "Mobile dashboard"),
+        widget_groups=("Core widgets", "Smart widgets"),
+        support="Standard support",
     ),
     "pro": PlanDefinition(
         code="pro",
         name="Pro",
         monthly_price_rm=49,
-        max_users=3,
+        max_users=1,
         max_devices=10,
         max_projects=10,
+        message_quota_monthly=10_000_000,
+        automation_limit=20,
         max_widgets=30,
         retention_days=90,
-        features=("10 projects", "10 devices", "Advanced dashboards", "90-day history", "Priority support"),
+        features=("10 projects", "10 devices", "10,000,000 messages/month", "90-day data retention", "20 automations", "Core, smart and advanced widgets", "Full API access", "Priority support", "Web dashboard", "Mobile dashboard"),
+        widget_groups=("Core widgets", "Smart widgets", "Advanced widgets"),
+        support="Priority support",
+    ),
+    "max": PlanDefinition(
+        code="max",
+        name="Max",
+        monthly_price_rm=99,
+        max_users=10,
+        max_devices=30,
+        max_projects=30,
+        message_quota_monthly=50_000_000,
+        automation_limit=100,
+        max_widgets=60,
+        retention_days=365,
+        features=("30 projects", "30 devices", "10 users", "50,000,000 messages/month", "365-day data retention", "100 automations", "Team collaboration", "User roles and permissions", "Advanced OTA management", "Fleet device management"),
+        widget_groups=("Core widgets", "Smart widgets", "Advanced widgets"),
+        support="Priority support",
     ),
     "enterprise": PlanDefinition(
         code="enterprise",
@@ -60,9 +91,13 @@ PLAN_CATALOG: dict[str, PlanDefinition] = {
         max_users=9999,
         max_devices=9999,
         max_projects=9999,
+        message_quota_monthly=None,
+        automation_limit=None,
         max_widgets=9999,
         retention_days=365,
-        features=("Custom limits", "White label", "Private deployment", "SLA-ready support"),
+        features=("Custom device limit", "Custom project limit", "Custom user limit", "Custom message quota", "Custom data retention", "Unlimited automations", "All widgets", "White-label platform", "Custom domain", "Advanced security", "SLA and dedicated support"),
+        widget_groups=("All widgets",),
+        support="Dedicated technical support",
     ),
 }
 
@@ -104,9 +139,13 @@ def usage(db: Session, tenant_id: str) -> dict[str, object]:
         "max_devices": plan.max_devices,
         "projects": projects,
         "max_projects": plan.max_projects,
+        "message_quota_monthly": plan.message_quota_monthly,
+        "automation_limit": plan.automation_limit,
         "max_widgets": plan.max_widgets,
         "retention_days": plan.retention_days,
         "features": list(plan.features),
+        "widget_groups": list(plan.widget_groups),
+        "support": plan.support,
     }
 
 

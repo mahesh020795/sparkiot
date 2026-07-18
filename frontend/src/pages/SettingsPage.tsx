@@ -2,43 +2,48 @@ import { BellRing, CheckCircle2, CreditCard, LockKeyhole, LogIn, LogOut, MailChe
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { api, clearSession, getSession, saveSession } from "../lib/api";
+import { findPlan, normalizePlanCode, planCatalog } from "../lib/planCatalog";
 import type { UsageSummary, UserProfile } from "../lib/types";
 
 type AccountStatus = "idle" | "loading" | "signed-in" | "error";
 type PushStatus = "idle" | "checking" | "enabled" | "error" | "unsupported";
-
-const planCatalog = [
-  { code: "free", name: "Free", price: "RM0/month", summary: "Start testing one board.", limits: "1 project · 1 device · 7-day data" },
-  { code: "plus", name: "Plus", price: "RM25/month", summary: "Best starter plan for students and small IoT customers.", limits: "3 projects · 3 devices · 30-day data" },
-  { code: "pro", name: "Pro", price: "RM49/month", summary: "For growing customer labs and more active dashboards.", limits: "10 projects · 10 devices · 90-day data" },
-  { code: "enterprise", name: "Enterprise", price: "Custom", summary: "For universities, companies and white-label deployment.", limits: "Custom limits · SLA-ready support" },
-];
 
 const demoUsage: UsageSummary = {
   plan_code: "pro",
   plan_name: "Pro",
   monthly_price_rm: 49,
   users: 1,
-  max_users: 3,
+  max_users: 1,
   devices: 3,
   max_devices: 10,
   projects: 3,
   max_projects: 10,
+  message_quota_monthly: 10_000_000,
+  automation_limit: 20,
   max_widgets: 30,
   retention_days: 90,
-  features: ["GPS", "Camera URL", "Browser push", "90-day history", "Advanced dashboards"],
+  features: ["Advanced widgets", "Full API access", "Priority support"],
+  widget_groups: ["Core widgets", "Smart widgets", "Advanced widgets"],
+  support: "Priority support",
 };
-
-function normalizePlanCode(code?: string) {
-  return code === "starter" ? "plus" : (code || "pro");
-}
 
 function priceLabel(usage: UsageSummary | null, profile: UserProfile | null) {
   const code = normalizePlanCode(usage?.plan_code ?? profile?.plan_code);
-  const catalogPlan = planCatalog.find((plan) => plan.code === code);
-  if (usage?.monthly_price_rm === null) return "Custom";
+  if (usage?.monthly_price_rm === null) return "Contact sales";
   if (typeof usage?.monthly_price_rm === "number") return `RM${usage.monthly_price_rm}/month`;
-  return catalogPlan?.price ?? "RM0/month";
+  return findPlan(code).price;
+}
+
+function formatMessageQuota(usage: UsageSummary | null, planCode: string) {
+  if (usage?.message_quota_monthly === null) return "Custom message quota";
+  if (typeof usage?.message_quota_monthly === "number") return `${usage.message_quota_monthly.toLocaleString()} messages/month`;
+  return findPlan(planCode).usageHighlights.find((item) => item.includes("messages")) ?? "Plan message quota";
+}
+
+function formatAutomationLimit(usage: UsageSummary | null, planCode: string) {
+  if (usage?.automation_limit === null) return "Unlimited automations";
+  if (typeof usage?.automation_limit === "number") return `${usage.automation_limit} automations`;
+  return findPlan(planCode).usageHighlights.find((item) => item.includes("automation")) ?? "Plan automations";
 }
 
 export function SettingsPage() {
@@ -46,7 +51,7 @@ export function SettingsPage() {
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [status, setStatus] = useState<AccountStatus>(getSession() ? "loading" : "idle");
   const [pushStatus, setPushStatus] = useState<PushStatus>("idle");
-  const [pushMessage, setPushMessage] = useState("Sign in, then enable browser notifications for Blynk-style alert delivery.");
+  const [pushMessage, setPushMessage] = useState("Sign in, then enable browser notifications for alert delivery.");
   const [error, setError] = useState("");
 
   const activePlanCode = useMemo(() => normalizePlanCode(usage?.plan_code ?? profile?.plan_code), [usage?.plan_code, profile?.plan_code]);
@@ -106,7 +111,7 @@ export function SettingsPage() {
     setUsage(null);
     setStatus("idle");
     setPushStatus("idle");
-    setPushMessage("Sign in, then enable browser notifications for Blynk-style alert delivery.");
+    setPushMessage("Sign in, then enable browser notifications for alert delivery.");
     setError("");
   }
 
@@ -114,6 +119,11 @@ export function SettingsPage() {
     if (!profile || !getSession()) {
       setPushStatus("error");
       setPushMessage("Sign in before enabling browser push notifications.");
+      return;
+    }
+    if (!window.isSecureContext) {
+      setPushStatus("unsupported");
+      setPushMessage("Browser push needs HTTPS or localhost. Chrome is supported, but this domain must use HTTPS before push can be enabled.");
       return;
     }
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
@@ -147,7 +157,7 @@ export function SettingsPage() {
       });
       await api.savePushSubscription(subscription.toJSON());
       setPushStatus("enabled");
-      setPushMessage("Browser push enabled");
+      setPushMessage("Browser push enabled.");
     } catch {
       setPushStatus("error");
       setPushMessage("Could not enable browser push. Check HTTPS/domain setup and VAPID keys.");
@@ -155,7 +165,8 @@ export function SettingsPage() {
   }
 
   const signedIn = Boolean(profile);
-  const currentPlanName = usage?.plan_name ?? planCatalog.find((plan) => plan.code === activePlanCode)?.name ?? "Pro";
+  const currentPlan = findPlan(activePlanCode);
+  const currentPlanName = usage?.plan_name ?? currentPlan.name;
 
   return (
     <section className="support-page settings-page">
@@ -164,16 +175,16 @@ export function SettingsPage() {
           <div className="panel-title"><UserCircle size={18} /><h2>Account access</h2></div>
           {profile ? (
             <div className="settings-detail-list">
-              <SettingsRow label="Name" value={profile.full_name} />
+              <SettingsRow label="Account name" value={profile.full_name} />
               <SettingsRow label="Email" value={profile.email} />
-              <SettingsRow label="Workspace" value={profile.tenant_id} />
+              <SettingsRow label="Workspace ID" value={profile.tenant_id} />
               <SettingsRow label="Email status" value={profile.email_verified ? "Email verified" : "Verification pending"} />
               <button type="button" onClick={signOut}><LogOut size={16} />Sign out</button>
             </div>
           ) : (
             <div className="account-state">
               <strong>{status === "loading" ? "Connecting account..." : "Not signed in"}</strong>
-              <span>Use the seeded demo account to test authenticated API, plan limits and tenant-scoped workspace.</span>
+              <span>Sign in to view account details, plan usage, security status and push notification setup.</span>
               <button type="button" className="primary" onClick={signInDemo} disabled={status === "loading"}><LogIn size={16} />Sign in demo account</button>
             </div>
           )}
@@ -184,13 +195,16 @@ export function SettingsPage() {
           <div className="panel-title"><CreditCard size={18} /><h2>Plan &amp; usage</h2></div>
           <div className="current-plan-box">
             <span>Current plan</span>
-            <strong>{currentPlanName}</strong>
+            <strong>Spark IoT {currentPlanName}</strong>
             <em>{priceLabel(usage, profile)}</em>
+            <p>{currentPlan.purpose}</p>
           </div>
           <div className="usage-meter-list">
             <SettingsRow label="Projects" value={usage ? `${usage.projects} / ${usage.max_projects} projects` : signedIn ? "Loading usage" : "Sign in to view"} />
             <SettingsRow label="Devices" value={usage ? `${usage.devices} / ${usage.max_devices} devices` : signedIn ? "Loading usage" : "Sign in to view"} />
             <SettingsRow label="Users" value={usage ? `${usage.users} / ${usage.max_users} users` : signedIn ? "Loading usage" : "Sign in to view"} />
+            <SettingsRow label="Messages" value={formatMessageQuota(usage, activePlanCode)} />
+            <SettingsRow label="Automation" value={formatAutomationLimit(usage, activePlanCode)} />
             <SettingsRow label="Data window" value={usage ? `${usage.retention_days}-day history` : "Plan based"} />
           </div>
         </article>
@@ -200,7 +214,7 @@ export function SettingsPage() {
           <div className="security-list">
             <SecurityItem icon={<MailCheck size={16} />} title={profile?.email_verified ? "Email verified" : "Email verification"} detail={profile?.email_verified ? "Account email is verified." : "Verify email before production use."} />
             <SecurityItem icon={<ShieldCheck size={16} />} title="Password protected" detail="Passwords are hashed; reset tokens are single-use." />
-            <SecurityItem icon={<CheckCircle2 size={16} />} title="Tenant scoped" detail="Projects, devices and dashboards stay inside one workspace." />
+            <SecurityItem icon={<CheckCircle2 size={16} />} title="Workspace isolation" detail="Projects, devices and dashboards stay inside your account." />
           </div>
         </article>
 
@@ -208,7 +222,7 @@ export function SettingsPage() {
           <div className="panel-title"><BellRing size={18} /><h2>Browser push</h2></div>
           <p>Enable browser push subscriptions for threshold alerts, schedule events and manual notification tests.</p>
           <div className="push-state-row">
-            <strong>{pushStatus === "enabled" ? "Browser push enabled" : pushStatus === "checking" ? "Enabling push..." : pushStatus === "unsupported" ? "Push unsupported" : "Push opt-in required"}</strong>
+            <strong>{pushStatus === "enabled" ? "Browser push enabled" : pushStatus === "checking" ? "Enabling push..." : pushStatus === "unsupported" && pushMessage.includes("HTTPS") ? "HTTPS required" : pushStatus === "unsupported" ? "Push unsupported" : "Push opt-in required"}</strong>
             <span>{pushMessage}</span>
           </div>
           <button type="button" className="primary" onClick={enableBrowserPush} disabled={!profile || pushStatus === "checking"}>
@@ -223,10 +237,11 @@ export function SettingsPage() {
           {planCatalog.map((plan) => (
             <div key={plan.code} className={`plan-tier-card ${activePlanCode === plan.code ? "active" : ""}`}>
               <span>{activePlanCode === plan.code ? "Current plan" : "Available"}</span>
+              {plan.badge && <b>{plan.badge}</b>}
               <strong>{plan.name}</strong>
               <em>{plan.price}</em>
-              <p>{plan.summary}</p>
-              <small>{plan.limits}</small>
+              <p>{plan.shortDescription}</p>
+              <small>{plan.usageHighlights.slice(0, 3).join(" · ")}</small>
             </div>
           ))}
         </div>

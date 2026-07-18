@@ -48,7 +48,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.add(tenant)
     db.flush()
     if db.scalar(select(User).where(User.tenant_id == tenant.id, User.is_active)):
-        raise HTTPException(status_code=409, detail={"code": "plan_user_limit", "message": "Pro plan allows 3 active users"})
+        raise HTTPException(status_code=409, detail={"code": "plan_user_limit", "message": "Pro plan allows 1 active user"})
     user = User(tenant_id=tenant.id, email=payload.email.lower(), full_name=payload.full_name, password_hash=hash_secret(payload.password))
     db.add(user)
     db.flush()

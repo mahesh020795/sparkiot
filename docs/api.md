@@ -25,6 +25,12 @@ Main resources:
 - `/schedules`
 - `/realtime/ws`
 
+## Tenant usage and plans
+
+`GET /api/v1/tenant/usage` returns the active account plan plus current usage. The official catalog is Free, Plus, Pro, Max and Enterprise. The response includes user/device/project counts, monthly price, message quota, automation limit, widget limit, retention window, feature list, widget groups and support level.
+
+New signups currently default to the Pro plan for MVP hardware testing. Legacy `starter` tenants are mapped to Plus so old demo data continues to work.
+
 ## Realtime WebSocket
 
 Dashboards connect to `GET /api/v1/realtime/ws?token={access_token}&project_id={project_id}`. The server validates the access token, confirms the project belongs to the authenticated tenant, then subscribes the browser only to telemetry events for that project.

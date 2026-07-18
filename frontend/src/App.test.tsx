@@ -1328,7 +1328,7 @@ describe("App", () => {
 
     expect(await screen.findByText("Customer Greenhouse fan")).toBeInTheDocument();
     expect(screen.getByText("18:30")).toBeInTheDocument();
-    expect(screen.getByText("Asia/Kuala_Lumpur")).toBeInTheDocument();
+    expect(screen.getAllByText("Asia/Kuala_Lumpur").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: /Create live schedule/i }));
 
@@ -1584,6 +1584,7 @@ describe("App", () => {
       }
     }));
     Object.defineProperty(navigator, "serviceWorker", { value: { register }, configurable: true });
+    vi.stubGlobal("isSecureContext", true);
     vi.stubGlobal("PushManager", function PushManager() {});
     vi.stubGlobal("Notification", {
       permission: "default",
