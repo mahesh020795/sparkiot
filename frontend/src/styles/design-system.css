@@ -5061,6 +5061,44 @@ body {
 }
 
 /*
+  Notification rule dropdown layering.
+  Rule cards contain custom select menus inside a compact row. Those menus must
+  escape the row/card instead of being clipped inside the rounded block.
+*/
+.spark-ui .notification-builder,
+.spark-ui .notification-builder.studio-system-rules {
+  overflow: visible;
+}
+
+.spark-ui .rule-editor {
+  overflow: visible;
+}
+
+.spark-ui .rule-editor::before,
+.spark-ui .rule-editor::after {
+  display: none;
+}
+
+.spark-ui .rule-flow {
+  overflow: visible;
+}
+
+.spark-ui .rule-flow label,
+.spark-ui .rule-flow .spark-select {
+  position: relative;
+  z-index: 1;
+}
+
+.spark-ui .rule-flow label:focus-within,
+.spark-ui .rule-flow .spark-select:has(.spark-select-trigger[aria-expanded="true"]) {
+  z-index: 750;
+}
+
+.spark-ui .rule-flow .spark-select-menu {
+  z-index: 760;
+}
+
+/*
   Dashboard selector layering.
   The dashboard header has older responsive rules that use overflow clipping to
   protect metric cards. The project dropdown is an intentional overlay, so it

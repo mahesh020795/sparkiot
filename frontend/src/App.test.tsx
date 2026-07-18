@@ -649,6 +649,22 @@ describe("App", () => {
     expect(screen.getAllByDisplayValue("Voltage Alert").length).toBe(beforeRules + 1);
   });
 
+  it("lets notification rule dropdown menus escape the rule block", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Templates"));
+    fireEvent.click(within(screen.getByRole("article", { name: /Smart Irrigation template/i })).getByRole("button", { name: /Edit template/i }));
+    fireEvent.click(screen.getAllByText("Notifications")[1]);
+
+    fireEvent.click(screen.getByLabelText("Temperature Alert datastream menu"));
+
+    expect(screen.getByRole("listbox", { name: "Temperature Alert datastream options" })).toHaveClass("spark-select-menu");
+
+    const css = readFileSync(resolve(__dirname, "styles/design-system.css"), "utf8");
+    expect(css).toContain(".spark-ui .rule-editor {\n  overflow: visible;");
+    expect(css).toContain(".spark-ui .rule-flow {\n  overflow: visible;");
+    expect(css).toContain(".spark-ui .rule-flow .spark-select-menu {\n  z-index: 760;");
+  });
+
   it("keeps Template Studio creation buttons working when browser randomUUID is unavailable", async () => {
     const originalRandomUuid = crypto.randomUUID;
     Object.defineProperty(crypto, "randomUUID", { configurable: true, value: undefined });
