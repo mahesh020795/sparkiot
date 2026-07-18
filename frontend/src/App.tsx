@@ -77,6 +77,9 @@ export function App() {
     () => isAccountMode ? activeProjects.filter((project) => (accountDashboards[project.id]?.widgets.length ?? 0) > 0) : activeProjects,
     [accountDashboards, activeProjects, isAccountMode]
   );
+  const pageTitle = view === "dashboard"
+    ? selectedProject ? `${selectedProject.name} Dashboard` : "Spark IoT Dashboard"
+    : selectedProject?.name ?? "Spark IoT Dashboard";
 
   const nav = [
     ["dashboard", LayoutDashboard, "Dashboard"],
@@ -622,7 +625,7 @@ export function App() {
           <div className={view === "dashboard" ? "dashboard-header-grid spark-page-header-grid product-header-grid" : "standard-header-grid product-header-grid"} data-testid={view === "dashboard" ? "dashboard-header-grid" : undefined}>
           <div className={view === "dashboard" ? "cockpit-title-block spark-page-header-primary" : "cockpit-title-block"} data-testid={view === "dashboard" ? "dashboard-header-primary" : undefined}>
             {view !== "dashboard" && <div className="cockpit-kicker-row"><span className="eyebrow">Control Center</span></div>}
-            <h1>{view === "dashboard" ? `${selectedProject?.name ?? "Smart Irrigation"} Dashboard` : selectedProject?.name ?? "Spark IoT Dashboard"}</h1>
+            <h1>{pageTitle}</h1>
           </div>
           <div className="top-actions">
             {view === "dashboard" && dashboardSelectorProjects.length > 0 && (

@@ -44,6 +44,7 @@ describe("DashboardPage account input persistence", () => {
     expect(await screen.findByRole("heading", { name: /Create your first dashboard/i })).toBeInTheDocument();
     expect(screen.getByText(/Start with a template, create a project/i)).toBeInTheDocument();
     expect(screen.getByTestId("dashboard-empty-card")).toHaveClass("dashboard-empty-card");
+    expect(screen.getByText("Template").closest(".dashboard-empty-flow-step")).toBeTruthy();
     expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Template");
     expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Device code");
     expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Live dashboard");

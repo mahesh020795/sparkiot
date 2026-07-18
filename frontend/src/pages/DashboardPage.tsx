@@ -253,11 +253,11 @@ function DashboardEmptyState({
           </div>
         </div>
         <div className="dashboard-empty-flow" aria-label="Dashboard creation flow">
-          <span><Workflow size={16} /> Template</span>
+          <span className="dashboard-empty-flow-step"><Workflow size={16} /> Template</span>
           <ArrowRight size={16} />
-          <span><Code2 size={16} /> Device code</span>
+          <span className="dashboard-empty-flow-step"><Code2 size={16} /> Device code</span>
           <ArrowRight size={16} />
-          <span><LayoutDashboard size={16} /> Live dashboard</span>
+          <span className="dashboard-empty-flow-step"><LayoutDashboard size={16} /> Live dashboard</span>
         </div>
       </div>
     </div>

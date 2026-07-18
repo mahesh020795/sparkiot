@@ -130,6 +130,38 @@ describe("App", () => {
     expect(wizardSteps.slice(0, 4)).toEqual(["Choose template", "Create project", "Add datastreams", "Add device"]);
   });
 
+  it("uses a neutral dashboard title for authenticated accounts with no projects", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
+    vi.spyOn(api, "me").mockResolvedValue({
+      full_name: "Acme Owner",
+      email: "owner@acme.test",
+      tenant_id: "tenant-1",
+      plan_code: "pro",
+      email_verified: true,
+      onboarding_step: "dashboard",
+    });
+    vi.spyOn(api, "usage").mockResolvedValue(plusUsage());
+    vi.spyOn(api, "projects").mockResolvedValue([]);
+    vi.spyOn(api, "devices").mockResolvedValue([]);
+    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "notifications").mockResolvedValue([]);
+    vi.spyOn(api, "schedules").mockResolvedValue([]);
+    vi.spyOn(api, "dashboard").mockResolvedValue({ id: "empty", project_id: "empty", name: "Dashboard", revision: 1, widgets: [] });
+    vi.spyOn(api, "latest").mockResolvedValue([]);
+    vi.spyOn(api, "onboarding").mockResolvedValue({
+      current_step: "dashboard",
+      completed_steps: ["verify_email"],
+      demo_viewed: false,
+      first_project_id: null,
+    });
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Spark IoT Dashboard" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Smart Irrigation Dashboard" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-header-selector")).not.toBeInTheDocument();
+  });
+
   it("opens the simulated demo dashboard from the verified starter workspace", async () => {
     localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
     vi.spyOn(api, "me").mockResolvedValue({

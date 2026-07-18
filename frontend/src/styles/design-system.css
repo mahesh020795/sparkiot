@@ -5321,16 +5321,21 @@ body {
   box-shadow: none;
 }
 
-.spark-ui.dashboard-shell .dashboard-empty-flow span {
+.spark-ui.dashboard-shell .dashboard-empty-flow .dashboard-empty-flow-step {
   justify-content: flex-start;
   min-height: 52px;
-  padding: 0 var(--spark-space-4);
+  padding: 0 var(--spark-space-5);
   border: 1px solid var(--spark-border);
   border-radius: var(--spark-radius-sm);
   background: #ffffff;
   color: var(--spark-text);
   font-size: var(--spark-text-sm);
   letter-spacing: -0.01em;
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-flow .dashboard-empty-flow-step svg {
+  flex: 0 0 auto;
+  color: #2563eb;
 }
 
 .spark-ui.dashboard-shell .dashboard-empty-flow > svg {
