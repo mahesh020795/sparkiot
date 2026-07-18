@@ -253,11 +253,20 @@ function DashboardEmptyState({
           </div>
         </div>
         <div className="dashboard-empty-flow" aria-label="Dashboard creation flow">
-          <span className="dashboard-empty-flow-step"><Workflow size={16} /> Template</span>
+          <span className="dashboard-empty-flow-step">
+            <span className="dashboard-empty-flow-icon"><Workflow size={18} /></span>
+            <span><strong>Template</strong><small>Board model and V pins</small></span>
+          </span>
           <ArrowRight size={16} />
-          <span className="dashboard-empty-flow-step"><Code2 size={16} /> Device code</span>
+          <span className="dashboard-empty-flow-step">
+            <span className="dashboard-empty-flow-icon"><Code2 size={18} /></span>
+            <span><strong>Device code</strong><small>ESP32 / ESP8266 sketch</small></span>
+          </span>
           <ArrowRight size={16} />
-          <span className="dashboard-empty-flow-step"><LayoutDashboard size={16} /> Live dashboard</span>
+          <span className="dashboard-empty-flow-step">
+            <span className="dashboard-empty-flow-icon"><LayoutDashboard size={18} /></span>
+            <span><strong>Live dashboard</strong><small>MQTT widgets online</small></span>
+          </span>
         </div>
       </div>
     </div>

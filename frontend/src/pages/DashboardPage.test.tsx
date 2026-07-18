@@ -46,8 +46,11 @@ describe("DashboardPage account input persistence", () => {
     expect(screen.getByTestId("dashboard-empty-card")).toHaveClass("dashboard-empty-card");
     expect(screen.getByText("Template").closest(".dashboard-empty-flow-step")).toBeTruthy();
     expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Template");
+    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Board model and V pins");
     expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Device code");
+    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("ESP32 / ESP8266 sketch");
     expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Live dashboard");
+    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("MQTT widgets online");
     fireEvent.click(screen.getByRole("button", { name: /Create dashboard/i }));
     fireEvent.click(screen.getByRole("button", { name: /View demo dashboard/i }));
 
