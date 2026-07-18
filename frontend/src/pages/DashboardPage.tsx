@@ -237,26 +237,28 @@ function DashboardEmptyState({
   onPreviewDemo?: () => void;
 }) {
   return (
-    <div className="dashboard-empty-state">
-      <div className="dashboard-empty-copy">
-        <span className="section-kicker">Dashboard not created</span>
-        <h2>Create your first dashboard</h2>
-        <p>Start with a project and template, add datastreams, provision a device, then Spark IoT will generate the live dashboard and Arduino-ready code.</p>
-        <div className="dashboard-empty-actions">
-          <button className="primary" type="button" onClick={onCreateDashboard}>
-            <LayoutDashboard size={17} /> Create dashboard
-          </button>
-          <button type="button" onClick={onPreviewDemo}>
-            <PlayCircle size={17} /> View demo dashboard
-          </button>
+    <div className="dashboard-empty-stage">
+      <div className="dashboard-empty-card" data-testid="dashboard-empty-card">
+        <div className="dashboard-empty-copy">
+          <span className="section-kicker">Dashboard not created</span>
+          <h2>Create your first dashboard</h2>
+          <p>Start with a template, create a project, map datastreams, then provision a device. Spark IoT will generate the live dashboard and Arduino-ready code.</p>
+          <div className="dashboard-empty-actions">
+            <button className="primary" type="button" onClick={onCreateDashboard}>
+              <LayoutDashboard size={17} /> Create dashboard
+            </button>
+            <button type="button" onClick={onPreviewDemo}>
+              <PlayCircle size={17} /> View demo dashboard
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="dashboard-empty-flow" aria-label="Dashboard creation flow">
-        <span><Workflow size={16} /> Template</span>
-        <ArrowRight size={16} />
-        <span><Code2 size={16} /> Device code</span>
-        <ArrowRight size={16} />
-        <span><LayoutDashboard size={16} /> Live dashboard</span>
+        <div className="dashboard-empty-flow" aria-label="Dashboard creation flow">
+          <span><Workflow size={16} /> Template</span>
+          <ArrowRight size={16} />
+          <span><Code2 size={16} /> Device code</span>
+          <ArrowRight size={16} />
+          <span><LayoutDashboard size={16} /> Live dashboard</span>
+        </div>
       </div>
     </div>
   );

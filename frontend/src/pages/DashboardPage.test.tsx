@@ -42,7 +42,11 @@ describe("DashboardPage account input persistence", () => {
     render(<DashboardPage projectId="project-empty" devices={[]} onCreateDashboard={createDashboard} onPreviewDemo={previewDemo} />);
 
     expect(await screen.findByRole("heading", { name: /Create your first dashboard/i })).toBeInTheDocument();
-    expect(screen.getByText(/Start with a project and template/i)).toBeInTheDocument();
+    expect(screen.getByText(/Start with a template, create a project/i)).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-empty-card")).toHaveClass("dashboard-empty-card");
+    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Template");
+    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Device code");
+    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Live dashboard");
     fireEvent.click(screen.getByRole("button", { name: /Create dashboard/i }));
     fireEvent.click(screen.getByRole("button", { name: /View demo dashboard/i }));
 

@@ -5245,3 +5245,115 @@ body {
 .spark-ui.dashboard-shell .project-switcher .spark-select-menu {
   z-index: 900;
 }
+
+/*
+  Empty dashboard composition.
+  The dashboard canvas intentionally starts flush under the page header when
+  widgets exist. Empty states need their own padded stage so first-time users
+  see a calm SaaS onboarding card instead of text stuck to the viewport edge.
+*/
+.spark-ui.dashboard-shell .dashboard-empty-stage {
+  padding: clamp(1.5rem, 3vw, 2.5rem) var(--spark-page-pad-x) var(--spark-space-10);
+  border-top: 1px solid var(--spark-border);
+  background:
+    linear-gradient(rgba(226, 232, 240, 0.48) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(226, 232, 240, 0.48) 1px, transparent 1px),
+    var(--spark-bg);
+  background-size: 96px 96px;
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+  align-items: center;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  width: min(1180px, 100%);
+  min-height: 320px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 3vw, 2.35rem);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-xl);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--spark-shadow-card);
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-copy {
+  max-width: 660px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-copy h2 {
+  margin: var(--spark-space-3) 0 var(--spark-space-3);
+  font-size: clamp(2rem, 4vw, 3.45rem);
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-copy p {
+  max-width: 680px;
+  color: var(--spark-muted);
+  font-size: var(--spark-text-lg);
+  line-height: 1.62;
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-actions {
+  gap: var(--spark-space-3);
+  margin-top: var(--spark-space-5);
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-actions button {
+  min-height: 50px;
+  padding-inline: 1.15rem;
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-flow {
+  display: grid;
+  gap: var(--spark-space-3);
+  align-self: stretch;
+  padding: var(--spark-space-4);
+  border: 1px dashed #bcd4ff;
+  border-radius: var(--spark-radius-lg);
+  background: #f8fbff;
+  box-shadow: none;
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-flow span {
+  justify-content: flex-start;
+  min-height: 52px;
+  padding: 0 var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-sm);
+  background: #ffffff;
+  color: var(--spark-text);
+  font-size: var(--spark-text-sm);
+  letter-spacing: -0.01em;
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-flow > svg {
+  justify-self: center;
+  transform: rotate(90deg);
+}
+
+@media (max-width: 980px) {
+  .spark-ui.dashboard-shell .dashboard-empty-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .spark-ui.dashboard-shell .dashboard-empty-stage {
+    padding-inline: var(--spark-space-4);
+  }
+
+  .spark-ui.dashboard-shell .dashboard-empty-card {
+    padding: var(--spark-space-5);
+  }
+
+  .spark-ui.dashboard-shell .dashboard-empty-actions {
+    flex-direction: column;
+  }
+}
