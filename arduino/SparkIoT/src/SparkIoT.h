@@ -46,6 +46,9 @@ public:
 
   void onCommand(const char* channel, SparkIoTCommandCallback callback);
   bool ack(const char* channel, bool value, const char* message = "Command applied");
+  bool publishStatus(const char* status = "online");
+  const char* lastError();
+  int mqttState();
 
 private:
   struct CommandHandler {
@@ -71,11 +74,14 @@ private:
   const char* _tenantId;
   const char* _deviceId;
   const char* _token;
+  const char* _lastError;
+  int _lastMqttState;
 
   unsigned long _lastReconnectAttempt;
 
   void connectWiFi();
   bool connectMqtt();
+  void setLastError(const char* message);
   bool publishJson(const char* kind, const char* channel, const char* valueJson, const char* unit = "");
   void buildTopic(char* output, size_t outputSize, const char* kind, const char* channel);
   void handleMessage(char* topic, byte* payload, unsigned int length);

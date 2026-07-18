@@ -38,6 +38,9 @@ def test_sparkiot_library_exposes_clean_blynk_style_api():
         "bool setCameraUrl(",
         "void onCommand(",
         "bool ack(",
+        "bool publishStatus(",
+        "const char* lastError()",
+        "int mqttState()",
         "extern SparkIoTClient SparkIoT;",
     ]:
         assert expected in header
@@ -54,6 +57,9 @@ def test_sparkiot_library_exposes_clean_blynk_style_api():
         "SparkIoTClient SparkIoT;",
         "_networkClient",
         "_managedWiFi",
+        "_lastError",
+        "_lastMqttState",
+        "publishStatus",
     ]:
         assert expected in implementation
 
@@ -70,6 +76,20 @@ def test_sparkiot_library_documents_json_safe_payloads_vps_hosting_and_external_
         assert "EthernetClient" in content
         assert "WiFiNINA" in content
         assert "SparkIoT.begin(networkClient" in content
+        assert "SparkIoT.publishStatus(\"online\")" in content
+        assert "SparkIoT.lastError()" in content
+        assert "SparkIoT.mqttState()" in content
+
+
+def test_sparkiot_library_has_zip_packager_for_arduino_ide_install():
+    packager = ROOT / "scripts" / "package_arduino_library.py"
+    assert packager.exists()
+
+    content = packager.read_text(encoding="utf-8")
+    assert "SparkIoT-Arduino-Library-v1.0.0.zip" in content
+    assert "arduino/SparkIoT" in content
+    assert "library.properties" in content
+    assert "ZipFile" in content
 
 
 def test_sparkiot_v1_release_contract_documents_supported_boards_and_protocol():

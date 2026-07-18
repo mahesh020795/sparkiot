@@ -1510,6 +1510,64 @@ body {
   line-height: 1.45;
 }
 
+.spark-ui .board-health-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spark-space-3);
+}
+
+.spark-ui .board-health-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--spark-space-3);
+  align-items: center;
+  padding: var(--spark-space-4);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-lg);
+  background: var(--spark-surface);
+  box-shadow: var(--spark-shadow-soft);
+}
+
+.spark-ui .board-health-item > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary);
+}
+
+.spark-ui .board-health-item.good > span {
+  background: var(--spark-success-soft);
+  color: var(--spark-success);
+}
+
+.spark-ui .board-health-item small,
+.spark-ui .board-health-item strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spark-ui .board-health-item small {
+  color: var(--spark-muted-2);
+  font-size: var(--spark-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.spark-ui .board-health-item strong {
+  margin-top: 0.15rem;
+  color: var(--spark-text);
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
 .spark-ui .live-connection-card,
 .spark-ui .live-topic-card,
 .spark-ui .live-values-panel,
@@ -1594,6 +1652,22 @@ body {
   overflow-wrap: anywhere;
 }
 
+.spark-ui .quick-test-command-grid button {
+  width: fit-content;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 var(--spark-space-3);
+  border: 1px solid var(--spark-border-strong);
+  border-radius: var(--spark-radius-sm);
+  background: var(--spark-surface);
+  color: var(--spark-text);
+  font-size: var(--spark-label);
+  font-weight: 900;
+  box-shadow: none;
+}
+
 .spark-ui .quick-test-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1626,6 +1700,49 @@ body {
   border-color: #fecaca;
   background: var(--spark-danger-soft);
   color: #b91c1c;
+}
+
+.spark-ui .board-troubleshooting-card {
+  display: grid;
+  gap: var(--spark-space-4);
+}
+
+.spark-ui .board-troubleshooting-card h2 {
+  margin: var(--spark-space-1) 0 0;
+  color: var(--spark-text);
+  font-size: 1.15rem;
+  letter-spacing: -0.035em;
+}
+
+.spark-ui .board-troubleshooting-card ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spark-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.spark-ui .board-troubleshooting-card li {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+  padding: var(--spark-space-3);
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface-muted);
+}
+
+.spark-ui .board-troubleshooting-card strong {
+  color: var(--spark-text);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.spark-ui .board-troubleshooting-card span {
+  color: var(--spark-muted);
+  font-size: var(--spark-small);
+  line-height: 1.45;
 }
 
 .spark-ui .panel-title {
@@ -1787,6 +1904,8 @@ body {
   .spark-ui .live-system-grid,
   .spark-ui .connection-proof-timeline,
   .spark-ui .proof-steps,
+  .spark-ui .board-health-strip,
+  .spark-ui .board-troubleshooting-card ul,
   .spark-ui .quick-test-command-grid {
     grid-template-columns: 1fr;
   }

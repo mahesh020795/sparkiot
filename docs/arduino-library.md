@@ -93,9 +93,33 @@ SparkIoT.setCameraUrl("V6", "http://device.local/snapshot.jpg");
 
 SparkIoT.onCommand("V3", onCommandCallback);
 SparkIoT.ack("V3", true, "Command applied");
+SparkIoT.publishStatus("online");
+
+Serial.println(SparkIoT.lastError());
+Serial.println(SparkIoT.mqttState());
 ```
 
 String telemetry, camera URLs, and ACK messages are escaped before publishing, so quotes, backslashes, and newlines do not break MQTT JSON payloads.
+
+## Board Test workflow
+
+Use this flow for a real ESP32/ESP8266 customer test:
+
+1. Create or select a Spark IoT project.
+2. Select the template and device.
+3. Open **Board Test**.
+4. Copy the MQTT host, tenant ID, device ID, device token and V pin topics into the generated Arduino sketch.
+5. Upload the sketch.
+6. Watch for:
+   - last telemetry from the board,
+   - last command sent by the dashboard,
+   - last ACK returned by the board.
+
+If no data appears, check these three items first:
+
+- `SparkIoT.lastError()` in Serial Monitor.
+- `SparkIoT.mqttState()` in Serial Monitor.
+- The Board Test quick topic and payload match the selected project/device/template.
 
 ## Client adapter mode
 

@@ -1019,6 +1019,12 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
   const hasTelemetry = latestRows.length > 0;
   const hasCommand = commandLogs.some((log) => log.status !== "ack");
   const hasAck = commandLogs.some((log) => log.status === "ack");
+  const telemetryTimes = latestRows
+    .map((reading) => reading.server_at)
+    .sort()
+  const lastTelemetryAt = telemetryTimes[telemetryTimes.length - 1];
+  const lastCommand = commandLogs.find((log) => log.status !== "ack");
+  const lastAck = commandLogs.find((log) => log.status === "ack");
   const quickTestChannel = device?.id === "device-home" ? "V0" : "V3";
   const quickTestTopic = (device?.command_topic ?? "spark/v1/demo-tenant/device-irrigation/command/{channel}").replace("{channel}", quickTestChannel);
   const quickTestAckTopic = quickTestTopic.replace("/command/", "/ack/");
@@ -1090,6 +1096,29 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
         </div>
       </div>
 
+      <section className="board-health-strip" data-testid="board-health-strip">
+        <BoardHealthItem
+          state={status === "live" ? "good" : "warn"}
+          label="MQTT connected"
+          value={status === "live" ? `${payload.mqtt.host}:${payload.mqtt.port}` : "Check API and broker"}
+        />
+        <BoardHealthItem
+          state={hasTelemetry ? "good" : "warn"}
+          label="Last telemetry"
+          value={lastTelemetryAt ? new Date(lastTelemetryAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "Waiting for telemetry"}
+        />
+        <BoardHealthItem
+          state={hasCommand ? "good" : "warn"}
+          label="Last command"
+          value={lastCommand ? `${lastCommand.channel} ${formatCommandValue(lastCommand.value)}` : "Waiting for command"}
+        />
+        <BoardHealthItem
+          state={hasAck ? "good" : "warn"}
+          label="Last ACK"
+          value={lastAck ? `${lastAck.channel} ACK received` : "Waiting for ACK"}
+        />
+      </section>
+
       <section className="connection-proof-timeline" data-testid="connection-proof-timeline">
         <div>
           <span className="section-kicker">Connection proof</span>
@@ -1122,9 +1151,9 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
           <p>This sends a real command to the selected device. Your sketch should receive it in `SparkIoT.onCommand`, apply the output, then call `SparkIoT.ack`.</p>
         </div>
         <div className="quick-test-command-grid">
-          <span><small>Test command topic</small><code>{quickTestTopic}</code></span>
-          <span><small>Payload</small><code>{quickTestPayload}</code></span>
-          <span><small>Expected board ACK</small><code>{quickTestAckTopic}</code></span>
+          <QuickCopyField label="Test command topic" value={quickTestTopic} copyLabel="Copy test command topic" />
+          <QuickCopyField label="Payload" value={quickTestPayload} copyLabel="Copy test payload" />
+          <QuickCopyField label="Expected board ACK" value={quickTestAckTopic} copyLabel="Copy expected ACK topic" />
         </div>
         <div className="quick-test-actions">
           <button className="primary" onClick={publishQuickTestCommand} disabled={quickTestStatus === "publishing"}>
@@ -1132,6 +1161,18 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
           </button>
           <span className={`quick-test-status ${quickTestStatus}`}>{quickTestStatus === "idle" ? "Ready to test" : quickTestStatus}</span>
         </div>
+      </section>
+
+      <section className="panel board-troubleshooting-card">
+        <div>
+          <span className="section-kicker">Troubleshooting</span>
+          <h2>Troubleshooting if no data appears</h2>
+        </div>
+        <ul>
+          <li><strong>Token</strong><span>Token must match the selected device. Regenerate and reupload code if the board was shared or lost.</span></li>
+          <li><strong>Topic</strong><span>Topic must use the same tenant and device ID shown in Board Test.</span></li>
+          <li><strong>Channel</strong><span>Channel must match the dashboard V pin, for example V0 for temperature or V3 for relay control.</span></li>
+        </ul>
       </section>
 
       <details className="panel live-test-advanced">
@@ -1189,6 +1230,28 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
         </div>
       </section>
     </section>
+  );
+}
+
+function BoardHealthItem({ state, label, value }: { state: "good" | "warn"; label: string; value: string }) {
+  return (
+    <article className={`board-health-item ${state}`}>
+      <span>{state === "good" ? <CheckCircle2 size={16} /> : <RadioTower size={16} />}</span>
+      <div>
+        <small>{label}</small>
+        <strong>{value}</strong>
+      </div>
+    </article>
+  );
+}
+
+function QuickCopyField({ label, value, copyLabel }: { label: string; value: string; copyLabel: string }) {
+  return (
+    <span>
+      <small>{label}</small>
+      <code>{value}</code>
+      <button type="button" onClick={() => void copyText(value)} aria-label={copyLabel}><Copy size={14} />Copy</button>
+    </span>
   );
 }
 

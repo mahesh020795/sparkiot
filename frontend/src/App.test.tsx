@@ -1180,6 +1180,26 @@ describe("App", () => {
     expect(screen.getByText("Shows commands sent by Spark IoT and ACK packets returned by the board.")).toBeInTheDocument();
   });
 
+  it("shows real-board MQTT health, last event proof and copyable quick-test topics", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByText("Board Test"));
+
+    expect(screen.getByTestId("board-health-strip")).toHaveClass("board-health-strip");
+    expect(screen.getByText("MQTT connected")).toBeInTheDocument();
+    expect(screen.getByText("Last telemetry")).toBeInTheDocument();
+    expect(screen.getByText("Last command")).toBeInTheDocument();
+    expect(screen.getByText("Last ACK")).toBeInTheDocument();
+    expect(screen.getByText("Waiting for command")).toBeInTheDocument();
+    expect(screen.getByText("Waiting for ACK")).toBeInTheDocument();
+    expect(screen.getByText("Troubleshooting if no data appears")).toBeInTheDocument();
+    expect(screen.getByText(/token must match the selected device/i)).toBeInTheDocument();
+    expect(screen.getByText(/topic must use the same tenant and device ID/i)).toBeInTheDocument();
+    expect(screen.getByText(/channel must match the dashboard V pin/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy test command topic" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy test payload" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy expected ACK topic" })).toBeInTheDocument();
+  });
+
   it("shows a Blynk Timer-style schedule automation page in demo mode", async () => {
     render(<App />);
     fireEvent.click(await screen.findByText("Schedules"));

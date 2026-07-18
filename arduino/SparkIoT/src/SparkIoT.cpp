@@ -20,6 +20,8 @@ SparkIoTClient::SparkIoTClient()
     _tenantId(nullptr),
     _deviceId(nullptr),
     _token(nullptr),
+    _lastError("Not started"),
+    _lastMqttState(0),
     _lastReconnectAttempt(0) {}
 
 #if SPARKIOT_HAS_MANAGED_WIFI
@@ -104,6 +106,15 @@ bool SparkIoTClient::connected() {
 #endif
 }
 
+const char* SparkIoTClient::lastError() {
+  return _lastError;
+}
+
+int SparkIoTClient::mqttState() {
+  _lastMqttState = _mqtt.state();
+  return _lastMqttState;
+}
+
 bool SparkIoTClient::virtualWrite(const char* channel, float value, const char* unit) {
   char valueJson[32];
   dtostrf(value, 0, 3, valueJson);
@@ -179,6 +190,14 @@ bool SparkIoTClient::ack(const char* channel, bool value, const char* message) {
   return publishJson("ack", channel, valueJson, "");
 }
 
+bool SparkIoTClient::publishStatus(const char* status) {
+  char escapedStatus[80];
+  char valueJson[128];
+  escapeJson(status, escapedStatus, sizeof(escapedStatus));
+  snprintf(valueJson, sizeof(valueJson), "{\"token\":\"%s\",\"status\":\"%s\"}", _token, escapedStatus);
+  return publishJson("status", "", valueJson, "");
+}
+
 void SparkIoTClient::connectWiFi() {
 #if SPARKIOT_HAS_MANAGED_WIFI
   if (WiFi.status() == WL_CONNECTED) {
@@ -213,13 +232,17 @@ bool SparkIoTClient::connectMqtt() {
     char commandTopic[160];
     snprintf(commandTopic, sizeof(commandTopic), "spark/v1/%s/%s/command/#", _tenantId, _deviceId);
     _mqtt.subscribe(commandTopic);
+    _lastMqttState = _mqtt.state();
+    setLastError("OK");
     Serial.print("SparkIoT MQTT subscribed: ");
     Serial.println(commandTopic);
     return true;
   }
 
+  _lastMqttState = _mqtt.state();
+  setLastError("MQTT connect failed. Check broker host, port, device ID and token.");
   Serial.print("SparkIoT MQTT failed, rc=");
-  Serial.println(_mqtt.state());
+  Serial.println(_lastMqttState);
   return false;
 }
 
@@ -228,11 +251,16 @@ bool SparkIoTClient::publishJson(const char* kind, const char* channel, const ch
     connectMqtt();
   }
 
+  if (!_mqtt.connected()) {
+    setLastError("MQTT not connected. Call SparkIoT.run() and check broker/token.");
+    return false;
+  }
+
   char topic[180];
   char payload[360];
   buildTopic(topic, sizeof(topic), kind, channel);
 
-  if (strcmp(kind, "ack") == 0) {
+  if (strcmp(kind, "ack") == 0 || strcmp(kind, "status") == 0) {
     snprintf(payload, sizeof(payload), "%s", valueJson);
   } else if (unit && strlen(unit) > 0) {
     snprintf(payload, sizeof(payload), "{\"token\":\"%s\",\"value\":%s,\"unit\":\"%s\"}", _token, valueJson, unit);
@@ -241,6 +269,11 @@ bool SparkIoTClient::publishJson(const char* kind, const char* channel, const ch
   }
 
   const bool ok = _mqtt.publish(topic, payload);
+  if (!ok) {
+    setLastError("MQTT publish failed. Payload may be too large or broker disconnected.");
+  } else {
+    setLastError("OK");
+  }
   Serial.print("SparkIoT publish ");
   Serial.print(topic);
   Serial.print(" -> ");
@@ -249,7 +282,15 @@ bool SparkIoTClient::publishJson(const char* kind, const char* channel, const ch
 }
 
 void SparkIoTClient::buildTopic(char* output, size_t outputSize, const char* kind, const char* channel) {
-  snprintf(output, outputSize, "spark/v1/%s/%s/%s/%s", _tenantId, _deviceId, kind, channel);
+  if (channel && strlen(channel) > 0) {
+    snprintf(output, outputSize, "spark/v1/%s/%s/%s/%s", _tenantId, _deviceId, kind, channel);
+  } else {
+    snprintf(output, outputSize, "spark/v1/%s/%s/%s", _tenantId, _deviceId, kind);
+  }
+}
+
+void SparkIoTClient::setLastError(const char* message) {
+  _lastError = message ? message : "";
 }
 
 void SparkIoTClient::handleMessage(char* topic, byte* payload, unsigned int length) {

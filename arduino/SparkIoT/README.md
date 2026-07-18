@@ -43,9 +43,34 @@ SparkIoT.setLocation("V5", 3.139, 101.6869, 14, 8);
 SparkIoT.setCameraUrl("V6", "http://device.local/snapshot.jpg");
 SparkIoT.onCommand("V3", onCommand);
 SparkIoT.ack("V3", true, "Command applied");
+SparkIoT.publishStatus("online");
+
+Serial.println(SparkIoT.lastError());
+Serial.println(SparkIoT.mqttState());
 ```
 
 String telemetry, camera URLs, and ACK messages are JSON-safe for quotes, backslashes, and newlines before they are published to MQTT.
+
+## Board Test diagnostics
+
+Use the Spark IoT **Board Test** page while uploading your first sketch. The page shows last telemetry, last command and last ACK proof so you can confirm the full loop from board -> broker -> backend -> dashboard.
+
+If your board does not connect, print the diagnostics in Serial Monitor:
+
+```cpp
+if (!SparkIoT.connected()) {
+  Serial.print("SparkIoT error: ");
+  Serial.println(SparkIoT.lastError());
+  Serial.print("MQTT state: ");
+  Serial.println(SparkIoT.mqttState());
+}
+```
+
+Common fixes:
+
+- Do not use `localhost` from a real board.
+- Use the device token from the selected Spark IoT device.
+- Publish to the exact V pin topic shown in Board Test.
 
 ## Client adapter mode
 

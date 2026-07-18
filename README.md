@@ -163,6 +163,7 @@ SparkIoT.begin(WIFI_SSID, WIFI_PASSWORD, BROKER_HOST, BROKER_PORT, SPARK_TENANT_
 SparkIoT.virtualWrite("V0", 29.4, "C");
 SparkIoT.onCommand("V3", onPumpCommand);
 SparkIoT.ack("V3", true, "Pump command applied");
+SparkIoT.publishStatus("online");
 ```
 
 For Ethernet, WiFiNINA, WiFiS3, MKR GSM/NB, and similar boards, connect the network first and pass the board's `Client` object into Spark IoT:
@@ -177,6 +178,14 @@ Installable Arduino library:
 - `arduino/SparkIoT/library.properties`
 - `arduino/SparkIoT/src/SparkIoT.h`
 - `arduino/SparkIoT/src/SparkIoT.cpp`
+
+Create the Arduino IDE ZIP package:
+
+```bash
+python scripts/package_arduino_library.py
+```
+
+This writes `outputs/SparkIoT-Arduino-Library-v1.0.0.zip`, which can be installed from Arduino IDE with `Sketch -> Include Library -> Add .ZIP Library...`.
 
 Included examples:
 
