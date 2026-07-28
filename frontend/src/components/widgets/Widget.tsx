@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { api } from "../../lib/api";
 import type { Device, Telemetry, WidgetConfig } from "../../lib/types";
+import { levelPercent, levelStatus, levelStatusLabel, numericWidgetValue } from "./levelWidgets";
 
 const WEEK_DAYS = [
   { key: "monday", short: "M", label: "Monday" },
@@ -25,6 +26,7 @@ export function Widget({ config, reading, devices, onCommand }: { config: Widget
   if (config.type === "gps") return <MapWidget config={config} value={value} />;
   if (config.type === "camera") return <CameraWidget config={config} value={value} />;
   if (config.type === "schedule") return <ScheduleWidget config={config} value={value} onCommand={onCommand} />;
+  if (config.type === "tank_level") return <TankLevelWidget config={config} value={numericWidgetValue(value)} />;
   if (config.type === "power_hub") return <PowerHubWidget config={config} value={Number(raw ?? 12.4)} />;
   if (config.type === "event_monitor") return <EventMonitorWidget config={config} value={String(raw ?? "")} />;
   if (config.type === "switch") return <ControlWidget icon={<ToggleLeft />} config={config} device={device} value={Boolean(raw)} onCommand={onCommand} />;
@@ -149,6 +151,39 @@ function MapWidget({ config, value }: { config: WidgetConfig; value: any }) {
 
 function CameraWidget({ config, value }: { config: WidgetConfig; value: any }) {
   return <article className="widget spark-widget-card widget-camera cockpit-media-widget"><WidgetHeader config={config} icon={<Camera size={16} />} /><div className="media-frame camera-frame"><img className="camera" src={value?.url ?? "https://placehold.co/640x360?text=ESP32-CAM"} alt="Camera snapshot" /><span className="camera-live-badge">Video out</span></div><WidgetFooter config={config} value="Use PTZ overlays to shift simulated camera horizon" label="VIDEO OUT" /></article>;
+}
+
+function TankLevelWidget({ config, value }: { config: WidgetConfig; value: number | null }) {
+  const min = config.min ?? 0;
+  const max = config.max ?? 100;
+  const percent = levelPercent(value, min, max);
+  const capacity = config.capacity ?? 1000;
+  const currentVolume = percent === null ? null : Math.round((percent / 100) * capacity);
+  const status = percent === null
+    ? "no_data"
+    : typeof config.dangerThreshold === "number" && percent <= config.dangerThreshold
+      ? "danger"
+      : typeof config.warningThreshold === "number" && percent <= config.warningThreshold
+        ? "warning"
+        : "safe";
+  const fill = percent ?? 0;
+
+  return (
+    <article className="widget spark-widget-card widget-tank-level">
+      <WidgetHeader config={config} icon={<Droplets size={16} />} />
+      <div className="tank-level-body">
+        <div className="tank-visual" aria-label={`Tank fill ${percent ?? 0}%`}>
+          <span className="tank-water" style={{ height: `${fill}%` }} />
+        </div>
+        <div className="tank-level-copy">
+          <strong>{percent === null ? "--" : `${percent}%`}</strong>
+          <span>{currentVolume === null ? "Waiting for level" : `${currentVolume} / ${capacity} L`}</span>
+          <em className={`level-status level-status-${status}`}>{levelStatusLabel(status)}</em>
+        </div>
+      </div>
+      <WidgetFooter config={config} value={`Capacity ${capacity} L`} />
+    </article>
+  );
 }
 
 function ScheduleWidget({ config, value, onCommand }: { config: WidgetConfig; value: any; onCommand?: (config: WidgetConfig, value: unknown) => void }) {

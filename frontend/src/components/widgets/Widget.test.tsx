@@ -38,6 +38,35 @@ describe("Smart level widget helpers", () => {
   });
 });
 
+describe("Smart level dashboard widgets", () => {
+  it("renders a Tank Level smart widget with fill, capacity and status", () => {
+    const config: WidgetConfig = {
+      id: "tank-widget",
+      type: "tank_level",
+      title: "Water Tank Level",
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 3,
+      deviceId: "device-1",
+      channel: "V20",
+      unit: "%",
+      min: 0,
+      max: 100,
+      capacity: 1000,
+      warningThreshold: 25,
+      dangerThreshold: 10
+    };
+
+    render(<Widget config={config} reading={{ id: "t1", device_id: "device-1", channel: "V20", value: 72, unit: "%", observed_at: "2026-07-29T00:00:00Z", server_at: "2026-07-29T00:00:00Z" }} devices={[]} />);
+
+    expect(screen.getByText("Water Tank Level")).toBeInTheDocument();
+    expect(screen.getByText("72%")).toBeInTheDocument();
+    expect(screen.getByText("720 / 1000 L")).toBeInTheDocument();
+    expect(screen.getByText("Normal")).toBeInTheDocument();
+  });
+});
+
 describe("Schedule dashboard widget", () => {
   it("lets users edit days and time cycles inside the dashboard card", () => {
     const onCommand = vi.fn();
