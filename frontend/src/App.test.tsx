@@ -1798,8 +1798,13 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByText(/Reset your Spark IoT password/i)).toBeInTheDocument();
-    expect(screen.getByDisplayValue("dev-reset-token-123")).toBeInTheDocument();
+    expect(screen.queryByTestId("auth-tabs")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Reset token")).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue("dev-reset-token-123")).not.toBeInTheDocument();
+    expect(screen.getByText("mahesh@example.com")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("New password"), { target: { value: "NewSpark123!" } });
+    fireEvent.change(screen.getByLabelText("Confirm new password"), { target: { value: "NewSpark123!" } });
     fireEvent.click(screen.getByRole("button", { name: /Update password/i }));
 
     expect(await screen.findByText("Password updated. Sign in with your new password.")).toBeInTheDocument();
