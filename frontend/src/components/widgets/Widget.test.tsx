@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { WidgetConfig } from "../../lib/types";
+import { levelPercent, levelStatus, numericWidgetValue } from "./levelWidgets";
 import { Widget } from "./Widget";
 
 const scheduleConfig: WidgetConfig = {
@@ -18,6 +19,24 @@ const scheduleConfig: WidgetConfig = {
 };
 
 afterEach(() => cleanup());
+
+describe("Smart level widget helpers", () => {
+  it("normalizes level values and classifies safe warning and danger states", () => {
+    expect(numericWidgetValue({ raw: 72 })).toBe(72);
+    expect(numericWidgetValue("0.85")).toBe(0.85);
+    expect(numericWidgetValue("offline")).toBeNull();
+
+    expect(levelPercent(72, 0, 100)).toBe(72);
+    expect(levelPercent(120, 0, 100)).toBe(100);
+    expect(levelPercent(-10, 0, 100)).toBe(0);
+    expect(levelPercent(null, 0, 100)).toBeNull();
+
+    expect(levelStatus(0.85, 1.5, 2)).toBe("safe");
+    expect(levelStatus(1.6, 1.5, 2)).toBe("warning");
+    expect(levelStatus(2.1, 1.5, 2)).toBe("danger");
+    expect(levelStatus(null, 1.5, 2)).toBe("no_data");
+  });
+});
 
 describe("Schedule dashboard widget", () => {
   it("lets users edit days and time cycles inside the dashboard card", () => {

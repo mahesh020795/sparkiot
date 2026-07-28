@@ -67,6 +67,11 @@ export type WidgetConfig = {
   days?: string[];
   timeSlots?: string[];
   maxTimeSlots?: number;
+  warningThreshold?: number;
+  dangerThreshold?: number;
+  capacity?: number;
+  location?: string;
+  statusLabel?: string;
 };
 
 export type UserProfile = {
