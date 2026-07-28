@@ -611,11 +611,11 @@ describe("App", () => {
     expect(screen.getAllByText("gauge").length).toBeGreaterThan(0);
     expect(screen.getByText("Input widgets")).toBeInTheDocument();
     expect(screen.getByText("Output widgets")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /time Input widget/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /schedule Input widget/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Add Time Input widget/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Add Schedule widget/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /date Input widget/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /day Input widget/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /camera Output widget/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Add Camera widget/i })).toBeInTheDocument();
     fireEvent.click(screen.getAllByText("Notifications")[1]);
     expect(screen.getByText("Alert operations center")).toBeInTheDocument();
     expect(screen.getByText("Push-safe rule engine")).toBeInTheDocument();
@@ -667,13 +667,19 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
     expect(screen.queryByText("Camera Snapshot")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /camera.*Output widget/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Add Camera widget/i }));
     expect(screen.getAllByText("Camera Snapshot").length).toBeGreaterThan(0);
     const addedCamera = screen.getAllByText("Camera Snapshot").map((item) => item.closest("article")).find(Boolean) as HTMLElement;
     const gridItem = addedCamera.closest(".react-grid-item") as HTMLElement;
     expect(gridItem?.getAttribute("style") ?? "").not.toMatch(/Infinity|NaN/);
     expect(screen.getByRole("status")).toHaveTextContent(/Camera Snapshot widget added to canvas/i);
     expect(screen.getByDisplayValue("Camera Snapshot")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Add Tank Level widget/i }));
+    expect(screen.getByRole("status")).toHaveTextContent(/Tank Level widget added to canvas/i);
+    fireEvent.click(screen.getByRole("button", { name: /Add Flood Level widget/i }));
+    expect(screen.getByRole("status")).toHaveTextContent(/Flood Level widget added to canvas/i);
+    fireEvent.click(screen.getByRole("button", { name: /Add Threshold Monitor widget/i }));
+    expect(screen.getByRole("status")).toHaveTextContent(/Threshold Monitor widget added to canvas/i);
 
     fireEvent.click(screen.getAllByText("Notifications")[1]);
     const beforeRules = screen.getAllByDisplayValue("Voltage Alert").length;
@@ -710,7 +716,7 @@ describe("App", () => {
       expect(screen.getByDisplayValue("Datastream V3")).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
-      fireEvent.click(screen.getByRole("button", { name: /camera.*Output widget/i }));
+      fireEvent.click(screen.getByRole("button", { name: /Add Camera widget/i }));
       expect(screen.getByRole("status")).toHaveTextContent(/Camera Snapshot widget added to canvas/i);
 
       fireEvent.click(screen.getAllByText("Notifications")[1]);
@@ -727,7 +733,7 @@ describe("App", () => {
     fireEvent.click(within(screen.getByRole("article", { name: /Smart Irrigation template/i })).getByRole("button", { name: /Edit template/i }));
     fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
 
-    const valueWidgetButton = screen.getByRole("button", { name: /value.*Output widget/i });
+    const valueWidgetButton = screen.getByRole("button", { name: /Add Value widget/i });
     for (let index = 0; index < 18; index += 1) {
       fireEvent.click(valueWidgetButton);
     }

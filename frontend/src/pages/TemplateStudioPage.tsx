@@ -34,7 +34,7 @@ import type { Telemetry } from "../lib/types";
 const GridLayout = WidthProvider(BaseGridLayout);
 const widgetLibraryGroups = [
   { title: "Input widgets", kind: "Input", caption: "Send values or commands to the board", types: ["switch", "push_button", "time", "schedule"] },
-  { title: "Output widgets", kind: "Output", caption: "Display telemetry, media and board status", types: ["gauge", "meter", "value", "led", "chart", "gps", "camera", "serial_lcd", "battery", "signal"] }
+  { title: "Output widgets", kind: "Output", caption: "Display telemetry, media and board status", types: ["gauge", "meter", "value", "tank_level", "flood_level", "threshold_monitor", "led", "chart", "gps", "camera", "serial_lcd", "battery", "signal"] }
 ] as const;
 const PRO_WIDGET_LIMIT = 30;
 const PUBLIC_MQTT_HOST = import.meta.env.VITE_MQTT_HOST ?? "mqtt.rectronx.com";
@@ -143,28 +143,35 @@ export function TemplateStudioPage({
       return;
     }
     const preferredType = dataTypeForWidgetType(type);
+    const widgetDefaults = widgetDefaultsForType(type);
+    const defaultName = defaultNameForWidgetType(type);
     const existingStream =
       (datastreamId ? template.datastreams.find((item) => item.id === datastreamId) : undefined) ??
-      template.datastreams.find((item) => item.dataType === preferredType);
+      (isSmartLevelWidget(type)
+        ? template.datastreams.find((item) => item.name.toLowerCase() === defaultName.toLowerCase())
+        : template.datastreams.find((item) => item.dataType === preferredType));
     const stream = existingStream ?? createDatastream(template.datastreams, {
-      name: defaultNameForWidgetType(type),
+      name: defaultName,
       dataType: preferredType,
-      unit: preferredType === "boolean" || preferredType === "gps" || preferredType === "image" || preferredType === "string" ? "" : "unit",
-      min: preferredType === "boolean" ? 0 : preferredType === "gps" || preferredType === "image" || preferredType === "string" ? undefined : 0,
-      max: preferredType === "boolean" ? 1 : preferredType === "gps" || preferredType === "image" || preferredType === "string" ? undefined : 100,
-      color: colorForType(preferredType)
+      unit: widgetDefaults.unit ?? (preferredType === "boolean" || preferredType === "gps" || preferredType === "image" || preferredType === "string" ? "" : "unit"),
+      min: widgetDefaults.min ?? (preferredType === "boolean" ? 0 : preferredType === "gps" || preferredType === "image" || preferredType === "string" ? undefined : 0),
+      max: widgetDefaults.max ?? (preferredType === "boolean" ? 1 : preferredType === "gps" || preferredType === "image" || preferredType === "string" ? undefined : 100),
+      color: widgetDefaults.color ?? colorForType(preferredType)
     });
     const datastreams = existingStream ? template.datastreams : [...template.datastreams, stream];
+    const isWide = type === "chart" || type === "gps" || type === "camera" || type === "flood_level";
+    const isTall = type === "chart" || type === "gps" || type === "camera" || type === "schedule" || type === "tank_level" || type === "threshold_monitor" || type === "flood_level";
     const widget = hydrateWidget({
       id: clientId("w"),
       type,
       title: stream.name,
       x: 0,
       y: nextWidgetRow(template.dashboard.widgets),
-      w: type === "chart" || type === "gps" || type === "camera" ? 6 : 3,
-      h: type === "chart" || type === "gps" || type === "camera" || type === "schedule" ? 3 : 2,
+      w: isWide ? 6 : 3,
+      h: isTall ? 3 : 2,
       deviceId: "",
       channel: "",
+      ...widgetDefaults,
       ...(type === "schedule" ? { days: ["mon", "wed", "fri"], timeSlots: ["06:00", "12:00", "18:00"], maxTimeSlots: 3 } : {})
     }, stream, device);
     onChange({ ...template, datastreams, dashboard: { ...template.dashboard, widgets: [...template.dashboard.widgets, widget] } });
@@ -609,7 +616,7 @@ function DashboardBuilder({ template, device, latest, layout, widgetAddStatus, s
                   <small>{group.caption}</small>
                 </div>
                 <div className="widget-library-grid">
-                  {group.types.map((type) => <button className="widget-tile" type="button" key={type} aria-label={`${type.replace("_", " ")} ${group.kind} widget`} onClick={() => onAddWidget(type)}><Grid2X2Plus size={15} /><span>{type.replace("_", " ")}</span><small>{group.kind} widget</small></button>)}
+                  {group.types.map((type) => <button className="widget-tile" type="button" key={type} aria-label={`Add ${widgetLabel(type)} widget`} onClick={() => onAddWidget(type)}><Grid2X2Plus size={15} /><span>{widgetLabel(type)}</span><small>{group.kind} widget</small></button>)}
                 </div>
               </section>
             ))}
@@ -661,6 +668,18 @@ function DashboardBuilder({ template, device, latest, layout, widgetAddStatus, s
                     options={[1, 2, 3, 4, 5, 6].map((count) => ({ value: String(count), label: `${count} slot${count === 1 ? "" : "s"}` }))}
                   />
                 </label>
+              )}
+              {isSmartLevelWidget(selectedWidget.type) && (
+                <div className="inspector-field-grid">
+                  <label>Warning threshold<input type="number" value={selectedWidget.warningThreshold ?? ""} onChange={(event) => onUpdateWidget(selectedWidget.id, { warningThreshold: optionalNumber(event.target.value) })} /></label>
+                  <label>Danger threshold<input type="number" value={selectedWidget.dangerThreshold ?? ""} onChange={(event) => onUpdateWidget(selectedWidget.id, { dangerThreshold: optionalNumber(event.target.value) })} /></label>
+                </div>
+              )}
+              {selectedWidget.type === "tank_level" && (
+                <label>Tank capacity<input type="number" value={selectedWidget.capacity ?? ""} onChange={(event) => onUpdateWidget(selectedWidget.id, { capacity: optionalNumber(event.target.value) })} /></label>
+              )}
+              {selectedWidget.type === "flood_level" && (
+                <label>Site location<input value={selectedWidget.location ?? ""} onChange={(event) => onUpdateWidget(selectedWidget.id, { location: event.target.value })} /></label>
               )}
               <div className="inspector-actions"><button onClick={onDuplicate}><Copy size={16} />Duplicate</button><button onClick={onDelete}><Trash2 size={16} />Delete</button></div>
             </>
@@ -805,6 +824,53 @@ function dataTypeForWidgetType(type: string): Datastream["dataType"] {
   return "float";
 }
 
+function isSmartLevelWidget(type: string) {
+  return type === "tank_level" || type === "flood_level" || type === "threshold_monitor";
+}
+
+function widgetDefaultsForType(type: string): Partial<WidgetConfig> {
+  if (type === "tank_level") {
+    return { unit: "%", min: 0, max: 100, capacity: 1000, warningThreshold: 25, dangerThreshold: 10, color: "#2563eb" };
+  }
+  if (type === "flood_level") {
+    return { unit: "m", min: 0, max: 2.5, warningThreshold: 1.5, dangerThreshold: 2, location: "Site location", color: "#0891b2" };
+  }
+  if (type === "threshold_monitor") {
+    return { unit: "", min: 0, max: 100, warningThreshold: 70, dangerThreshold: 90, color: "#f59e0b" };
+  }
+  return {};
+}
+
+function widgetLabel(type: string) {
+  const labels: Record<string, string> = {
+    gauge: "Gauge",
+    meter: "Meter",
+    value: "Value",
+    switch: "Switch",
+    push_button: "Push Button",
+    led: "LED",
+    chart: "Chart",
+    gps: "GPS Map",
+    camera: "Camera",
+    serial_lcd: "Serial LCD",
+    time: "Time Input",
+    schedule: "Schedule",
+    battery: "Battery",
+    signal: "Signal",
+    tank_level: "Tank Level",
+    flood_level: "Flood Level",
+    threshold_monitor: "Threshold Monitor"
+  };
+  return labels[type] ?? type.replace(/_/g, " ");
+}
+
+function optionalNumber(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const next = Number(trimmed);
+  return Number.isFinite(next) ? next : undefined;
+}
+
 function defaultNameForWidgetType(type: string) {
   const labels: Record<string, string> = {
     gauge: "Gauge Value",
@@ -820,7 +886,10 @@ function defaultNameForWidgetType(type: string) {
     time: "Time Input",
     schedule: "Schedule",
     battery: "Battery Level",
-    signal: "Signal Strength"
+    signal: "Signal Strength",
+    tank_level: "Tank Level",
+    flood_level: "Flood Level",
+    threshold_monitor: "Threshold Monitor"
   };
   return labels[type] ?? "Datastream";
 }
