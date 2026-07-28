@@ -374,6 +374,95 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
 .level-status-warning { color: #b45309; background: #fffbeb; border: 1px solid #fde68a; }
 .level-status-danger { color: #be123c; background: #fff1f2; border: 1px solid #fecdd3; }
 .level-status-no_data { color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0; }
+.flood-level-body {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.6fr) minmax(240px, 1.4fr) minmax(120px, 0.6fr);
+  gap: 22px;
+  align-items: center;
+  min-height: 210px;
+}
+.flood-value {
+  display: block;
+  margin-bottom: 12px;
+  color: #0891b2;
+  font-size: clamp(2.2rem, 4vw, 3.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+.flood-channel {
+  position: relative;
+  min-height: 160px;
+  overflow: hidden;
+  border: 1px solid #dbeafe;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #f8fbff, #eef6ff);
+}
+.flood-water {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.7), rgba(37, 99, 235, 0.85));
+}
+.flood-line {
+  position: absolute;
+  right: 14px;
+  width: 60%;
+  padding-top: 3px;
+  border-top: 1px dashed currentColor;
+  text-align: right;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+.flood-line-danger { top: 22%; color: #dc2626; }
+.flood-line-warning { top: 42%; color: #d97706; }
+.flood-meta {
+  display: grid;
+  gap: 14px;
+  color: #64748b;
+}
+.flood-meta small,
+.threshold-copy span {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.flood-meta strong {
+  display: block;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+.threshold-monitor-body {
+  display: grid;
+  gap: 16px;
+  min-height: 210px;
+  align-content: center;
+}
+.threshold-monitor-body > strong {
+  color: #0f172a;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+.threshold-track {
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eef2f7;
+}
+.threshold-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
+}
+.threshold-copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 .notification { border-top: 1px solid #e8edf5; padding: 14px 0; }
 .notification p { margin: 4px 0; }
 .notification small { color: #8a95a6; }

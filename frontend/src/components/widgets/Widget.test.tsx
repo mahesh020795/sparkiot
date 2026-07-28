@@ -65,6 +65,60 @@ describe("Smart level dashboard widgets", () => {
     expect(screen.getByText("720 / 1000 L")).toBeInTheDocument();
     expect(screen.getByText("Normal")).toBeInTheDocument();
   });
+
+  it("renders a Flood Level smart widget with thresholds and location", () => {
+    const config: WidgetConfig = {
+      id: "flood-widget",
+      type: "flood_level",
+      title: "Flood Monitoring",
+      x: 0,
+      y: 0,
+      w: 6,
+      h: 3,
+      deviceId: "device-1",
+      channel: "V21",
+      unit: "m",
+      min: 0,
+      max: 2.5,
+      warningThreshold: 1.5,
+      dangerThreshold: 2,
+      location: "Riverside Area"
+    };
+
+    render(<Widget config={config} reading={{ id: "f1", device_id: "device-1", channel: "V21", value: 0.85, unit: "m", observed_at: "2026-07-29T03:00:00Z", server_at: "2026-07-29T03:00:00Z" }} devices={[]} />);
+
+    expect(screen.getByText("Flood Monitoring")).toBeInTheDocument();
+    expect(screen.getByText("0.85 m")).toBeInTheDocument();
+    expect(screen.getByText("Riverside Area")).toBeInTheDocument();
+    expect(screen.getByText("Danger 2 m")).toBeInTheDocument();
+    expect(screen.getByText("Warning 1.5 m")).toBeInTheDocument();
+  });
+
+  it("renders a generic Threshold Monitor with warning and danger status", () => {
+    const config: WidgetConfig = {
+      id: "threshold-widget",
+      type: "threshold_monitor",
+      title: "Gas Level",
+      x: 0,
+      y: 0,
+      w: 4,
+      h: 3,
+      deviceId: "device-1",
+      channel: "V22",
+      unit: "ppm",
+      min: 0,
+      max: 1000,
+      warningThreshold: 600,
+      dangerThreshold: 800
+    };
+
+    render(<Widget config={config} reading={{ id: "th1", device_id: "device-1", channel: "V22", value: 850, unit: "ppm", observed_at: "2026-07-29T03:00:00Z", server_at: "2026-07-29T03:00:00Z" }} devices={[]} />);
+
+    expect(screen.getByText("Gas Level")).toBeInTheDocument();
+    expect(screen.getByText("850 ppm")).toBeInTheDocument();
+    expect(screen.getByText("Danger")).toBeInTheDocument();
+    expect(screen.getByText("Warning at 600 ppm")).toBeInTheDocument();
+  });
 });
 
 describe("Schedule dashboard widget", () => {

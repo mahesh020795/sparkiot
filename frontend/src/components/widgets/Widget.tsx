@@ -27,6 +27,8 @@ export function Widget({ config, reading, devices, onCommand }: { config: Widget
   if (config.type === "camera") return <CameraWidget config={config} value={value} />;
   if (config.type === "schedule") return <ScheduleWidget config={config} value={value} onCommand={onCommand} />;
   if (config.type === "tank_level") return <TankLevelWidget config={config} value={numericWidgetValue(value)} />;
+  if (config.type === "flood_level") return <FloodLevelWidget config={config} value={numericWidgetValue(value)} />;
+  if (config.type === "threshold_monitor") return <ThresholdMonitorWidget config={config} value={numericWidgetValue(value)} />;
   if (config.type === "power_hub") return <PowerHubWidget config={config} value={Number(raw ?? 12.4)} />;
   if (config.type === "event_monitor") return <EventMonitorWidget config={config} value={String(raw ?? "")} />;
   if (config.type === "switch") return <ControlWidget icon={<ToggleLeft />} config={config} device={device} value={Boolean(raw)} onCommand={onCommand} />;
@@ -182,6 +184,60 @@ function TankLevelWidget({ config, value }: { config: WidgetConfig; value: numbe
         </div>
       </div>
       <WidgetFooter config={config} value={`Capacity ${capacity} L`} />
+    </article>
+  );
+}
+
+function FloodLevelWidget({ config, value }: { config: WidgetConfig; value: number | null }) {
+  const unit = config.unit ?? "m";
+  const status = levelStatus(value, config.warningThreshold, config.dangerThreshold);
+  const percent = levelPercent(value, config.min ?? 0, config.max ?? 2.5) ?? 0;
+  const displayValue = value === null ? "--" : `${value.toFixed(value < 10 ? 2 : 0)} ${unit}`;
+
+  return (
+    <article className="widget spark-widget-card widget-flood-level">
+      <WidgetHeader config={config} icon={<Droplets size={16} />} />
+      <div className="flood-level-body">
+        <div>
+          <strong className="flood-value">{displayValue}</strong>
+          <span className={`level-status level-status-${status}`}>{levelStatusLabel(status)}</span>
+        </div>
+        <div className="flood-channel" aria-label={`Flood level ${displayValue}`}>
+          <span className="flood-water" style={{ height: `${Math.max(14, percent)}%` }} />
+          <span className="flood-line flood-line-danger">Danger {config.dangerThreshold ?? 2} {unit}</span>
+          <span className="flood-line flood-line-warning">Warning {config.warningThreshold ?? 1.5} {unit}</span>
+        </div>
+        <div className="flood-meta">
+          <span><small>Location</small><strong>{config.location ?? "Site location"}</strong></span>
+          <span><small>Updated</small><strong>Latest telemetry</strong></span>
+        </div>
+      </div>
+      <WidgetFooter config={config} value="Water level safety monitor" />
+    </article>
+  );
+}
+
+function ThresholdMonitorWidget({ config, value }: { config: WidgetConfig; value: number | null }) {
+  const unit = config.unit ?? "";
+  const status = levelStatus(value, config.warningThreshold, config.dangerThreshold);
+  const percent = levelPercent(value, config.min ?? 0, config.max ?? 100) ?? 0;
+  const displayValue = value === null ? "--" : `${value}${unit ? ` ${unit}` : ""}`;
+
+  return (
+    <article className="widget spark-widget-card widget-threshold-monitor">
+      <WidgetHeader config={config} icon={<Gauge size={16} />} />
+      <div className="threshold-monitor-body">
+        <span className={`level-status level-status-${status}`}>{levelStatusLabel(status)}</span>
+        <strong>{displayValue}</strong>
+        <div className="threshold-track" aria-label={`Threshold level ${percent}%`}>
+          <span style={{ width: `${percent}%` }} />
+        </div>
+        <div className="threshold-copy">
+          <span>Warning at {config.warningThreshold ?? 70}{unit ? ` ${unit}` : ""}</span>
+          <span>Danger at {config.dangerThreshold ?? 90}{unit ? ` ${unit}` : ""}</span>
+        </div>
+      </div>
+      <WidgetFooter config={config} value="Limit-based sensor health" />
     </article>
   );
 }
