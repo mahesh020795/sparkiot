@@ -611,8 +611,8 @@ describe("App", () => {
     expect(screen.getByText("Widget Library")).toBeInTheDocument();
     expect(screen.getByText("Input widgets")).toBeInTheDocument();
     expect(screen.getByText("Output widgets")).toBeInTheDocument();
-    expect(screen.getByText("switch")).toBeInTheDocument();
-    expect(screen.getAllByText("gauge").length).toBeGreaterThan(0);
+    expect(screen.getByText("Switch")).toBeInTheDocument();
+    expect(screen.getAllByText("Gauge").length).toBeGreaterThan(0);
     expect(screen.getByText("Input widgets")).toBeInTheDocument();
     expect(screen.getByText("Output widgets")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Add Time Input widget/i })).toBeInTheDocument();
@@ -738,7 +738,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
 
     const valueWidgetButton = screen.getByRole("button", { name: /Add Value widget/i });
-    for (let index = 0; index < 18; index += 1) {
+    for (let index = 0; index < 15; index += 1) {
       fireEvent.click(valueWidgetButton);
     }
     expect(screen.getByRole("status")).toHaveTextContent(/widget added to canvas/i);
