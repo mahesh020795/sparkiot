@@ -25,7 +25,10 @@ export const demoTemplates: DeviceTemplate[] = [
     stream("ds-event", "Event Monitor", "V8", "string", "", undefined, undefined, "#e11d48"),
     stream("ds-pressure", "Line Pressure", "V9", "float", "PSI", 0, 80, "#22c55e"),
     stream("ds-camera", "Video Output", "V10", "image", "", undefined, undefined, "#e11d48"),
-    stream("ds-schedule", "Irrigation Schedule", "V12", "time", "AUTO", undefined, undefined, "#f59e0b")
+    stream("ds-tank", "Water Tank Level", "V11", "integer", "%", 0, 100, "#2563eb"),
+    stream("ds-schedule", "Irrigation Schedule", "V12", "time", "AUTO", undefined, undefined, "#f59e0b"),
+    stream("ds-flood", "Flood Level", "V13", "float", "m", 0, 2.5, "#0891b2"),
+    stream("ds-threshold", "Threshold Monitor", "V14", "float", "%", 0, 100, "#f59e0b")
   ], [
     widget("w-temp", "gauge", "ds-temp", 0, 0, 4, 3),
     widget("w-humidity", "meter", "ds-humidity", 4, 0, 4, 3),
@@ -38,7 +41,10 @@ export const demoTemplates: DeviceTemplate[] = [
     widget("w-zone-1", "switch", "ds-zone-1", 9, 6, 3, 3),
     widget("w-zone-2", "switch", "ds-zone-2", 0, 9, 3, 3),
     widget("w-power", "power_hub", "ds-power", 3, 9, 3, 3),
-    widget("w-event", "event_monitor", "ds-event", 6, 9, 3, 3)
+    widget("w-event", "event_monitor", "ds-event", 6, 9, 3, 3),
+    widget("w-tank", "tank_level", "ds-tank", 9, 9, 3, 3, { capacity: 1000, warningThreshold: 25, dangerThreshold: 10 }),
+    widget("w-flood", "flood_level", "ds-flood", 0, 12, 6, 3, { warningThreshold: 1.5, dangerThreshold: 2, location: "Riverside Pump Station" }),
+    widget("w-threshold", "threshold_monitor", "ds-threshold", 6, 12, 3, 3, { warningThreshold: 70, dangerThreshold: 90, statusLabel: "Hydration limit" })
   ]),
   template("template-home", "Smart Home", "ESP8266", "project-home", "device-home", [
     stream("ds-relay", "Relay Switch", "V0", "boolean", "", 0, 1, "#2563eb"),
@@ -77,7 +83,10 @@ export const demoLatest: Record<string, Telemetry> = {
   "device-irrigation:V8": reading("device-irrigation", "V8", "[OK] Gateway link active\n[OK] Zone 1 solenoid OPEN\n[WARN] Soil moisture low at 31%\n[INFO] MQTT publishing success"),
   "device-irrigation:V9": reading("device-irrigation", "V9", 32.8, "PSI"),
   "device-irrigation:V10": reading("device-irrigation", "V10", { url: "https://placehold.co/960x540/eef3f8/1f2a3d?text=Irrigation+Camera+Stream" }),
+  "device-irrigation:V11": reading("device-irrigation", "V11", 72, "%"),
   "device-irrigation:V12": reading("device-irrigation", "V12", { days: ["M", "W", "F"], times: ["06:00 AM", "12:00 PM", "06:00 PM"], duration: 25 }),
+  "device-irrigation:V13": reading("device-irrigation", "V13", 0.85, "m"),
+  "device-irrigation:V14": reading("device-irrigation", "V14", 68, "%"),
   "device-home:V0": reading("device-home", "V0", true),
   "device-home:V1": reading("device-home", "V1", 82, "%"),
   "device-home:V2": reading("device-home", "V2", "Closed"),
@@ -105,8 +114,8 @@ function stream(id: string, name: string, pin: Datastream["pin"], dataType: Data
   return { id, name, pin, dataType, unit, min, max, color };
 }
 
-function widget(id: string, type: string, datastreamId: string, x: number, y: number, w: number, h: number): WidgetConfig {
-  return { id, type, title: "", x, y, w, h, deviceId: "", channel: "", datastreamId };
+function widget(id: string, type: string, datastreamId: string, x: number, y: number, w: number, h: number, patch?: Partial<WidgetConfig>): WidgetConfig {
+  return { id, type, title: "", x, y, w, h, deviceId: "", channel: "", datastreamId, ...patch };
 }
 
 function hydrateWidgets(widgets: WidgetConfig[], datastreams: Datastream[], deviceId: string): WidgetConfig[] {

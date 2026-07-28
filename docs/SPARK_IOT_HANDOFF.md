@@ -97,6 +97,9 @@ Important widgets:
 - Serial/LCD.
 - Time input.
 - Schedule input with day and time slots.
+- Tank Level smart widget for capacity-style water level displays. It reads a numeric percentage channel, supports `capacity`, low-level `warningThreshold`, and low-level `dangerThreshold`, and shows calculated litres against capacity.
+- Flood Level smart widget for rivers, drains, tank overflow, or sump safety. It reads a numeric height channel, usually metres, supports high-level `warningThreshold`, high-level `dangerThreshold`, and `location`.
+- Threshold Monitor smart widget for generic numeric limits such as pressure, gas, vibration, pH, or fill percentage. It reads a numeric channel and shows safe/warning/danger state from warning and danger thresholds.
 
 Standalone day/date widgets were intentionally removed from the product direction. Keep “Time only” and “Schedule” as the main user input widgets.
 
@@ -117,6 +120,7 @@ Important behavior:
 - Template creation button must work in demo and account modes.
 - Add virtual pin must work.
 - Add widget must work.
+- Widget Library is grouped into Input widgets and Output widgets. Output widgets currently include Tank Level, Flood Level, and Threshold Monitor. Labels must stay customer-facing, not raw internal values like `tank_level`.
 - Add notification rule must work.
 - Save should not show false “failed” if local/demo save succeeds.
 - Templates should not show green active status, because templates are reusable designs, not live deployments.
@@ -158,6 +162,26 @@ Important behavior:
 - Account mode token regeneration calls the backend and reveals the new one-time token.
 - Provisioning the first device for a template-created project binds unassigned dashboard widgets to that device and persists the updated template in account mode.
 - Delete uses `ConfirmDialog`.
+
+### Smart Irrigation demo level widgets
+
+The seeded Smart Irrigation dashboard includes level widgets so customers can immediately understand migration use cases beyond basic gauges:
+
+- `V11` / `Water Tank Level`: integer `%`, rendered by `tank_level`, capacity `1000 L`, warning at `25%`, danger at `10%`.
+- `V13` / `Flood Level`: float `m`, rendered by `flood_level`, warning at `1.5 m`, danger at `2 m`, location `Riverside Pump Station`.
+- `V14` / `Threshold Monitor`: float `%`, rendered by `threshold_monitor`, warning at `70%`, danger at `90%`.
+
+Firmware can publish the normal Spark IoT envelope to these pins:
+
+```json
+{"token":"DEVICE_TOKEN","value":72,"unit":"%"}
+```
+
+Flood-level example:
+
+```json
+{"token":"DEVICE_TOKEN","value":0.85,"unit":"m"}
+```
 
 ### Live Test / Board Test
 

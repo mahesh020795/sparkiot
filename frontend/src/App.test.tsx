@@ -193,6 +193,10 @@ describe("App", () => {
     expect(within(demoBanner).getByText(/Demo dashboard/i)).toBeInTheDocument();
     expect(within(demoBanner).getByText(/Simulated telemetry/i)).toBeInTheDocument();
     expect(screen.getByText("Temperature")).toBeInTheDocument();
+    expect(screen.getByText("Water Tank Level")).toBeInTheDocument();
+    expect(screen.getByText("Flood Level")).toBeInTheDocument();
+    expect(screen.getByText("Threshold Monitor")).toBeInTheDocument();
+    expect(screen.getByText("Riverside Pump Station")).toBeInTheDocument();
   });
 
   it("marks demo preview separately from customer workspace", async () => {
