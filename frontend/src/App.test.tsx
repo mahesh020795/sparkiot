@@ -478,10 +478,19 @@ describe("App", () => {
     const toggle = screen.getByRole("button", { name: "Open navigation" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(toggle).toHaveAttribute("aria-controls", "main-navigation");
+    expect(document.body).not.toHaveClass("hesh-mobile-nav-locked");
 
     fireEvent.click(toggle);
     expect(screen.getByRole("button", { name: "Close navigation" })).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByTestId("product-sidebar")).toHaveClass("mobile-nav-open");
+    expect(document.body).toHaveClass("hesh-mobile-nav-locked");
+
+    fireEvent.click(screen.getByRole("button", { name: "Close navigation" }));
+    expect(screen.getByRole("button", { name: "Open navigation" })).toHaveAttribute("aria-expanded", "false");
+    expect(document.body).not.toHaveClass("hesh-mobile-nav-locked");
+
+    fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+    expect(document.body).toHaveClass("hesh-mobile-nav-locked");
 
     const templatesButton = within(screen.getByRole("navigation", { name: "Main navigation" })).getByRole("button", { name: "Templates" });
     templatesButton.focus();
@@ -490,6 +499,7 @@ describe("App", () => {
     expect(closedToggle).toHaveAttribute("aria-expanded", "false");
     expect(closedToggle).toHaveFocus();
     expect(screen.getByTestId("product-sidebar")).not.toHaveClass("mobile-nav-open");
+    expect(document.body).not.toHaveClass("hesh-mobile-nav-locked");
     expect(await screen.findByText("3/10 templates used")).toBeInTheDocument();
   });
 

@@ -648,8 +648,11 @@ def test_hesh_v4_mobile_navigation_dashboard_and_guided_action_contracts():
     phone = media_query_block(design_system, "(max-width: 640px)")
 
     for selector, property_name, expected in [
+        (".spark-ui .sidebar", "height", "72px"),
         (".spark-ui .sidebar", "min-height", "72px"),
-        (".spark-ui .sidebar", "overflow", "visible"),
+        (".spark-ui .sidebar", "max-height", "72px"),
+        (".spark-ui .sidebar", "grid-template-rows", "72px"),
+        (".spark-ui .sidebar", "overflow", "hidden"),
         (".spark-ui .mobile-nav-toggle", "display", "inline-flex"),
         (".spark-ui .sidebar:not(.mobile-nav-open) nav", "display", "none"),
         (
@@ -664,6 +667,32 @@ def test_hesh_v4_mobile_navigation_dashboard_and_guided_action_contracts():
             "grid-template-columns",
             "minmax(0, 1fr)",
         ),
+    ]:
+        assert (
+            modeled_author_cascade_value(tablet, selector, property_name)
+            == expected
+        )
+
+    for selector, property_name, expected in [
+        (".spark-ui .sidebar.mobile-nav-open", "position", "fixed"),
+        (".spark-ui .sidebar.mobile-nav-open", "inset", "0"),
+        (".spark-ui .sidebar.mobile-nav-open", "width", "100%"),
+        (".spark-ui .sidebar.mobile-nav-open", "height", "100dvh"),
+        (".spark-ui .sidebar.mobile-nav-open", "min-height", "100dvh"),
+        (".spark-ui .sidebar.mobile-nav-open", "max-height", "100dvh"),
+        (
+            ".spark-ui .sidebar.mobile-nav-open",
+            "grid-template-rows",
+            "72px minmax(0, 1fr) auto",
+        ),
+        (".spark-ui .sidebar.mobile-nav-open", "align-items", "stretch"),
+        (".spark-ui .sidebar.mobile-nav-open", "overflow", "hidden"),
+        (".spark-ui .sidebar.mobile-nav-open nav", "grid-row", "2"),
+        (".spark-ui .sidebar.mobile-nav-open nav", "min-height", "0"),
+        (".spark-ui .sidebar.mobile-nav-open nav", "max-height", "none"),
+        (".spark-ui .sidebar.mobile-nav-open nav", "overflow-y", "auto"),
+        (".spark-ui .sidebar.mobile-nav-open .session-card", "grid-row", "3"),
+        ("body.hesh-mobile-nav-locked", "overflow", "hidden"),
     ]:
         assert (
             modeled_author_cascade_value(tablet, selector, property_name)

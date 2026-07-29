@@ -98,6 +98,14 @@ export function App() {
     ["settings", Settings, "Settings"]
   ] as const;
 
+  useEffect(() => {
+    document.body.classList.toggle("hesh-mobile-nav-locked", mobileNavOpen);
+
+    return () => {
+      document.body.classList.remove("hesh-mobile-nav-locked");
+    };
+  }, [mobileNavOpen]);
+
   async function refreshAccountData() {
     if (!session) return;
     const [me, onboardingState] = await Promise.all([

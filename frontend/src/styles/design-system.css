@@ -913,6 +913,10 @@ body {
 }
 
 @media (max-width: 980px) {
+  body.hesh-mobile-nav-locked {
+    overflow: hidden;
+  }
+
   .spark-ui {
     grid-template-columns: 1fr;
     overflow: auto;
@@ -922,31 +926,66 @@ body {
     position: sticky;
     top: 0;
     z-index: 1000;
-    height: auto;
+    height: 72px;
     min-height: 72px;
-    max-height: none;
+    max-height: 72px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 72px;
     align-items: center;
-    overflow: visible;
+    gap: 0;
+    overflow: hidden;
     border-right: 0;
     border-bottom: 1px solid var(--spark-border);
     box-shadow: var(--spark-shadow-soft);
     scrollbar-gutter: auto;
   }
 
-  .spark-ui .sidebar nav {
-    grid-column: 1 / -1;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-height: calc(100vh - 72px);
-    overflow-y: auto;
+  .spark-ui .sidebar .brand {
+    grid-column: 1;
+    grid-row: 1;
+    height: 72px;
+    min-height: 0;
+    padding: 0 var(--spark-space-4);
+    overflow: hidden;
+    border-bottom: 0;
   }
 
-  .spark-ui .sidebar .session-card {
+  .spark-ui .sidebar.mobile-nav-open {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    grid-template-rows: 72px minmax(0, 1fr) auto;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  .spark-ui .sidebar.mobile-nav-open nav {
     grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .spark-ui .sidebar.mobile-nav-open .session-card {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    max-height: min(13rem, 32dvh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .spark-ui .mobile-nav-toggle {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
     display: inline-flex;
     align-items: center;
     justify-content: center;
