@@ -568,7 +568,7 @@ function DashboardBuilder({ template, device, latest, layout, widgetAddStatus, s
           </div>
         </div>
         <div className="builder-toolbar">
-          <span className="pill online-pill">Actual dashboard canvas</span>
+          <span className="pill mode-pill">Actual dashboard canvas</span>
           <span className="pill">12-column grid</span>
           <span className="pill">{template.dashboard.widgets.length} widgets</span>
           <span className="muted-text">Drag from any blank area. Use the grip if the card has buttons or inputs.</span>

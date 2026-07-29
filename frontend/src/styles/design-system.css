@@ -32,7 +32,7 @@
   --spark-success-strong: #147a4b;
   --spark-success-soft: #eaf8f0;
   --spark-action: var(--hesh-orange);
-  --spark-action-strong: #de4718;
+  --spark-action-strong: #e95020;
   --spark-action-soft: #fff0ea;
   --spark-warning: #f59e0b;
   --spark-warning-soft: #fffbeb;
@@ -1161,6 +1161,12 @@ body {
   color: var(--spark-success-strong);
 }
 
+.spark-ui .mode-pill {
+  border-color: color-mix(in srgb, var(--hesh-cobalt) 24%, white);
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary-strong);
+}
+
 .spark-ui .status-dot.online {
   background: var(--spark-success);
 }
@@ -1724,7 +1730,7 @@ body {
 
 .spark-ui .quick-test-command-grid button {
   width: fit-content;
-  min-height: 34px;
+  min-height: var(--spark-control-height);
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -1854,9 +1860,9 @@ body {
 }
 
 .spark-ui .connection-line button {
-  width: 36px;
-  height: 36px;
-  min-height: 36px;
+  width: var(--spark-control-height);
+  height: var(--spark-control-height);
+  min-height: var(--spark-control-height);
   justify-content: center;
   padding: 0;
 }
@@ -2925,7 +2931,7 @@ body {
 }
 
 .spark-ui .builder-cell.selected {
-  outline: 3px solid rgba(37, 99, 235, 0.25);
+  outline: 3px solid color-mix(in srgb, var(--hesh-cobalt) 25%, transparent);
   outline-offset: 3px;
 }
 
@@ -4759,7 +4765,7 @@ body {
 .spark-ui .launch-wizard-step button {
   grid-column: 1 / -1;
   width: 100%;
-  min-height: 2.35rem;
+  min-height: var(--spark-control-height);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5164,7 +5170,8 @@ body {
 
 .spark-ui select:not([multiple]):focus {
   border-color: var(--hesh-cobalt) !important;
-  outline: none;
+  outline: 3px solid var(--hesh-cobalt);
+  outline-offset: 2px;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--hesh-cobalt) 14%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 

@@ -5,6 +5,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 APP_CSS = ROOT / "frontend" / "src" / "styles" / "app.css"
 DESIGN_SYSTEM_CSS = ROOT / "frontend" / "src" / "styles" / "design-system.css"
+TEMPLATE_STUDIO_PAGE = (
+    ROOT / "frontend" / "src" / "pages" / "TemplateStudioPage.tsx"
+)
 DISABLED_LEGACY_MARKER = "Legacy final duplicate dashboard layer disabled"
 LEGACY_BRAND_HEX_VALUES = {
     "#071126",
@@ -34,6 +37,57 @@ def rule_bodies_for_selector(css: str, selector: str) -> list[str]:
             ).split(",")
         }
     ]
+
+
+def declarations_for_property(body: str, property_name: str) -> list[str]:
+    return [
+        value.strip()
+        for value in re.findall(
+            rf"(?:^|;)\s*{re.escape(property_name)}\s*:\s*([^;]+)",
+            body,
+            flags=re.MULTILINE,
+        )
+    ]
+
+
+def final_property_value(css: str, selector: str, property_name: str) -> str:
+    values = [
+        value
+        for body in rule_bodies_for_selector(css, selector)
+        for value in declarations_for_property(body, property_name)
+    ]
+    assert values, f"missing {property_name!r} ownership for {selector!r}"
+    return values[-1]
+
+
+def css_hex_token(css: str, token_name: str) -> str:
+    matches = re.findall(
+        rf"{re.escape(token_name)}\s*:\s*(#[0-9a-fA-F]{{6}})\s*;",
+        css,
+    )
+    assert matches, f"missing six-digit color token {token_name!r}"
+    return matches[-1]
+
+
+def relative_luminance(hex_color: str) -> float:
+    channels = [
+        int(hex_color[index : index + 2], 16) / 255
+        for index in (1, 3, 5)
+    ]
+    linear = [
+        channel / 12.92
+        if channel <= 0.04045
+        else ((channel + 0.055) / 1.055) ** 2.4
+        for channel in channels
+    ]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def contrast_ratio(first: str, second: str) -> float:
+    lighter, darker = sorted(
+        [relative_luminance(first), relative_luminance(second)], reverse=True
+    )
+    return (lighter + 0.05) / (darker + 0.05)
 
 
 def test_dashboard_shell_is_owned_by_design_system_v2():
@@ -88,32 +142,37 @@ def test_hesh_v4_semantics_map_brand_actions_interactions_and_health():
     ]:
         assert expected in design_system
 
-    primary_rules = rule_bodies_for_selector(design_system, ".spark-ui .primary")
-    assert primary_rules
-    assert any("background: var(--hesh-orange)" in body for body in primary_rules)
-    assert any("color: var(--hesh-ink)" in body for body in primary_rules)
-
-    active_navigation_rules = rule_bodies_for_selector(
-        design_system, ".spark-ui .sidebar nav button.active"
+    assert (
+        final_property_value(design_system, ".spark-ui .primary", "background")
+        == "var(--hesh-orange)"
     )
-    assert active_navigation_rules
-    assert any("background: #edf2ff" in body for body in active_navigation_rules)
-    assert any("color: var(--hesh-cobalt)" in body for body in active_navigation_rules)
-
-    focus_rules = rule_bodies_for_selector(
-        design_system, ".spark-ui button:focus-visible"
+    assert (
+        final_property_value(design_system, ".spark-ui .primary", "color")
+        == "var(--hesh-ink)"
     )
-    assert focus_rules
-    assert any(
-        "outline: 3px solid var(--hesh-cobalt)" in body for body in focus_rules
+    assert (
+        final_property_value(
+            design_system, ".spark-ui .sidebar nav button.active", "background"
+        )
+        == "#edf2ff"
     )
-
-    healthy_status_rules = rule_bodies_for_selector(
-        design_system, ".spark-ui .status-dot.online"
+    assert (
+        final_property_value(
+            design_system, ".spark-ui .sidebar nav button.active", "color"
+        )
+        == "var(--hesh-cobalt)"
     )
-    assert healthy_status_rules
-    assert any(
-        "background: var(--spark-success)" in body for body in healthy_status_rules
+    assert (
+        final_property_value(
+            design_system, ".spark-ui button:focus-visible", "outline"
+        )
+        == "3px solid var(--hesh-cobalt)"
+    )
+    assert (
+        final_property_value(
+            design_system, ".spark-ui .status-dot.online", "background"
+        )
+        == "var(--spark-success)"
     )
 
 
@@ -141,21 +200,23 @@ def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size()
         ".spark-ui .entity-card-actions .template-open-button.entity-edit-button",
         ".spark-ui .account-quickstart-card > button",
     ]:
-        action_rules = rule_bodies_for_selector(design_system, selector)
-        assert action_rules
-        assert any("background: var(--hesh-orange)" in body for body in action_rules)
-        assert any("color: var(--hesh-ink)" in body for body in action_rules)
+        assert (
+            final_property_value(design_system, selector, "background")
+            == "var(--hesh-orange)"
+        )
+        assert (
+            final_property_value(design_system, selector, "color")
+            == "var(--hesh-ink)"
+        )
 
     for selector in [
         ".spark-ui .account-quickstart-grid input",
         ".spark-ui .account-quickstart-grid select",
         ".spark-ui .account-quickstart-card > button",
     ]:
-        control_rules = rule_bodies_for_selector(design_system, selector)
-        assert control_rules
-        assert any(
-            "min-height: var(--spark-control-height)" in body
-            for body in control_rules
+        assert (
+            final_property_value(design_system, selector, "min-height")
+            == "var(--spark-control-height)"
         )
 
     for selector in [
@@ -167,18 +228,23 @@ def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size()
         ),
         ".spark-ui .account-quickstart-card > button.primary:hover",
     ]:
-        scoped_hover_rules = rule_bodies_for_selector(design_system, selector)
-        assert scoped_hover_rules
-        assert any(
-            "background: var(--spark-action-strong)" in body
-            for body in scoped_hover_rules
+        assert (
+            final_property_value(design_system, selector, "background")
+            == "var(--spark-action-strong)"
+        )
+        assert (
+            final_property_value(design_system, selector, "color")
+            == "var(--hesh-ink)"
         )
 
     for selector in ["input:focus", "select:focus", "textarea:focus"]:
         focus_rules = rule_bodies_for_selector(app_css, selector)
         assert focus_rules
         assert all("#2563eb" not in body.lower() for body in focus_rules)
-        assert any("border-color: var(--hesh-cobalt)" in body for body in focus_rules)
+        assert (
+            final_property_value(app_css, selector, "border-color")
+            == "var(--hesh-cobalt) !important"
+        )
 
     for selector in [
         "button:focus-visible",
@@ -192,9 +258,169 @@ def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size()
         assert all(
             "rgba(37, 99, 235" not in body for body in focus_visible_rules
         )
-        assert any(
-            "var(--hesh-cobalt)" in body for body in focus_visible_rules
+        assert (
+            final_property_value(app_css, selector, "outline")
+            == "3px solid var(--hesh-cobalt)"
         )
+
+
+def test_hesh_v4_final_select_focus_ownership():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+
+    select_focus = ".spark-ui select:not([multiple]):focus"
+    assert (
+        final_property_value(design_system, select_focus, "border-color")
+        == "var(--hesh-cobalt) !important"
+    )
+    assert (
+        final_property_value(design_system, select_focus, "outline")
+        == "3px solid var(--hesh-cobalt)"
+    )
+    assert final_property_value(design_system, select_focus, "outline-offset") == "2px"
+
+
+def test_hesh_v4_final_compact_control_target_ownership():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+
+    for selector in [
+        ".spark-ui .quick-test-command-grid button",
+        ".spark-ui .connection-line button",
+        ".spark-ui .launch-wizard-step button",
+    ]:
+        assert (
+            final_property_value(design_system, selector, "min-height")
+            == "var(--spark-control-height)"
+        )
+
+    assert (
+        final_property_value(
+            design_system, ".spark-ui .connection-line button", "width"
+        )
+        == "var(--spark-control-height)"
+    )
+    assert (
+        final_property_value(
+            design_system, ".spark-ui .connection-line button", "height"
+        )
+        == "var(--spark-control-height)"
+    )
+
+
+def test_hesh_v4_final_primary_hover_ownership_has_accessible_contrast():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+
+    hover_selectors = [
+        ".spark-ui .primary:hover",
+        ".spark-ui .action-button.primary:hover",
+        ".spark-ui .template-open-button:hover",
+        ".spark-ui .setup-summary-actions .primary:hover",
+        ".spark-ui .entity-card-actions button.entity-edit-button:hover",
+        (
+            ".spark-ui .entity-card-actions "
+            ".template-open-button.entity-edit-button:hover"
+        ),
+        ".spark-ui .account-quickstart-card > button.primary:hover",
+    ]
+    for selector in hover_selectors:
+        assert (
+            final_property_value(design_system, selector, "background")
+            == "var(--spark-action-strong)"
+        )
+        assert (
+            final_property_value(design_system, selector, "color")
+            == "var(--hesh-ink)"
+        )
+
+    assert contrast_ratio(
+        css_hex_token(design_system, "--spark-action-strong"),
+        css_hex_token(design_system, "--hesh-ink"),
+    ) >= 4.5
+
+
+def test_hesh_v4_final_selection_ownership():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+    app_css = active_app_css_without_disabled_legacy_block()
+
+    assert (
+        final_property_value(
+            design_system, ".spark-ui .builder-cell.selected", "outline"
+        )
+        == "3px solid color-mix(in srgb, var(--hesh-cobalt) 25%, transparent)"
+    )
+    assert (
+        final_property_value(app_css, ".builder-cell.selected > .widget", "outline")
+        == "2px solid var(--hesh-cobalt)"
+    )
+
+
+def test_hesh_v4_final_resize_handle_ownership():
+    app_css = active_app_css_without_disabled_legacy_block()
+
+    handle_after = ".react-grid-item > .react-resizable-handle::after"
+    assert (
+        final_property_value(app_css, handle_after, "border-right")
+        == "3px solid var(--hesh-cobalt) !important"
+    )
+    assert (
+        final_property_value(app_css, handle_after, "border-bottom")
+        == "3px solid var(--hesh-cobalt) !important"
+    )
+    for selector in [
+        ".react-grid-item > .react-resizable-handle-s::after",
+        ".react-grid-item > .react-resizable-handle-n::after",
+    ]:
+        assert (
+            final_property_value(app_css, selector, "border-bottom")
+            == "3px solid var(--hesh-cobalt) !important"
+        )
+    assert (
+        final_property_value(
+            app_css,
+            ".react-grid-item > .react-resizable-handle-e::after",
+            "border-right",
+        )
+        == "3px solid var(--hesh-cobalt) !important"
+    )
+
+
+def test_hesh_v4_final_dashboard_grid_and_overflow_ownership():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+
+    dashboard_grid = (
+        ".spark-ui.dashboard-shell .product-header-grid.dashboard-header-grid"
+    )
+    assert (
+        " ".join(
+            final_property_value(design_system, dashboard_grid, "grid-template-areas")
+            .replace("\n", " ")
+            .split()
+        )
+        == '"primary" "selector" "metrics"'
+    )
+    for selector in [
+        ".spark-ui.dashboard-shell .app-page-header",
+        ".spark-ui.dashboard-shell .spark-page-header-grid.dashboard-header-grid",
+        dashboard_grid,
+        ".spark-ui.dashboard-shell .spark-page-header-selector",
+        ".spark-ui.dashboard-shell .project-switcher",
+    ]:
+        assert final_property_value(design_system, selector, "overflow") == "visible"
+
+
+def test_template_studio_canvas_label_does_not_claim_online_health_semantics():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+    page = TEMPLATE_STUDIO_PAGE.read_text(encoding="utf-8")
+
+    assert 'className="pill mode-pill">Actual dashboard canvas' in page
+    assert 'className="pill online-pill">Actual dashboard canvas' not in page
+    assert (
+        final_property_value(design_system, ".spark-ui .mode-pill", "background")
+        == "var(--spark-primary-soft)"
+    )
+    assert (
+        final_property_value(design_system, ".spark-ui .mode-pill", "color")
+        == "var(--spark-primary-strong)"
+    )
 
 
 def test_app_css_does_not_reintroduce_final_dashboard_header_override_layer():

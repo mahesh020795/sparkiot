@@ -174,7 +174,7 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
 .connection-line { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 9px; border: 1px solid #e8edf5; border-radius: 14px; background: #f8fafc; min-width: 0; }
 .connection-line span { color: #667085; font-size: 10px; font-weight: 950; letter-spacing: 0.06em; text-transform: uppercase; }
 .connection-line code { margin: 0; padding: 8px 9px; border-radius: 10px; background: #fff; white-space: nowrap; }
-.connection-line button { width: 34px; height: 34px; justify-content: center; padding: 0; border-radius: 11px; }
+.connection-line button { width: var(--spark-control-height, 44px); height: var(--spark-control-height, 44px); min-height: var(--spark-control-height, 44px); justify-content: center; padding: 0; border-radius: 11px; }
 .live-topic-card p { margin: 10px 0 12px; color: #667085; line-height: 1.55; }
 .live-topic-card code { margin-top: 9px; white-space: nowrap; }
 .command-test-note { display: grid; gap: 7px; margin-top: 12px; padding: 12px; border: 1px solid #dbe7ff; border-radius: 16px; background: #eff6ff; color: #1d4ed8; }
@@ -635,7 +635,7 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
 .builder-drag-grip:active { cursor: grabbing; }
 .builder-cell .chart, .builder-cell .map { width: 100%; height: 100%; min-height: 0; flex: 1 1 auto; }
 .builder-cell .camera { width: 100%; height: 100%; min-height: 0; flex: 1 1 auto; }
-.builder-cell.selected > .widget { outline: 2px solid #2563eb; outline-offset: -2px; box-shadow: 0 18px 40px rgba(37, 99, 235, 0.12); }
+.builder-cell.selected > .widget { outline: 2px solid var(--hesh-cobalt); outline-offset: -2px; box-shadow: 0 18px 40px color-mix(in srgb, var(--hesh-cobalt) 12%, transparent); }
 .selected-widget-card { display: grid; gap: 3px; padding: 13px; border: 1px solid #dbe7ff; border-radius: 16px; background: linear-gradient(135deg, #f8fbff, #ffffff); box-shadow: 0 12px 26px rgba(37, 99, 235, 0.06); }
 .selected-widget-card strong { color: #111827; font-size: 15px; letter-spacing: -0.02em; }
 .selected-widget-card span { color: #667085; font-size: 12px; font-weight: 800; text-transform: capitalize; }
@@ -650,8 +650,8 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
   bottom: 8px;
   width: 9px;
   height: 9px;
-  border-right: 3px solid #2563eb !important;
-  border-bottom: 3px solid #2563eb !important;
+  border-right: 3px solid var(--hesh-cobalt) !important;
+  border-bottom: 3px solid var(--hesh-cobalt) !important;
 }
 .react-grid-item > .react-resizable-handle-e {
   right: -4px;
@@ -678,14 +678,14 @@ main { min-width: 0; max-width: 100%; padding: 22px 24px 40px; overflow: hidden;
   right: 5px;
   bottom: 12px;
   border-right: 0 !important;
-  border-bottom: 3px solid #2563eb !important;
+  border-bottom: 3px solid var(--hesh-cobalt) !important;
 }
 .react-grid-item > .react-resizable-handle-e::after {
   width: 0;
   height: 18px;
   right: 12px;
   bottom: 5px;
-  border-right: 3px solid #2563eb !important;
+  border-right: 3px solid var(--hesh-cobalt) !important;
   border-bottom: 0 !important;
 }
 .inspector-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
