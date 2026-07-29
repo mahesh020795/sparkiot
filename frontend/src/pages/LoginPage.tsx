@@ -124,12 +124,12 @@ export function LoginPage({
         <p className="muted-text auth-intro">{intro}</p>
         {!isResetLinkMode && (
           <div className="auth-mode-tabs" role="tablist" aria-label="Authentication mode" data-testid="auth-tabs">
-            <button type="button" className={mode === "login" ? "active" : ""} onClick={() => changeMode("login")}>Existing account</button>
-            <button type="button" className={mode === "register" ? "active" : ""} onClick={() => changeMode("register")}>Create Pro account</button>
-            <button type="button" className={mode === "reset" ? "active" : ""} onClick={() => changeMode("reset")}>Reset password</button>
+            <button id="auth-tab-login" type="button" role="tab" aria-selected={mode === "login"} aria-controls="auth-mode-panel" className={mode === "login" ? "active" : ""} onClick={() => changeMode("login")}>Existing account</button>
+            <button id="auth-tab-register" type="button" role="tab" aria-selected={mode === "register"} aria-controls="auth-mode-panel" className={mode === "register" ? "active" : ""} onClick={() => changeMode("register")}>Create Pro account</button>
+            <button id="auth-tab-reset" type="button" role="tab" aria-selected={mode === "reset"} aria-controls="auth-mode-panel" className={mode === "reset" ? "active" : ""} onClick={() => changeMode("reset")}>Reset password</button>
           </div>
         )}
-        <form className="auth-form" data-testid="auth-form" onSubmit={submit}>
+        <form id="auth-mode-panel" className="auth-form" data-testid="auth-form" role={isResetLinkMode ? undefined : "tabpanel"} aria-labelledby={isResetLinkMode ? undefined : `auth-tab-${mode}`} onSubmit={submit}>
           {mode === "register" && (
             <>
               <AuthField icon={<Building2 size={17} />} label="Company or workspace name"><input value={tenantName} onChange={(event) => setTenantName(event.target.value)} /></AuthField>

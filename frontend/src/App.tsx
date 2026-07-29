@@ -73,7 +73,8 @@ export function App() {
   const activeLatest = isAccountMode ? accountLatest : demoLatest;
   const activeTemplates = isAccountMode ? accountTemplates : templates;
   const selectedProject = useMemo(() => activeProjects.find((project) => project.id === selectedProjectId), [activeProjects, selectedProjectId]);
-  const selectedDevice = useMemo(() => activeDevices.find((device) => device.project_id === selectedProjectId), [activeDevices, selectedProjectId]);
+  const selectedProjectDevices = useMemo(() => activeDevices.filter((device) => device.project_id === selectedProjectId), [activeDevices, selectedProjectId]);
+  const selectedDevice = selectedProjectDevices[0];
   const selectedTemplate = useMemo(() => activeTemplates.find((template) => template.dashboard.project_id === selectedProjectId) ?? activeTemplates[0] ?? templates[0], [activeTemplates, selectedProjectId, templates]);
   const dashboardSelectorProjects = useMemo(
     () => isAccountMode ? activeProjects.filter((project) => (accountDashboards[project.id]?.widgets.length ?? 0) > 0) : activeProjects,
@@ -676,11 +677,11 @@ export function App() {
           <DashboardPage
             key={selectedProjectId}
             projectId={selectedProjectId}
-            devices={selectedDevice ? [selectedDevice] : activeDevices}
+            devices={selectedProjectDevices}
             onCreateDashboard={() => setView("setup")}
             onPreviewDemo={() => setDemoPreviewMode(true)}
           />
-        ) : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedDevice ? [selectedDevice] : demoDevices} />)}
+        ) : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedProjectDevices} />)}
         {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : createDemoProject} onUpdateProject={updateProject} onDeleteProject={deleteProject} />}
         {view === "templates" && (
           templateStudioId ? (

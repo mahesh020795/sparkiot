@@ -5425,6 +5425,38 @@ body {
   color: var(--spark-success-strong);
 }
 
+.spark-ui.dashboard-shell .dashboard-connection-status.partial {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status.partial .status-dot {
+  background: #d97706;
+  box-shadow: 0 0 0 0.3rem #ffedd5;
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status.partial strong {
+  color: #9a3412;
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status.offline {
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status.offline .status-dot {
+  background: #dc2626;
+  box-shadow: 0 0 0 0.3rem #ffe4e6;
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status.offline strong {
+  color: #b42318;
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status.no-devices .status-dot {
+  background: var(--spark-muted-2);
+}
+
 /*
   Empty dashboard composition.
   The dashboard canvas intentionally starts flush under the page header when

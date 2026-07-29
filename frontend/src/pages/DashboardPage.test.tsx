@@ -24,7 +24,70 @@ afterEach(() => {
   localStorage.clear();
 });
 
+function connectionDevice(id: string, isOnline: boolean): Device {
+  return {
+    id,
+    project_id: "project-health",
+    name: id.replace(/-/g, " "),
+    board: "ESP32",
+    is_online: isOnline,
+    telemetry_topic: `spark/v1/tenant/${id}/telemetry/{channel}`,
+    command_topic: `spark/v1/tenant/${id}/command/{channel}`,
+  };
+}
+
+async function renderConnectionStatus(devices: Device[]) {
+  vi.stubGlobal("WebSocket", undefined);
+  vi.spyOn(api, "dashboard").mockResolvedValue({
+    id: "dashboard-health",
+    project_id: "project-health",
+    name: "Health Dashboard",
+    revision: 1,
+    widgets: [{ id: "health-value", type: "value", title: "Health value", x: 0, y: 0, w: 3, h: 2, deviceId: devices[0]?.id ?? "", channel: "V0" }],
+  });
+  vi.spyOn(api, "latest").mockResolvedValue([]);
+  render(<DashboardPage projectId="project-health" devices={devices} />);
+  return screen.findByRole("status", { name: "Device connection" });
+}
+
 describe("DashboardPage account input persistence", () => {
+  it.each([
+    {
+      name: "fully online",
+      devices: [connectionDevice("pump-one", true), connectionDevice("pump-two", true)],
+      stateClass: "online",
+      label: "Connected",
+      detail: "2 devices are online",
+    },
+    {
+      name: "partially online",
+      devices: [connectionDevice("pump-online", true), connectionDevice("pump-offline", false)],
+      stateClass: "partial",
+      label: "Partially connected",
+      detail: "1 of 2 devices online",
+    },
+    {
+      name: "fully offline",
+      devices: [connectionDevice("pump-one", false), connectionDevice("pump-two", false)],
+      stateClass: "offline",
+      label: "Offline",
+      detail: "2 devices are offline",
+    },
+    {
+      name: "without devices",
+      devices: [],
+      stateClass: "no-devices",
+      label: "No devices",
+      detail: "Provision a device to start live telemetry",
+    },
+  ])("shows explicit $name connection health", async ({ devices, stateClass, label, detail }) => {
+    const status = await renderConnectionStatus(devices);
+
+    expect(status).toHaveClass(stateClass);
+    expect(status).toHaveTextContent(label);
+    expect(status).toHaveTextContent(detail);
+  });
+
   it("shows a guided empty dashboard state when no widgets exist", async () => {
     vi.stubGlobal("WebSocket", undefined);
     const dashboard: Dashboard = {
@@ -118,6 +181,7 @@ describe("DashboardPage account input persistence", () => {
     const first = render(<DashboardPage projectId="project-account" devices={[device]} />);
     expect(await screen.findByDisplayValue("06:00")).toBeInTheDocument();
     const connectionStatus = screen.getByRole("status", { name: "Device connection" });
+    expect(connectionStatus).toHaveClass("online");
     expect(connectionStatus).toHaveTextContent("Connected");
     expect(connectionStatus).toHaveTextContent("ESP32 Account Node is online");
     fireEvent.change(screen.getByLabelText("Selected command time"), { target: { value: "18:30" } });

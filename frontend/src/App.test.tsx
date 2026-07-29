@@ -87,6 +87,10 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByText(/Verify your email/i)).toBeInTheDocument();
+    const verifyMain = screen.getByRole("main");
+    expect(verifyMain).toHaveAttribute("data-ui-mode", "brand");
+    expect(within(verifyMain).getByText("Make IoT simple.")).toBeInTheDocument();
+    expect(verifyMain.querySelectorAll("button.primary")).toHaveLength(1);
     expect(screen.getByText(/owner@acme.test/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /View demo dashboard/i })).toBeInTheDocument();
   });
@@ -117,6 +121,7 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: /Welcome, Acme/i })).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveAttribute("data-ui-mode", "brand");
     expect(screen.getByText("Make IoT simple.")).toBeInTheDocument();
+    expect(screen.getByRole("main").querySelectorAll("button.primary")).toHaveLength(1);
     expect(screen.getByText(/Your Hesh IoT Pro workspace is ready/i)).toBeInTheDocument();
     expect(screen.getByText(/No live dashboard yet/i)).toBeInTheDocument();
     expect(screen.getByText(/Create project/i)).toBeInTheDocument();
@@ -166,6 +171,45 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "Hesh IoT Dashboard" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Smart Irrigation Dashboard" })).not.toBeInTheDocument();
     expect(screen.queryByTestId("dashboard-header-selector")).not.toBeInTheDocument();
+  });
+
+  it("reports connection health from all and only devices in the selected account project", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
+    const projects = [
+      { id: "project-alpha", name: "Alpha Plant", description: "Mixed device health", is_active: true },
+      { id: "project-beta", name: "Beta Plant", description: "Separate project", is_active: true },
+    ];
+    const devices = [
+      { id: "alpha-online", project_id: "project-alpha", name: "Alpha Pump", board: "ESP32", is_online: true, telemetry_topic: "spark/v1/tenant/alpha-online/telemetry/{channel}", command_topic: "spark/v1/tenant/alpha-online/command/{channel}" },
+      { id: "alpha-offline", project_id: "project-alpha", name: "Alpha Tank", board: "ESP32", is_online: false, telemetry_topic: "spark/v1/tenant/alpha-offline/telemetry/{channel}", command_topic: "spark/v1/tenant/alpha-offline/command/{channel}" },
+      { id: "beta-online", project_id: "project-beta", name: "Beta Meter", board: "ESP8266", is_online: true, telemetry_topic: "spark/v1/tenant/beta-online/telemetry/{channel}", command_topic: "spark/v1/tenant/beta-online/command/{channel}" },
+    ];
+    const alphaDashboard = {
+      id: "dashboard-alpha",
+      project_id: "project-alpha",
+      name: "Alpha Dashboard",
+      revision: 1,
+      widgets: [{ id: "alpha-value", type: "value", title: "Tank level", x: 0, y: 0, w: 3, h: 2, deviceId: "alpha-online", channel: "V0" }],
+    };
+    vi.spyOn(api, "me").mockResolvedValue({ full_name: "Acme Owner", email: "owner@acme.test", tenant_id: "tenant-1", plan_code: "pro", email_verified: true, onboarding_step: "dashboard" });
+    vi.spyOn(api, "usage").mockResolvedValue(plusUsage({ projects: 2, devices: 3 }));
+    vi.spyOn(api, "projects").mockResolvedValue(projects);
+    vi.spyOn(api, "devices").mockResolvedValue(devices);
+    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "notifications").mockResolvedValue([]);
+    vi.spyOn(api, "schedules").mockResolvedValue([]);
+    vi.spyOn(api, "dashboard").mockImplementation(async (projectId) => projectId === "project-alpha" ? alphaDashboard : { ...alphaDashboard, id: "dashboard-beta", project_id: "project-beta", name: "Beta Dashboard" });
+    vi.spyOn(api, "latest").mockResolvedValue([]);
+    vi.spyOn(api, "onboarding").mockResolvedValue({ current_step: "dashboard", completed_steps: ["verify_email", "project"], demo_viewed: false, first_project_id: "project-alpha" });
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Alpha Plant Dashboard" })).toBeInTheDocument();
+    const connectionStatus = await screen.findByRole("status", { name: "Device connection" });
+    expect(connectionStatus).toHaveClass("partial");
+    expect(connectionStatus).toHaveTextContent("Partially connected");
+    expect(connectionStatus).toHaveTextContent("1 of 2 devices online");
+    expect(connectionStatus).not.toHaveTextContent("Beta Meter");
   });
 
   it("opens the simulated demo dashboard from the verified starter workspace", async () => {
@@ -604,8 +648,9 @@ describe("App", () => {
     expect(screen.getByTestId("template-studio-header")).toHaveClass("wizard-header", "studio-system-header");
     expect(screen.getByLabelText("Template setup steps")).toHaveClass("wizard-steps", "studio-system-steps");
     expect(screen.getByRole("button", { name: /Setup.*Product model/i })).toHaveAttribute("aria-current", "step");
-    expect(screen.getByTestId("studio-primary-action")).toHaveTextContent("Save");
-    expect(screen.getByRole("button", { name: /Full builder/i })).not.toHaveClass("primary");
+    expect(screen.getByTestId("studio-primary-action")).toHaveClass("primary", "studio-progress-action");
+    expect(screen.getByRole("button", { name: /Full builder/i })).toHaveClass("studio-edit-action");
+    expect(screen.getByRole("button", { name: /Full builder/i })).not.toHaveClass("primary", "studio-progress-action");
     expect(screen.getAllByDisplayValue("Energy Monitor").length).toBeGreaterThan(0);
     expect(screen.getByText("Migrate")).toBeInTheDocument();
     expect(screen.getByText("Datastreams")).toBeInTheDocument();
@@ -618,6 +663,8 @@ describe("App", () => {
     expect(screen.getByText("Blynk import command center")).toBeInTheDocument();
     expect(screen.getByText("Virtual pin parser")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Datastreams"));
+    expect(screen.getByRole("button", { name: /Add V pin/i })).toHaveClass("studio-edit-action");
+    expect(screen.getByRole("button", { name: /Add V pin/i })).not.toHaveClass("primary", "studio-progress-action");
     expect(screen.getByText("Virtual pin registry")).toBeInTheDocument();
     expect(screen.getByText("Firmware-safe channel map")).toBeInTheDocument();
     expect(screen.getByTestId("datastream-editor")).toHaveClass("studio-system-datastreams");
@@ -1717,15 +1764,22 @@ describe("App", () => {
     expect(screen.getByTestId("auth-primary-action")).toHaveClass("primary", "auth-primary-action");
     expect(screen.getByRole("button", { name: /Continue demo mode/i })).toHaveClass("auth-secondary-action");
     expect(screen.getAllByTestId("auth-field").length).toBeGreaterThanOrEqual(2);
+    const authTabs = screen.getAllByRole("tab");
+    expect(authTabs).toHaveLength(3);
+    expect(authTabs[0]).toHaveAttribute("aria-selected", "true");
+    expect(authTabs[1]).toHaveAttribute("aria-selected", "false");
+    expect(authTabs[2]).toHaveAttribute("aria-selected", "false");
 
-    fireEvent.click(screen.getByRole("button", { name: /Create Pro account/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Create Pro account/i }));
+    expect(screen.getByRole("tab", { name: /Create Pro account/i })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("auth-card")).toHaveClass("auth-card");
     expect(screen.getByTestId("auth-tabs")).toHaveClass("auth-mode-tabs");
     expect(screen.getByTestId("auth-form")).toHaveClass("auth-form");
     expect(screen.getAllByTestId("auth-field").length).toBeGreaterThanOrEqual(4);
     expect(screen.getByTestId("auth-primary-action")).toHaveClass("primary", "auth-primary-action");
 
-    fireEvent.click(screen.getByRole("button", { name: /Reset password/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Reset password/i }));
+    expect(screen.getByRole("tab", { name: /Reset password/i })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("auth-card")).toHaveClass("auth-card");
     expect(screen.getByTestId("auth-tabs")).toHaveClass("auth-mode-tabs");
     expect(screen.getByTestId("auth-form")).toHaveClass("auth-form");
@@ -1759,7 +1813,7 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(await screen.findByRole("button", { name: /Sign in to account/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Create Pro account/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Create Pro account/i }));
     fireEvent.change(screen.getByLabelText("Company or workspace name"), { target: { value: "Rectronx Customer Lab" } });
     fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Mahesh Rajagopal" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "mahesh@example.com" } });
@@ -1867,6 +1921,10 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByText("Email verified. Your Pro workspace is ready.")).toBeInTheDocument();
+    const verificationMain = screen.getByRole("main");
+    expect(verificationMain).toHaveAttribute("data-ui-mode", "brand");
+    expect(within(verificationMain).getByText("Make IoT simple.")).toBeInTheDocument();
+    expect(verificationMain.querySelectorAll("button.primary")).toHaveLength(1);
     expect(screen.getByRole("button", { name: /Sign in to your workspace/i })).toBeInTheDocument();
   });
 

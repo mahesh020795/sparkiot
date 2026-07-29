@@ -235,20 +235,35 @@ function persistDashboardInput(projectId: string, reading: Telemetry) {
 
 function DashboardConnectionStatus({ devices }: { devices: Device[] }) {
   const onlineDevices = devices.filter((device) => device.is_online);
-  const connected = onlineDevices.length > 0;
-  const detail = connected
+  const state = devices.length === 0
+    ? "no-devices"
+    : onlineDevices.length === devices.length
+      ? "online"
+      : onlineDevices.length === 0
+        ? "offline"
+        : "partial";
+  const label = state === "online"
+    ? "Connected"
+    : state === "partial"
+      ? "Partially connected"
+      : state === "offline"
+        ? "Offline"
+        : "No devices";
+  const detail = state === "online"
     ? onlineDevices.length === 1
       ? `${onlineDevices[0].name} is online`
       : `${onlineDevices.length} devices are online`
-    : devices.length
-      ? "Devices are provisioned but currently offline"
-      : "Provision a device to start live telemetry";
+    : state === "partial"
+      ? `${onlineDevices.length} of ${devices.length} devices online`
+      : state === "offline"
+        ? `${devices.length} ${devices.length === 1 ? "device is" : "devices are"} offline`
+        : "Provision a device to start live telemetry";
 
   return (
-    <div className={`dashboard-connection-status ${connected ? "online" : "offline"}`} role="status" aria-label="Device connection">
+    <div className={`dashboard-connection-status ${state}`} role="status" aria-label="Device connection">
       <span className="status-dot" aria-hidden="true" />
       <span>
-        <strong>{connected ? "Connected" : "Not connected"}</strong>
+        <strong>{label}</strong>
         <small>{detail}</small>
       </span>
     </div>
