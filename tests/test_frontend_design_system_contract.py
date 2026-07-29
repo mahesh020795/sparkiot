@@ -716,6 +716,62 @@ def test_hesh_v4_mobile_navigation_dashboard_and_guided_action_contracts():
         )
 
 
+def test_hesh_dashboard_readable_presentation_owns_tablet_inline_grid_geometry():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+    laptop = media_query_block(design_system, "(max-width: 1180px)")
+    narrow = media_query_block(design_system, "(max-width: 720px)")
+    canvas = (
+        ".spark-ui.dashboard-shell .dashboard-main "
+        ".gemini-widget-canvas:not(.edit-mode)"
+    )
+
+    for property_name, expected in [
+        ("display", "grid"),
+        ("grid-template-columns", "repeat(2, minmax(0, 1fr))"),
+        ("grid-auto-flow", "row"),
+        ("grid-auto-rows", "auto"),
+        ("align-items", "start"),
+        ("height", "auto !important"),
+        ("min-height", "0 !important"),
+    ]:
+        assert modeled_author_cascade_value(laptop, canvas, property_name) == expected
+
+    for cell_class in [".grid-cell", ".react-grid-item"]:
+        cell = f"{canvas} > {cell_class}"
+        for property_name, expected in [
+            ("position", "relative !important"),
+            ("inset", "auto !important"),
+            ("width", "auto !important"),
+            ("height", "auto !important"),
+            ("min-height", "0 !important"),
+            ("min-width", "0"),
+            ("transform", "none !important"),
+            ("grid-column", "auto !important"),
+            ("grid-row", "auto !important"),
+            ("max-width", "100%"),
+            ("align-self", "start"),
+        ]:
+            assert (
+                modeled_author_cascade_value(laptop, cell, property_name)
+                == expected
+            )
+
+        widget = f"{cell} > .widget"
+        assert (
+            modeled_author_cascade_value(laptop, widget, "height")
+            == "auto !important"
+        )
+        assert (
+            modeled_author_cascade_value(laptop, widget, "min-height")
+            == "clamp(16rem, 32vw, 22rem)"
+        )
+
+    assert (
+        modeled_author_cascade_value(narrow, canvas, "grid-template-columns")
+        == "minmax(0, 1fr)"
+    )
+
+
 def test_hesh_v4_modeled_author_cascade_owns_accessible_primary_hovers():
     design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
     author_css = active_frontend_author_css()
