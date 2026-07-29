@@ -10,6 +10,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { StarterWorkspacePage } from "./pages/StarterWorkspacePage";
 import { TemplateStudioPage } from "./pages/TemplateStudioPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { HeshBrand } from "./components/HeshBrand";
 import { SparkSelect } from "./components/SparkSelect";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { demoDevices, demoLatest, demoNotifications, demoProjects, demoTemplates } from "./lib/demoData";
@@ -608,7 +609,7 @@ export function App() {
   return (
     <div className={view === "dashboard" ? "app-shell spark-ui dashboard-shell" : "app-shell spark-ui"} data-testid="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-icon"><span className="material-symbols-outlined" aria-hidden="true">edgesensor_high</span></span><div><strong>Spark IoT</strong><span>Rectronx Cloud</span></div></div>
+        <div className="brand"><HeshBrand tagline /></div>
         <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
           <span className="section-kicker">{isAccountMode ? "Pro account" : demoPreviewMode ? "Demo preview" : "Demo workspace"}</span>
@@ -769,7 +770,7 @@ function EmailVerificationLink({ token, onSignIn }: { token: string; onSignIn: (
   return (
     <main className="login-screen">
       <section className="login-panel auth-card">
-        <div className="brand large auth-brand"><CheckCircle2 size={28} /><div><strong>Spark IoT</strong><span>Rectronx Cloud</span></div></div>
+        <HeshBrand className="auth-brand" />
         <h1 className="auth-title">Email verification</h1>
         <p className={state === "error" ? "error" : state === "success" ? "success" : "muted-text auth-intro"}>{message}</p>
         <button type="button" className="primary auth-primary-action" onClick={onSignIn}>Sign in to your workspace</button>

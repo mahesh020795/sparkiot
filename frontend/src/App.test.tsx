@@ -466,9 +466,9 @@ describe("App", () => {
     expect(screen.getByTestId("dashboard-header-grid")).toHaveClass("dashboard-header-grid", "spark-page-header-grid");
     expect(screen.getByTestId("dashboard-header-primary")).toHaveClass("spark-page-header-primary");
     expect(screen.getByTestId("dashboard-header-selector")).toHaveClass("spark-page-header-selector");
-    expect(screen.getByText("Rectronx Cloud")).toBeInTheDocument();
-    expect(screen.queryByText("Redronix Cloud")).not.toBeInTheDocument();
-    expect(screen.getByText("edgesensor_high")).toHaveClass("material-symbols-outlined");
+    expect(screen.getByLabelText("Hesh IoT")).toHaveClass("hesh-brand");
+    expect(screen.getByText("Make IoT simple.")).toBeInTheDocument();
+    expect(screen.queryByText("Rectronx Cloud")).not.toBeInTheDocument();
     expect(screen.queryByText("Responsive readiness")).not.toBeInTheDocument();
     expect(screen.queryByText("Quality assurance console")).not.toBeInTheDocument();
     expect(screen.getByTestId("dashboard-header-primary")).toBeInTheDocument();
@@ -1691,7 +1691,7 @@ describe("App", () => {
 
     const authCard = screen.getByTestId("auth-card");
     expect(authCard).toHaveClass("login-panel", "auth-card");
-    expect(screen.getByTestId("auth-brand")).toHaveClass("auth-brand");
+    expect(screen.getByLabelText("Hesh IoT")).toHaveClass("hesh-brand", "auth-brand");
     expect(screen.getByTestId("auth-tabs")).toHaveClass("auth-mode-tabs");
     expect(screen.getByTestId("auth-form")).toHaveClass("auth-form");
     expect(screen.getByTestId("auth-primary-action")).toHaveClass("primary", "auth-primary-action");

@@ -1,6 +1,7 @@
-import { Activity, Building2, KeyRound, Lock, Mail, UserRound } from "lucide-react";
+import { Building2, KeyRound, Lock, Mail, UserRound } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
+import { HeshBrand } from "../components/HeshBrand";
 import { api, saveSession, type Session } from "../lib/api";
 
 type AuthMode = "login" | "register" | "reset";
@@ -118,7 +119,7 @@ export function LoginPage({
   return (
     <main className="login-screen">
       <section className="login-panel auth-card" data-testid="auth-card">
-        <div className="brand large auth-brand" data-testid="auth-brand"><Activity size={28} /><div><strong>Spark IoT</strong><span>Rectronx Cloud</span></div></div>
+        <HeshBrand className="auth-brand" />
         <h1 className="auth-title">{title}</h1>
         <p className="muted-text auth-intro">{intro}</p>
         {!isResetLinkMode && (

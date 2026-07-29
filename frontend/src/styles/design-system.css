@@ -5,6 +5,12 @@
 */
 
 :root {
+  --hesh-orange: #F25522;
+  --hesh-ink: #121722;
+  --hesh-cobalt: #2457F5;
+  --hesh-online: #22A865;
+  --hesh-canvas: #F7F6F2;
+
   --spark-font-sans: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   --spark-bg: #f7f9fc;
@@ -5409,4 +5415,164 @@ body {
   .spark-ui.dashboard-shell .dashboard-empty-actions {
     flex-direction: column;
   }
+}
+
+/* Hesh IoT reusable identity */
+.hesh-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  color: var(--hesh-ink);
+}
+
+.hesh-circuit {
+  position: relative;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 2.75rem;
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--hesh-orange) 9%, white);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hesh-orange) 22%, white);
+}
+
+.hesh-circuit .hesh-rail,
+.hesh-circuit .hesh-link,
+.hesh-circuit .hesh-node {
+  position: absolute;
+  display: block;
+}
+
+.hesh-circuit .hesh-rail {
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 0.2rem;
+  border-radius: 999px;
+  background: var(--hesh-orange);
+}
+
+.hesh-circuit .hesh-rail-left {
+  left: 0.75rem;
+}
+
+.hesh-circuit .hesh-rail-right {
+  right: 0.75rem;
+}
+
+.hesh-circuit .hesh-link {
+  top: 1.275rem;
+  left: 0.75rem;
+  width: 1.25rem;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: var(--hesh-orange);
+}
+
+.hesh-circuit .hesh-node {
+  z-index: 1;
+  width: 0.45rem;
+  height: 0.45rem;
+  border: 0.1rem solid white;
+  border-radius: 50%;
+  background: var(--hesh-cobalt);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--hesh-cobalt) 18%, transparent);
+}
+
+.hesh-circuit .hesh-node-left {
+  top: 0.3rem;
+  left: 0.625rem;
+}
+
+.hesh-circuit .hesh-node-center {
+  top: 1.15rem;
+  left: 1.15rem;
+}
+
+.hesh-circuit .hesh-node-right {
+  right: 0.625rem;
+  bottom: 0.3rem;
+}
+
+.hesh-brand .hesh-brand-copy {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.hesh-brand .hesh-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.24rem;
+  color: var(--hesh-ink);
+  font-size: 1.2rem;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  text-transform: none;
+}
+
+.hesh-brand .hesh-wordmark strong {
+  color: var(--hesh-ink);
+  font: inherit;
+  font-weight: 900;
+}
+
+.hesh-brand .hesh-wordmark .hesh-word-iot {
+  color: var(--hesh-orange);
+  font: inherit;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.hesh-brand .hesh-brand-copy small {
+  color: color-mix(in srgb, var(--hesh-ink) 62%, white);
+  font-size: 0.7rem;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: 0.015em;
+  text-transform: none;
+}
+
+.hesh-brand-compact {
+  gap: 0.55rem;
+}
+
+.hesh-brand-compact .hesh-circuit {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-basis: 2.25rem;
+  transform: scale(0.82);
+  transform-origin: center;
+}
+
+.hesh-brand-mark {
+  gap: 0;
+}
+
+.spark-ui .brand .hesh-brand {
+  width: 100%;
+}
+
+.spark-ui .brand .hesh-wordmark {
+  font-size: 1.2rem;
+}
+
+.spark-ui .brand .hesh-brand-copy small {
+  color: color-mix(in srgb, var(--hesh-ink) 58%, white);
+  font-size: 0.7rem;
+  letter-spacing: 0.015em;
+  text-transform: none;
+}
+
+.login-panel .hesh-brand.auth-brand {
+  display: flex;
+}
+
+.login-panel .hesh-brand.auth-brand .hesh-circuit {
+  width: 3.25rem;
+  height: 3.25rem;
+  flex-basis: 3.25rem;
+}
+
+.login-panel .hesh-brand.auth-brand .hesh-wordmark {
+  font-size: 1.55rem;
 }
