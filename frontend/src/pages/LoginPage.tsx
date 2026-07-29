@@ -80,7 +80,7 @@ export function LoginPage({
       onLogin(session);
     } catch (caught) {
       const message = caught instanceof Error && caught.message.includes("duplicate_email")
-        ? "This email already has a Spark IoT account. Sign in instead."
+        ? "This email already has a Hesh IoT account. Sign in instead."
         : mode === "register"
           ? "Account creation failed. Check the details and API connection."
           : mode === "reset"
@@ -103,18 +103,18 @@ export function LoginPage({
   }
 
   const title = mode === "register"
-    ? "Create your Spark IoT Pro workspace"
+    ? "Create your Hesh IoT Pro workspace"
     : mode === "reset"
-      ? "Reset your Spark IoT password"
+      ? "Reset your Hesh IoT password"
       : "Sign in to your IoT control center";
 
   const intro = mode === "register"
     ? "Create a real Pro account for board testing: more projects, more devices, 90-day history, GPS, camera and push-ready notifications."
     : mode === "reset" && isResetLinkMode
-      ? "Set a new password for your Spark IoT account. The reset token stays hidden and is used only once."
+      ? "Set a new password for your Hesh IoT account. The reset token stays hidden and is used only once."
       : mode === "reset"
       ? "Request a one-time reset link, set a new password, then sign in again. Existing sessions are revoked after reset."
-      : "Sign in to your Spark IoT workspace, or create a Pro account when you are ready to test real boards.";
+      : "Sign in to your Hesh IoT workspace, or create a Pro account when you are ready to test real boards.";
 
   return (
     <main className="login-screen">

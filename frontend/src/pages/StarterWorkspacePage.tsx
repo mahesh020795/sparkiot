@@ -28,7 +28,7 @@ export function StarterWorkspacePage({
         <div className="starter-hero-copy">
           <span className="section-kicker">Pro workspace</span>
           <h1>Welcome, {firstName}</h1>
-          <p>Your Spark IoT Pro workspace is ready. Create a project to connect your first board and generate a live dashboard.</p>
+          <p>Your Hesh IoT Pro workspace is ready. Create a project to connect your first board and generate a live dashboard.</p>
           <div className="starter-plan-strip" aria-label="Pro plan limits">
             <span><CheckCircle2 size={16} /> Pro plan</span>
             <span>10 projects</span>

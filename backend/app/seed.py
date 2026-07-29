@@ -179,7 +179,7 @@ def seed() -> None:
         for channel, value, unit in [("temperature", {"raw": 29.4}, "C"), ("humidity", {"raw": 63}, "%"), ("led", {"raw": True}, None), ("pump", {"raw": False}, None), ("voltage", {"raw": 12.2}, "V"), ("serial", {"raw": "Boot OK\nWiFi connected\nMQTT connected"}, None), ("gps", {"lat": 3.139, "lng": 101.6869, "speed": 14}, None), ("camera", {"url": "https://placehold.co/640x360?text=ESP32-CAM+Snapshot"}, None)]:
             db.add(Telemetry(tenant_id=tenant.id, project_id=projects[0].id, device_id=devices[0].id, channel=channel, value=value, unit=unit))
         db.add(AlertRule(tenant_id=tenant.id, project_id=projects[0].id, device_id=devices[0].id, channel="temperature", operator=">", threshold=40))
-        db.add(Notification(tenant_id=tenant.id, user_id=user.id, title="Welcome to Spark IoT", body="Demo data is ready. Publish MQTT or HTTP telemetry to update widgets."))
+        db.add(Notification(tenant_id=tenant.id, user_id=user.id, title="Welcome to Hesh IoT", body="Demo data is ready. Publish MQTT or HTTP telemetry to update widgets."))
         db.flush()
         ensure_demo_templates(db)
         db.commit()

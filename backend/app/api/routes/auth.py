@@ -63,8 +63,8 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.add(Notification(
         tenant_id=tenant.id,
         user_id=user.id,
-        title="Welcome to Spark IoT",
-        body="Pro workspace is ready. Create a project, choose a template, add your first board, then generate Arduino code.",
+        title="Welcome to Hesh IoT",
+        body="Your Hesh IoT workspace is ready. Create a project, choose a template, add your first board, then generate Arduino code.",
     ))
     db.commit()
     db.refresh(user)
@@ -126,7 +126,7 @@ def confirm_password_reset(payload: PasswordResetConfirmRequest, db: Session = D
         tenant_id=user.tenant_id,
         user_id=user.id,
         title="Password updated",
-        body="Your Spark IoT password was changed. Existing sessions were signed out for safety.",
+        body="Your Hesh IoT password was changed. Existing sessions were signed out for safety.",
     ))
     db.commit()
     return StatusResponse(message="Password updated. Sign in with your new password.")
@@ -170,7 +170,7 @@ def confirm_email_verification(payload: EmailVerificationConfirmRequest, db: Ses
         tenant_id=user.tenant_id,
         user_id=user.id,
         title="Email verified",
-        body="Your Spark IoT workspace is ready. Create your first project to connect a board.",
+        body="Your Hesh IoT workspace is ready. Create your first project to connect a board.",
     ))
     db.commit()
     return StatusResponse(message="Email verified. Your Pro workspace is ready.")

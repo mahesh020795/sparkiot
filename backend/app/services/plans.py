@@ -35,7 +35,7 @@ PLAN_CATALOG: dict[str, PlanDefinition] = {
         automation_limit=0,
         max_widgets=10,
         retention_days=7,
-        features=("1 project", "1 device", "40,000 messages/month", "7-day data retention", "Core widgets", "Web dashboard", "Mobile dashboard", "Spark IoT branding"),
+        features=("1 project", "1 device", "40,000 messages/month", "7-day data retention", "Core widgets", "Web dashboard", "Mobile dashboard", "Hesh IoT branding"),
         widget_groups=("Core widgets",),
         support="Community support",
     ),

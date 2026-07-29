@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    app_name: str = "Spark IoT"
+    app_name: str = "Hesh IoT"
     environment: str = "local"
     api_v1_prefix: str = "/api/v1"
     database_url: str = "sqlite:///./spark_iot.db"
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_username: str = ""
     smtp_password: str = ""
-    smtp_from_email: str = "Spark IoT <no-reply@sparkiot.local>"
+    smtp_from_email: str = "Hesh IoT <no-reply@sparkiot.local>"
     smtp_use_tls: bool = True
     expose_dev_email_tokens: bool = True
     starter_max_users: int = 1

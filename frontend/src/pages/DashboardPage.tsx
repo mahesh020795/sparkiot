@@ -242,7 +242,7 @@ function DashboardEmptyState({
         <div className="dashboard-empty-copy">
           <span className="section-kicker">Dashboard not created</span>
           <h2>Create your first dashboard</h2>
-          <p>Start with a template, create a project, map datastreams, then provision a device. Spark IoT will generate the live dashboard and Arduino-ready code.</p>
+          <p>Start with a template, create a project, map datastreams, then provision a device. Hesh IoT will generate the live dashboard and Arduino-ready code.</p>
           <div className="dashboard-empty-actions">
             <button className="primary" type="button" onClick={onCreateDashboard}>
               <LayoutDashboard size={17} /> Create dashboard

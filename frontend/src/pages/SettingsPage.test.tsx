@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe("SettingsPage SaaS account model", () => {
-  it("shows the official Spark IoT plan ladder and account usage copy", async () => {
+  it("shows the official Hesh IoT plan ladder and account usage copy", async () => {
     localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
     vi.spyOn(api, "me").mockResolvedValue({
       full_name: "Mahesh Rajagopal",
@@ -42,7 +42,7 @@ describe("SettingsPage SaaS account model", () => {
     render(<SettingsPage />);
 
     expect(await screen.findByText("Mahesh Rajagopal")).toBeInTheDocument();
-    expect(screen.getByText("Spark IoT Pro")).toBeInTheDocument();
+    expect(screen.getByText("Hesh IoT Pro")).toBeInTheDocument();
     expect(screen.getAllByText("RM49/month").length).toBeGreaterThan(0);
     expect(screen.getByText("10,000,000 messages/month")).toBeInTheDocument();
     expect(screen.getByText("20 automations")).toBeInTheDocument();

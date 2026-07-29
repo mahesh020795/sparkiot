@@ -260,7 +260,7 @@ export function TemplateStudioPage({
         <div className="wizard-title">
           <div className="studio-mark"><Cpu size={24} /></div>
           <div>
-            <span className="eyebrow">Spark IoT Template Studio</span>
+            <span className="eyebrow">Hesh IoT Template Studio</span>
             <h2>{template.name}</h2>
             <p>Professional device template, datastream, dashboard and firmware builder for fast Blynk migration.</p>
           </div>
@@ -286,7 +286,7 @@ export function TemplateStudioPage({
               ? isDeviceBound
                 ? `${template.dashboard.widgets.length} widgets are mapped to ${device.id}. Code, telemetry and dashboard channels now point to the same board.`
                 : `${unboundWidgetCount} widget${unboundWidgetCount === 1 ? "" : "s"} still need to be mapped to ${device.name} before testing with hardware.`
-              : "Create a device first so Spark IoT can generate exact MQTT topics, widget bindings and Arduino credentials."}
+              : "Create a device first so Hesh IoT can generate exact MQTT topics, widget bindings and Arduino credentials."}
           </p>
         </div>
         {device && !isDeviceBound && (
@@ -316,7 +316,7 @@ export function TemplateStudioPage({
             <div>
               <span className="section-kicker">Product model studio</span>
               <h3>Start with the device your customer actually owns</h3>
-              <p>Name the template, choose the board, then use accelerators to generate common Spark IoT project structures faster than a manual Blynk setup.</p>
+              <p>Name the template, choose the board, then use accelerators to generate common Hesh IoT project structures faster than a manual Blynk setup.</p>
             </div>
             <div className="setup-metrics">
               <span><strong>{template.board}</strong><small>Board</small></span>
@@ -358,7 +358,7 @@ export function TemplateStudioPage({
             <div className="migration-hero">
               <span className="section-kicker">Blynk import command center</span>
               <h3>Virtual pin parser</h3>
-              <p>Paste existing Blynk virtual pins and Spark IoT will preserve V0, V1, V2 mapping for easier firmware migration.</p>
+              <p>Paste existing Blynk virtual pins and Hesh IoT will preserve V0, V1, V2 mapping for easier firmware migration.</p>
             </div>
             <div className="section-title"><h2>Blynk migration helper</h2><button className="primary small" onClick={applyMigration}><Wand2 size={16} />Build from pins</button></div>
             <p className="format-guide">Format: <strong>pin name type unit min max</strong>. Example: <code>V0 Temperature float C 0 100</code></p>
@@ -387,7 +387,7 @@ export function TemplateStudioPage({
             <div>
               <span className="section-kicker">Virtual pin registry</span>
               <h3>Firmware-safe channel map</h3>
-              <p>Each row becomes a stable Spark IoT channel used by Arduino code, MQTT topics, dashboard widgets and notification rules.</p>
+              <p>Each row becomes a stable Hesh IoT channel used by Arduino code, MQTT topics, dashboard widgets and notification rules.</p>
             </div>
             <div className="registry-metrics">
               <span><strong>{template.datastreams.length}/64</strong><small>Virtual pins</small></span>
@@ -454,7 +454,7 @@ export function TemplateStudioPage({
             <div className="code-hero">
               <span className="section-kicker">Firmware command center</span>
               <h3>Arduino-ready sketch</h3>
-              <p>Generate firmware that preserves Blynk-style virtual pins while publishing to Spark IoT topics.</p>
+              <p>Generate firmware that preserves Blynk-style virtual pins while publishing to Hesh IoT topics.</p>
             </div>
             <div className="firmware-export-panel firmware-system-panel" data-testid="firmware-export-panel">
               <div>
@@ -961,7 +961,7 @@ function buildArduinoSketch(template: DeviceTemplate, device?: Device) {
 
   return `#include <SparkIoT.h>
 
-// Spark IoT generated sketch for ${template.name} (${board})
+// Hesh IoT generated sketch for ${template.name} (${board})
 // Install Arduino IDE libraries:
 // - SparkIoT from arduino/SparkIoT in this repository
 // - PubSubClient by Nick O'Leary

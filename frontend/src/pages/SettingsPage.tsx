@@ -133,7 +133,7 @@ export function SettingsPage() {
     }
 
     setPushStatus("checking");
-    setPushMessage("Requesting browser permission and registering Spark IoT push worker...");
+    setPushMessage("Requesting browser permission and registering Hesh IoT push worker...");
     try {
       const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
       if (permission !== "granted") {
@@ -195,7 +195,7 @@ export function SettingsPage() {
           <div className="panel-title"><CreditCard size={18} /><h2>Plan &amp; usage</h2></div>
           <div className="current-plan-box">
             <span>Current plan</span>
-            <strong>Spark IoT {currentPlanName}</strong>
+            <strong>Hesh IoT {currentPlanName}</strong>
             <em>{priceLabel(usage, profile)}</em>
             <p>{currentPlan.purpose}</p>
           </div>

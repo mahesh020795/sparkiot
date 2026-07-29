@@ -115,7 +115,7 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: /Welcome, Acme/i })).toBeInTheDocument();
-    expect(screen.getByText(/Your Spark IoT Pro workspace is ready/i)).toBeInTheDocument();
+    expect(screen.getByText(/Your Hesh IoT Pro workspace is ready/i)).toBeInTheDocument();
     expect(screen.getByText(/No live dashboard yet/i)).toBeInTheDocument();
     expect(screen.getByText(/Create project/i)).toBeInTheDocument();
     expect(screen.getByText(/Provision device/i)).toBeInTheDocument();
@@ -125,6 +125,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Create first project/i }));
     expect(await screen.findByTestId("launch-wizard-panel")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Hesh IoT Launch Wizard" })).toBeInTheDocument();
     expect(screen.queryByText("Setup lives here now")).not.toBeInTheDocument();
     expect(screen.queryByText(/Blynk/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Select option")).not.toBeInTheDocument();
@@ -160,7 +161,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "Spark IoT Dashboard" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Hesh IoT Dashboard" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Smart Irrigation Dashboard" })).not.toBeInTheDocument();
     expect(screen.queryByTestId("dashboard-header-selector")).not.toBeInTheDocument();
   });
@@ -403,7 +404,7 @@ describe("App", () => {
     expect(screen.queryByText("Virtual IoT Simulator Connected")).not.toBeInTheDocument();
     expect(screen.queryByTestId("setup-summary-card")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Open setup flow/i })).not.toBeInTheDocument();
-    expect(screen.queryByText("Spark IoT Launch Wizard")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hesh IoT Launch Wizard")).not.toBeInTheDocument();
     expect(screen.queryByText("Create project")).not.toBeInTheDocument();
     expect(screen.queryByText("Customer setup flow")).not.toBeInTheDocument();
     expect(screen.queryByText("Launch checklist")).not.toBeInTheDocument();
@@ -583,7 +584,7 @@ describe("App", () => {
     expect(within(energyTemplateCard).getByRole("button", { name: /Delete template/i })).toBeInTheDocument();
     fireEvent.click(within(energyTemplateCard).getByRole("button", { name: /Edit template/i }));
 
-    expect(screen.getByText("Spark IoT Template Studio")).toBeInTheDocument();
+    expect(screen.getByText("Hesh IoT Template Studio")).toBeInTheDocument();
     expect(screen.getByTestId("template-studio")).toHaveClass("spark-studio");
     expect(screen.getByTestId("template-studio-header")).toHaveClass("wizard-header", "studio-system-header");
     expect(screen.getByLabelText("Template setup steps")).toHaveClass("wizard-steps", "studio-system-steps");
@@ -1185,7 +1186,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Create template/i }));
     fireEvent.click(screen.getByRole("button", { name: /Save template/i }));
 
-    expect(await screen.findByText("Spark IoT Template Studio")).toBeInTheDocument();
+    expect(await screen.findByText("Hesh IoT Template Studio")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Template name"), { target: { value: "Greenhouse Controller" } });
     fireEvent.click(screen.getByRole("button", { name: /Save/i }));
 
@@ -1222,7 +1223,7 @@ describe("App", () => {
     expect(screen.getByText("spark/v1/demo-tenant/device-irrigation/telemetry/{channel}")).toBeInTheDocument();
     expect(screen.getByText("spk_dev_irrigation_demo_9f3a")).toBeInTheDocument();
     expect(screen.getByText("Command monitor")).toBeInTheDocument();
-    expect(screen.getByText("Shows commands sent by Spark IoT and ACK packets returned by the board.")).toBeInTheDocument();
+    expect(screen.getByText("Shows commands sent by Hesh IoT and ACK packets returned by the board.")).toBeInTheDocument();
   });
 
   it("shows real-board MQTT health, last event proof and copyable quick-test topics", async () => {
@@ -1361,6 +1362,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Code"));
 
     expect(screen.getByText(/#include <SparkIoT\.h>/)).toBeInTheDocument();
+    expect(screen.getByText(/Hesh IoT generated sketch for Smart Irrigation/)).toBeInTheDocument();
     expect(screen.getByText(/SPARK_DEVICE_TOKEN = "spk_dev_irrigation_demo_9f3a"/)).toBeInTheDocument();
     expect(screen.getByText(/SPARK_DEVICE_ID = "device-irrigation"/)).toBeInTheDocument();
     expect(screen.getByText(/SparkIoT\.begin\(WIFI_SSID, WIFI_PASSWORD, BROKER_HOST, BROKER_PORT, SPARK_TENANT_ID, SPARK_DEVICE_ID, SPARK_DEVICE_TOKEN\)/)).toBeInTheDocument();
@@ -1810,7 +1812,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByText(/Reset your Spark IoT password/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Reset your Hesh IoT password/i)).toBeInTheDocument();
     expect(screen.queryByTestId("auth-tabs")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Reset token")).not.toBeInTheDocument();

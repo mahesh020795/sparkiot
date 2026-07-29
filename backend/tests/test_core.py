@@ -183,8 +183,8 @@ def test_register_creates_pro_tenant_user_refresh_token_and_welcome_notification
     assert db.scalar(select(RefreshToken).where(RefreshToken.user_id == user.id)) is not None
     notification = db.scalar(select(Notification).where(Notification.tenant_id == tenant.id, Notification.user_id == user.id))
     assert notification is not None
-    assert notification.title == "Welcome to Spark IoT"
-    assert "Pro workspace is ready" in notification.body
+    assert notification.title == "Welcome to Hesh IoT"
+    assert "Hesh IoT workspace is ready" in notification.body
 
 
 def test_usage_returns_free_plus_pro_enterprise_plan_metadata_and_legacy_starter_mapping():
@@ -342,11 +342,12 @@ def test_email_messages_are_smtp_ready_without_exposing_hashes():
     )
 
     assert verification.to_email == "owner@example.com"
-    assert verification.subject == "Verify your Spark IoT account"
+    assert verification.subject == "Verify your Hesh IoT account"
+    assert "Welcome to Hesh IoT" in verification.text
     assert "https://sparkiot.com/verify-email?token=verify-token-123" in verification.text
     assert "verify-token-123" in verification.text
     assert "token_hash" not in verification.text
-    assert reset.subject == "Reset your Spark IoT password"
+    assert reset.subject == "Reset your Hesh IoT password"
     assert "https://sparkiot.com/reset-password?token=reset-token-123" in reset.text
 
 

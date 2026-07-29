@@ -23,10 +23,10 @@ def build_verification_email(to_email: str, full_name: str, token: str, app_url:
     first_name = full_name.split(" ")[0] if full_name else "there"
     return EmailMessage(
         to_email=to_email,
-        subject="Verify your Spark IoT account",
+        subject="Verify your Hesh IoT account",
         text=(
             f"Hi {first_name},\n\n"
-            "Welcome to Spark IoT. Verify your email to start creating real projects, "
+            "Welcome to Hesh IoT. Verify your email to start creating real projects, "
             "device tokens, Arduino sketches and live dashboards.\n\n"
             f"Verify email: {verify_url}\n\n"
             f"Testing token: {token}\n\n"
@@ -34,9 +34,9 @@ def build_verification_email(to_email: str, full_name: str, token: str, app_url:
         ),
         html=(
             f"<p>Hi {first_name},</p>"
-            "<p>Welcome to <strong>Spark IoT</strong>. Verify your email to start creating real projects, "
+            "<p>Welcome to <strong>Hesh IoT</strong>. Verify your email to start creating real projects, "
             "device tokens, Arduino sketches and live dashboards.</p>"
-            f'<p><a href="{verify_url}">Verify your Spark IoT account</a></p>'
+            f'<p><a href="{verify_url}">Verify your Hesh IoT account</a></p>'
             "<p>If you did not create this account, you can ignore this email.</p>"
         ),
     )
@@ -48,18 +48,18 @@ def build_password_reset_email(to_email: str, full_name: str, token: str, app_ur
     first_name = full_name.split(" ")[0] if full_name else "there"
     return EmailMessage(
         to_email=to_email,
-        subject="Reset your Spark IoT password",
+        subject="Reset your Hesh IoT password",
         text=(
             f"Hi {first_name},\n\n"
-            "Use this one-time link to reset your Spark IoT password. The token expires in 30 minutes.\n\n"
+            "Use this one-time link to reset your Hesh IoT password. The token expires in 30 minutes.\n\n"
             f"Reset password: {reset_url}\n\n"
             f"Testing token: {token}\n\n"
             "If this was not you, ignore this email and rotate your password from Settings.\n"
         ),
         html=(
             f"<p>Hi {first_name},</p>"
-            "<p>Use this one-time link to reset your Spark IoT password. The token expires in 30 minutes.</p>"
-            f'<p><a href="{reset_url}">Reset your Spark IoT password</a></p>'
+            "<p>Use this one-time link to reset your Hesh IoT password. The token expires in 30 minutes.</p>"
+            f'<p><a href="{reset_url}">Reset your Hesh IoT password</a></p>'
             "<p>If this was not you, ignore this email and rotate your password from Settings.</p>"
         ),
     )

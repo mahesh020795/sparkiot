@@ -80,8 +80,8 @@ export function App() {
     [accountDashboards, activeProjects, isAccountMode]
   );
   const pageTitle = view === "dashboard"
-    ? selectedProject ? `${selectedProject.name} Dashboard` : "Spark IoT Dashboard"
-    : selectedProject?.name ?? "Spark IoT Dashboard";
+    ? selectedProject ? `${selectedProject.name} Dashboard` : "Hesh IoT Dashboard"
+    : selectedProject?.name ?? "Hesh IoT Dashboard";
   const accountPlan = findPlan(userProfile?.plan_code);
 
   const nav = [
@@ -613,7 +613,7 @@ export function App() {
         <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
           <span className="section-kicker">{isAccountMode ? "Pro account" : demoPreviewMode ? "Demo preview" : "Demo workspace"}</span>
-          <div><UserCircle size={16} /><strong>{isAccountMode ? userProfile?.full_name ?? userProfile?.email ?? "Spark IoT account" : demoPreviewMode ? "Preview dashboard" : "Sample workspace"}</strong></div>
+          <div><UserCircle size={16} /><strong>{isAccountMode ? userProfile?.full_name ?? userProfile?.email ?? "Hesh IoT account" : demoPreviewMode ? "Preview dashboard" : "Sample workspace"}</strong></div>
           <small>{isAccountMode ? userProfile?.email ?? "Signed in workspace" : demoPreviewMode ? "Simulated telemetry only" : "Explore the platform before sign in"}</small>
           {isAccountMode && <small className="session-plan-line">Package: {accountPlan.name} · {accountPlan.usageHighlights[1]} · {accountPlan.usageHighlights[0]}</small>}
           {session ? (
@@ -660,7 +660,7 @@ export function App() {
             templateCount={activeTemplates.length}
             deviceCount={activeDevices.length}
             datastreamCount={selectedTemplate?.datastreams.length ?? 0}
-            selectedProjectName={selectedProject?.name ?? "Spark IoT project"}
+            selectedProjectName={selectedProject?.name ?? "Hesh IoT project"}
             selectedDeviceName={selectedDevice?.name ?? activeDevices[0]?.name ?? "ESP board"}
             accountMode={isAccountMode}
             onCreateQuickStart={isAccountMode ? createAccountQuickStart : undefined}
@@ -745,7 +745,7 @@ export function App() {
 
 function EmailVerificationLink({ token, onSignIn }: { token: string; onSignIn: () => void }) {
   const [state, setState] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("Verifying your Spark IoT email...");
+  const [message, setMessage] = useState("Verifying your Hesh IoT email...");
 
   useEffect(() => {
     let mounted = true;
@@ -885,10 +885,10 @@ function LaunchWizardPanel({
   }
 
   return (
-    <section className="launch-wizard-panel" data-testid="launch-wizard-panel" aria-label="Spark IoT first-use launch wizard">
+    <section className="launch-wizard-panel" data-testid="launch-wizard-panel" aria-label="Hesh IoT first-use launch wizard">
       <div className="launch-wizard-copy">
         <span className="section-kicker">Customer onboarding</span>
-        <h2>Spark IoT Launch Wizard</h2>
+        <h2>Hesh IoT Launch Wizard</h2>
         <p>Start from a reusable template, create the customer project, map V-pins, then provision the board token, Arduino code and live proof.</p>
         <div className="launch-wizard-status">
           <span><CheckCircle2 size={16} /><strong>6/6 ready</strong></span>
@@ -1129,7 +1129,7 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
         <div>
           <span className="section-kicker">Connection proof</span>
           <h2>Three checks before handover</h2>
-          <p>Telemetry must arrive, Spark IoT must publish a command, and the board should return an ACK.</p>
+          <p>Telemetry must arrive, Hesh IoT must publish a command, and the board should return an ACK.</p>
         </div>
         <div className="proof-steps">
           <ProofStep
@@ -1219,7 +1219,7 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
 
       <section className="panel command-monitor-panel live-system-command-monitor" data-testid="live-command-monitor">
         <div className="panel-title"><TerminalSquare size={18} /><h2>Command monitor</h2></div>
-        <p>Shows commands sent by Spark IoT and ACK packets returned by the board.</p>
+        <p>Shows commands sent by Hesh IoT and ACK packets returned by the board.</p>
         <div className="command-log-list">
           {commandLogs.length ? commandLogs.map((log) => (
             <article key={log.id} className={`command-log-row ${log.status}`}>
