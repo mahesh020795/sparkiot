@@ -2132,6 +2132,27 @@ body {
   color: #b91c1c;
 }
 
+.spark-ui .studio-edit-action {
+  min-height: var(--spark-control-height);
+  border: 1px solid #bfd0ff;
+  background: var(--spark-primary-soft);
+  color: var(--spark-primary-strong);
+  box-shadow: none;
+}
+
+.spark-ui .studio-edit-action:hover {
+  border-color: var(--spark-primary);
+  background: #e2eaff;
+  color: var(--spark-primary-strong);
+  box-shadow: none;
+}
+
+.spark-ui .studio-progress-action {
+  border-color: var(--hesh-orange);
+  background: var(--hesh-orange);
+  color: var(--hesh-ink);
+}
+
 .spark-ui .studio-system-steps {
   display: grid;
   grid-template-columns: repeat(7, minmax(132px, 1fr));
@@ -4601,15 +4622,15 @@ body {
   gap: 0.2rem;
   padding: 0.68rem 0.82rem;
   border-radius: 18px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
 }
 
 .spark-ui .launch-wizard-status span {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  color: #047857;
+  color: #9a3412;
   font-size: 0.82rem;
   font-weight: 900;
 }
@@ -5348,6 +5369,62 @@ body {
   z-index: 900;
 }
 
+.spark-ui.dashboard-shell .dashboard-connection-status {
+  width: fit-content;
+  max-width: calc(100% - (2 * var(--spark-page-pad-x)));
+  min-height: 48px;
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--spark-space-3);
+  margin: var(--spark-space-4) var(--spark-page-pad-x) 0;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-md);
+  background: var(--spark-surface);
+  color: var(--spark-muted);
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status strong {
+  color: var(--spark-text);
+  font-size: 0.82rem;
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status small {
+  color: var(--spark-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status .status-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--spark-muted-2);
+  box-shadow: 0 0 0 0.3rem var(--spark-surface-muted);
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status.online {
+  border-color: #bbf7d0;
+  background: var(--spark-success-soft);
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status.online .status-dot {
+  background: var(--hesh-online);
+  box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--hesh-online) 14%, white);
+}
+
+.spark-ui.dashboard-shell .dashboard-connection-status.online strong {
+  color: var(--spark-success-strong);
+}
+
 /*
   Empty dashboard composition.
   The dashboard canvas intentionally starts flush under the page header when
@@ -5423,9 +5500,12 @@ body {
   border-radius: var(--spark-radius-lg);
   background: #f8fbff;
   box-shadow: none;
+  margin: 0;
+  list-style: none;
 }
 
 .spark-ui.dashboard-shell .dashboard-empty-flow .dashboard-empty-flow-step {
+  position: relative;
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
   align-items: center;
@@ -5438,6 +5518,15 @@ body {
   background: #ffffff;
   color: var(--spark-text);
   letter-spacing: -0.01em;
+}
+
+.spark-ui.dashboard-shell .dashboard-empty-flow .dashboard-empty-flow-arrow {
+  position: absolute;
+  z-index: 1;
+  right: calc(50% - 0.5rem);
+  bottom: calc(-1 * var(--spark-space-3) - 0.5rem);
+  color: var(--spark-primary);
+  transform: rotate(90deg);
 }
 
 .spark-ui.dashboard-shell .dashboard-empty-flow .dashboard-empty-flow-icon {
@@ -5473,11 +5562,6 @@ body {
   font-size: 0.78rem;
   font-weight: 800;
   line-height: 1.25;
-}
-
-.spark-ui.dashboard-shell .dashboard-empty-flow > svg {
-  justify-self: center;
-  transform: rotate(90deg);
 }
 
 @media (max-width: 980px) {
@@ -5658,4 +5742,78 @@ body {
 
 .login-panel .hesh-brand.auth-brand .hesh-wordmark {
   font-size: 1.55rem;
+}
+
+/* Brand mode carries Hesh identity; operation mode stays quiet and task-led. */
+[data-ui-mode="brand"] {
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--hesh-orange) 10%, transparent), transparent 34rem),
+    linear-gradient(145deg, var(--hesh-canvas), #eef3fb);
+  color: var(--hesh-ink);
+}
+
+[data-ui-mode="brand"] .primary {
+  border-color: var(--hesh-orange);
+  background: var(--hesh-orange);
+  color: var(--hesh-ink);
+  box-shadow: 0 12px 26px rgba(242, 85, 34, 0.2);
+}
+
+[data-ui-mode="brand"] .primary:hover {
+  border-color: var(--spark-action-strong);
+  background: var(--spark-action-strong);
+  color: var(--hesh-ink);
+}
+
+[data-ui-mode="brand"] .auth-card,
+[data-ui-mode="brand"] .onboarding-card,
+[data-ui-mode="brand"] .starter-hero,
+[data-ui-mode="brand"] .starter-panel {
+  border-color: color-mix(in srgb, var(--hesh-orange) 14%, var(--spark-border));
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 22px 58px rgba(18, 23, 34, 0.09);
+}
+
+[data-ui-mode="brand"] .auth-mode-tabs button.active {
+  color: var(--hesh-cobalt);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hesh-cobalt) 20%, white);
+}
+
+.starter-brand-header {
+  width: min(1180px, 100%);
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spark-space-4);
+  margin: 0 auto var(--spark-space-4);
+  padding: var(--spark-space-3) var(--spark-space-4);
+  border: 1px solid color-mix(in srgb, var(--hesh-orange) 16%, var(--spark-border));
+  border-radius: var(--spark-radius-lg);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.starter-brand-header > span:last-child {
+  color: var(--spark-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.onboarding-brand {
+  display: flex;
+  margin-bottom: var(--spark-space-6);
+  padding-bottom: var(--spark-space-5);
+  border-bottom: 1px solid var(--spark-border);
+}
+
+@media (max-width: 640px) {
+  .starter-brand-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .starter-brand-header > span:last-child {
+    text-align: left;
+  }
 }

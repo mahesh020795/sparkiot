@@ -115,6 +115,8 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: /Welcome, Acme/i })).toBeInTheDocument();
+    expect(screen.getByRole("main")).toHaveAttribute("data-ui-mode", "brand");
+    expect(screen.getByText("Make IoT simple.")).toBeInTheDocument();
     expect(screen.getByText(/Your Hesh IoT Pro workspace is ready/i)).toBeInTheDocument();
     expect(screen.getByText(/No live dashboard yet/i)).toBeInTheDocument();
     expect(screen.getByText(/Create project/i)).toBeInTheDocument();
@@ -193,7 +195,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /View demo dashboard/i }));
 
     expect(await screen.findByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
-    const demoBanner = screen.getByRole("status");
+    const demoBanner = screen.getByRole("status", { name: "Demo dashboard status" });
     expect(within(demoBanner).getByText(/Demo dashboard/i)).toBeInTheDocument();
     expect(within(demoBanner).getByText(/Simulated telemetry/i)).toBeInTheDocument();
     expect(screen.getByText("Temperature")).toBeInTheDocument();
@@ -226,7 +228,7 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: /View demo dashboard/i }));
 
     expect(update).toHaveBeenCalledWith({ current_step: "starter_workspace", completed_steps: ["verify_email"], demo_viewed: true, first_project_id: null });
-    const demoBanner = await screen.findByRole("status");
+    const demoBanner = await screen.findByRole("status", { name: "Demo dashboard status" });
     expect(within(demoBanner).getByText(/Demo dashboard/i)).toBeInTheDocument();
     expect(within(demoBanner).getByText(/Simulated telemetry/i)).toBeInTheDocument();
   });
@@ -463,6 +465,7 @@ describe("App", () => {
 
     const shell = await screen.findByTestId("app-shell");
     expect(shell).toHaveClass("app-shell", "dashboard-shell", "spark-ui");
+    expect(shell).toHaveAttribute("data-ui-mode", "operation");
     expect(screen.getByTestId("cockpit-header")).toHaveClass("app-page-header", "cockpit-header");
     expect(screen.getByTestId("dashboard-header-grid")).toHaveClass("dashboard-header-grid", "spark-page-header-grid");
     expect(screen.getByTestId("dashboard-header-primary")).toHaveClass("spark-page-header-primary");
@@ -485,6 +488,17 @@ describe("App", () => {
     expect(screen.queryByText("Water, pressure, flow models synced with scheduler output")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Edit labels/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Publish Changes/i })).not.toBeInTheDocument();
+  });
+
+  it("presents authentication as a branded path with one obvious primary action", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /Sign in to account/i }));
+
+    const authCard = screen.getByTestId("auth-card");
+    expect(screen.getByRole("main")).toHaveAttribute("data-ui-mode", "brand");
+    expect(within(authCard).getByText("Make IoT simple.")).toBeInTheDocument();
+    expect(authCard.querySelectorAll("button.primary")).toHaveLength(1);
+    expect(within(authCard).getByTestId("auth-primary-action")).toHaveTextContent("Sign in");
   });
 
   it("keeps compact cards inside narrow screens with shared overflow-safe CSS", () => {
@@ -586,8 +600,12 @@ describe("App", () => {
 
     expect(screen.getByText("Hesh IoT Template Studio")).toBeInTheDocument();
     expect(screen.getByTestId("template-studio")).toHaveClass("spark-studio");
+    expect(screen.getByTestId("template-studio")).toHaveAttribute("data-ui-mode", "operation");
     expect(screen.getByTestId("template-studio-header")).toHaveClass("wizard-header", "studio-system-header");
     expect(screen.getByLabelText("Template setup steps")).toHaveClass("wizard-steps", "studio-system-steps");
+    expect(screen.getByRole("button", { name: /Setup.*Product model/i })).toHaveAttribute("aria-current", "step");
+    expect(screen.getByTestId("studio-primary-action")).toHaveTextContent("Save");
+    expect(screen.getByRole("button", { name: /Full builder/i })).not.toHaveClass("primary");
     expect(screen.getAllByDisplayValue("Energy Monitor").length).toBeGreaterThan(0);
     expect(screen.getByText("Migrate")).toBeInTheDocument();
     expect(screen.getByText("Datastreams")).toBeInTheDocument();

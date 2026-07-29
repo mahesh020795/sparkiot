@@ -117,9 +117,9 @@ export function LoginPage({
       : "Sign in to your Hesh IoT workspace, or create a Pro account when you are ready to test real boards.";
 
   return (
-    <main className="login-screen">
+    <main className="login-screen" data-ui-mode="brand">
       <section className="login-panel auth-card" data-testid="auth-card">
-        <HeshBrand className="auth-brand" />
+        <HeshBrand className="auth-brand" tagline />
         <h1 className="auth-title">{title}</h1>
         <p className="muted-text auth-intro">{intro}</p>
         {!isResetLinkMode && (

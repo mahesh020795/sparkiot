@@ -1,5 +1,6 @@
 import { CheckCircle2, LogOut, Mail, PlayCircle, RefreshCcw } from "lucide-react";
 import { useState } from "react";
+import { HeshBrand } from "../components/HeshBrand";
 import { api } from "../lib/api";
 import type { UserProfile } from "../lib/types";
 
@@ -47,8 +48,9 @@ export function VerifyEmailPage({
   }
 
   return (
-    <main className="onboarding-screen">
+    <main className="onboarding-screen" data-ui-mode="brand">
       <section className="onboarding-card verify-card">
+        <HeshBrand className="onboarding-brand" tagline />
         <span className="onboarding-icon"><Mail size={24} /></span>
         <span className="section-kicker">Secure workspace setup</span>
         <h1>Verify your email</h1>

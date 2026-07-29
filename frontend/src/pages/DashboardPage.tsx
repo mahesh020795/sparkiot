@@ -84,25 +84,28 @@ export function DashboardPage({
   }
 
   return (
-    <section className="overview-page">
+    <section className="overview-page hesh-operation-surface" data-ui-mode="operation">
       {sortedWidgets.length === 0 ? (
         <DashboardEmptyState onCreateDashboard={onCreateDashboard} onPreviewDemo={onPreviewDemo} />
       ) : (
-        <div className={edit ? "layout edit-mode gemini-widget-canvas" : "layout gemini-widget-canvas"} data-testid="gemini-widget-canvas">
-          {sortedWidgets.map((widget) => (
-            <div
-              className="grid-cell"
-              draggable={edit}
-              onDragStart={() => setDraggingId(widget.id)}
-              onDragOver={(event) => edit && event.preventDefault()}
-              onDrop={() => moveWidget(widget.id)}
-              style={{ gridColumn: `span ${Math.min(widget.w, 12)}`, minHeight: `${widget.h * 92}px` }}
-              key={widget.id}
-            >
-              <Widget config={widget} reading={latest[`${widget.deviceId}:${widget.channel}`]} devices={devices} onCommand={updateCommandReading} />
-            </div>
-          ))}
-        </div>
+        <>
+          <DashboardConnectionStatus devices={devices} />
+          <div className={edit ? "layout edit-mode gemini-widget-canvas" : "layout gemini-widget-canvas"} data-testid="gemini-widget-canvas">
+            {sortedWidgets.map((widget) => (
+              <div
+                className="grid-cell"
+                draggable={edit}
+                onDragStart={() => setDraggingId(widget.id)}
+                onDragOver={(event) => edit && event.preventDefault()}
+                onDrop={() => moveWidget(widget.id)}
+                style={{ gridColumn: `span ${Math.min(widget.w, 12)}`, minHeight: `${widget.h * 92}px` }}
+                key={widget.id}
+              >
+                <Widget config={widget} reading={latest[`${widget.deviceId}:${widget.channel}`]} devices={devices} onCommand={updateCommandReading} />
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </section>
   );
@@ -186,7 +189,8 @@ export function LocalDashboardPage({
   }
 
   return (
-    <section className="overview-page">
+    <section className="overview-page hesh-operation-surface" data-ui-mode="operation">
+      <DashboardConnectionStatus devices={devices} />
       <div className={edit ? "layout edit-mode gemini-widget-canvas" : "layout gemini-widget-canvas"} data-testid="gemini-widget-canvas">
         {sortedWidgets.map((widget) => (
           <div
@@ -229,6 +233,28 @@ function persistDashboardInput(projectId: string, reading: Telemetry) {
   window.localStorage.setItem(dashboardInputStorageKey(projectId), JSON.stringify({ ...current, [key]: reading }));
 }
 
+function DashboardConnectionStatus({ devices }: { devices: Device[] }) {
+  const onlineDevices = devices.filter((device) => device.is_online);
+  const connected = onlineDevices.length > 0;
+  const detail = connected
+    ? onlineDevices.length === 1
+      ? `${onlineDevices[0].name} is online`
+      : `${onlineDevices.length} devices are online`
+    : devices.length
+      ? "Devices are provisioned but currently offline"
+      : "Provision a device to start live telemetry";
+
+  return (
+    <div className={`dashboard-connection-status ${connected ? "online" : "offline"}`} role="status" aria-label="Device connection">
+      <span className="status-dot" aria-hidden="true" />
+      <span>
+        <strong>{connected ? "Connected" : "Not connected"}</strong>
+        <small>{detail}</small>
+      </span>
+    </div>
+  );
+}
+
 function DashboardEmptyState({
   onCreateDashboard,
   onPreviewDemo,
@@ -252,22 +278,22 @@ function DashboardEmptyState({
             </button>
           </div>
         </div>
-        <div className="dashboard-empty-flow" aria-label="Dashboard creation flow">
-          <span className="dashboard-empty-flow-step">
+        <ol className="dashboard-empty-flow" aria-label="Next steps to a live dashboard">
+          <li className="dashboard-empty-flow-step">
             <span className="dashboard-empty-flow-icon"><Workflow size={18} /></span>
             <span><strong>Template</strong><small>Board model and V pins</small></span>
-          </span>
-          <ArrowRight size={16} />
-          <span className="dashboard-empty-flow-step">
+            <ArrowRight className="dashboard-empty-flow-arrow" size={16} aria-hidden="true" />
+          </li>
+          <li className="dashboard-empty-flow-step">
             <span className="dashboard-empty-flow-icon"><Code2 size={18} /></span>
             <span><strong>Device code</strong><small>ESP32 / ESP8266 sketch</small></span>
-          </span>
-          <ArrowRight size={16} />
-          <span className="dashboard-empty-flow-step">
+            <ArrowRight className="dashboard-empty-flow-arrow" size={16} aria-hidden="true" />
+          </li>
+          <li className="dashboard-empty-flow-step">
             <span className="dashboard-empty-flow-icon"><LayoutDashboard size={18} /></span>
             <span><strong>Live dashboard</strong><small>MQTT widgets online</small></span>
-          </span>
-        </div>
+          </li>
+        </ol>
       </div>
     </div>
   );

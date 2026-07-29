@@ -45,12 +45,13 @@ describe("DashboardPage account input persistence", () => {
     expect(screen.getByText(/Start with a template, create a project/i)).toBeInTheDocument();
     expect(screen.getByTestId("dashboard-empty-card")).toHaveClass("dashboard-empty-card");
     expect(screen.getByText("Template").closest(".dashboard-empty-flow-step")).toBeTruthy();
-    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Template");
-    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Board model and V pins");
-    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Device code");
-    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("ESP32 / ESP8266 sketch");
-    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("Live dashboard");
-    expect(screen.getByLabelText("Dashboard creation flow")).toHaveTextContent("MQTT widgets online");
+    const nextSteps = screen.getByRole("list", { name: "Next steps to a live dashboard" });
+    expect(nextSteps).toHaveTextContent("Template");
+    expect(nextSteps).toHaveTextContent("Board model and V pins");
+    expect(nextSteps).toHaveTextContent("Device code");
+    expect(nextSteps).toHaveTextContent("ESP32 / ESP8266 sketch");
+    expect(nextSteps).toHaveTextContent("Live dashboard");
+    expect(nextSteps).toHaveTextContent("MQTT widgets online");
     fireEvent.click(screen.getByRole("button", { name: /Create dashboard/i }));
     fireEvent.click(screen.getByRole("button", { name: /View demo dashboard/i }));
 
@@ -116,6 +117,9 @@ describe("DashboardPage account input persistence", () => {
 
     const first = render(<DashboardPage projectId="project-account" devices={[device]} />);
     expect(await screen.findByDisplayValue("06:00")).toBeInTheDocument();
+    const connectionStatus = screen.getByRole("status", { name: "Device connection" });
+    expect(connectionStatus).toHaveTextContent("Connected");
+    expect(connectionStatus).toHaveTextContent("ESP32 Account Node is online");
     fireEvent.change(screen.getByLabelText("Selected command time"), { target: { value: "18:30" } });
     expect(command).toHaveBeenCalledWith("device-account", "V12", "18:30");
     first.unmount();

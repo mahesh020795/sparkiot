@@ -607,7 +607,7 @@ export function App() {
   }
 
   return (
-    <div className={view === "dashboard" ? "app-shell spark-ui dashboard-shell" : "app-shell spark-ui"} data-testid="app-shell">
+    <div className={view === "dashboard" ? "app-shell spark-ui dashboard-shell" : "app-shell spark-ui"} data-testid="app-shell" data-ui-mode="operation">
       <aside className="sidebar">
         <div className="brand"><HeshBrand tagline /></div>
         <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
@@ -648,7 +648,7 @@ export function App() {
           </div>
         </header>
         {demoPreviewMode && (
-          <div className="demo-preview-banner" role="status">
+          <div className="demo-preview-banner" role="status" aria-label="Demo dashboard status">
             <strong>Demo dashboard</strong>
             <span>Simulated telemetry. Create your first project to connect real hardware.</span>
             <button type="button" onClick={() => setDemoPreviewMode(false)}>Back to workspace</button>
@@ -768,9 +768,9 @@ function EmailVerificationLink({ token, onSignIn }: { token: string; onSignIn: (
   }, [token]);
 
   return (
-    <main className="login-screen">
+    <main className="login-screen" data-ui-mode="brand">
       <section className="login-panel auth-card">
-        <HeshBrand className="auth-brand" />
+        <HeshBrand className="auth-brand" tagline />
         <h1 className="auth-title">Email verification</h1>
         <p className={state === "error" ? "error" : state === "success" ? "success" : "muted-text auth-intro"}>{message}</p>
         <button type="button" className="primary auth-primary-action" onClick={onSignIn}>Sign in to your workspace</button>
@@ -890,9 +890,9 @@ function LaunchWizardPanel({
         <span className="section-kicker">Customer onboarding</span>
         <h2>Hesh IoT Launch Wizard</h2>
         <p>Start from a reusable template, create the customer project, map V-pins, then provision the board token, Arduino code and live proof.</p>
-        <div className="launch-wizard-status">
-          <span><CheckCircle2 size={16} /><strong>6/6 ready</strong></span>
-          <small>{selectedProjectName} is ready for ESP32 / NodeMCU testing.</small>
+        <div className="launch-wizard-status" role="status" aria-label="Guided setup progress">
+          <span><CheckCircle2 size={16} /><strong>6 guided steps</strong></span>
+          <small>Follow the path to connect {selectedProjectName} to {selectedDeviceName}.</small>
         </div>
         {accountMode && (
           <div className="account-quickstart-card" data-testid="account-quickstart-card">

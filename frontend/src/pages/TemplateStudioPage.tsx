@@ -255,7 +255,7 @@ export function TemplateStudioPage({
   }
 
   return (
-    <section className={fullBuilder ? "studio spark-studio studio-fullscreen" : "studio spark-studio"} data-testid="template-studio">
+    <section className={fullBuilder ? "studio spark-studio studio-fullscreen" : "studio spark-studio"} data-testid="template-studio" data-ui-mode="operation">
       <header className="wizard-header studio-system-header" data-testid="template-studio-header">
         <div className="wizard-title">
           <div className="studio-mark"><Cpu size={24} /></div>
@@ -270,8 +270,8 @@ export function TemplateStudioPage({
           <span><strong>{template.datastreams.length}</strong> virtual pins</span>
           <span><strong>{template.dashboard.widgets.length}</strong> widgets</span>
           <span><strong>{template.notifications.length}</strong> alerts</span>
-          <button className="primary small" type="button" onClick={onSave} disabled={saveState === "saving"}><Save size={16} />{saveState === "saving" ? "Saving" : "Save"}</button>
-          <button className="primary small" type="button" onClick={() => setFullBuilder((value) => !value)}><Expand size={16} />{fullBuilder ? "Exit full builder" : "Full builder"}</button>
+          <button className="primary small studio-progress-action" data-testid="studio-primary-action" type="button" onClick={onSave} disabled={saveState === "saving"}><Save size={16} />{saveState === "saving" ? "Saving" : "Save"}</button>
+          <button className="small studio-edit-action" type="button" onClick={() => setFullBuilder((value) => !value)}><Expand size={16} />{fullBuilder ? "Exit full builder" : "Full builder"}</button>
         </div>
       </header>
       {saveState === "error" && saveError && <div className="save-error-banner">{saveError}</div>}
@@ -302,7 +302,7 @@ export function TemplateStudioPage({
           const activeIndex = stepConfig.findIndex((item) => item.id === activeStep);
           const state = index < activeIndex ? "complete" : index === activeIndex ? "active" : "pending";
           return (
-            <button key={step.id} className={`wizard-step ${state}`} aria-label={`${step.label} ${step.caption}`} onClick={() => setActiveStep(step.id)}>
+            <button key={step.id} className={`wizard-step ${state}`} aria-label={`${step.label} ${step.caption}`} aria-current={state === "active" ? "step" : undefined} onClick={() => setActiveStep(step.id)}>
               <span className="step-icon"><Icon size={17} /></span>
               <span className="step-copy"><strong>{step.label}</strong><small>{step.caption}</small></span>
             </button>
@@ -325,7 +325,7 @@ export function TemplateStudioPage({
             </div>
           </div>
           <div className="studio-section">
-            <div className="section-title"><h2>Template setup</h2><button onClick={autoGenerateFromPrompt}><Sparkles size={16} />AI suggest pins</button></div>
+            <div className="section-title"><h2>Template setup</h2><button className="studio-edit-action" onClick={autoGenerateFromPrompt}><Sparkles size={16} />AI suggest pins</button></div>
             <div className="template-fields">
               <label>Name<input aria-label="Template name" value={template.name} onChange={(event) => patchTemplate({ name: event.target.value })} /></label>
               <label>
@@ -360,7 +360,7 @@ export function TemplateStudioPage({
               <h3>Virtual pin parser</h3>
               <p>Paste existing Blynk virtual pins and Hesh IoT will preserve V0, V1, V2 mapping for easier firmware migration.</p>
             </div>
-            <div className="section-title"><h2>Blynk migration helper</h2><button className="primary small" onClick={applyMigration}><Wand2 size={16} />Build from pins</button></div>
+            <div className="section-title"><h2>Blynk migration helper</h2><button className="small studio-edit-action" onClick={applyMigration}><Wand2 size={16} />Build from pins</button></div>
             <p className="format-guide">Format: <strong>pin name type unit min max</strong>. Example: <code>V0 Temperature float C 0 100</code></p>
             <textarea className="migration-textarea" value={migrationText} onChange={(event) => setMigrationText(event.target.value)} />
           </div>
@@ -381,7 +381,7 @@ export function TemplateStudioPage({
               <h2>Datastreams / Virtual Pins</h2>
               <p>Define the data contract your firmware, dashboard widgets and alerts will use.</p>
             </div>
-            <button className="primary small" type="button" title="Add datastream" onClick={() => addDatastream()}><Plus size={16} />Add V pin</button>
+            <button className="small studio-edit-action" type="button" title="Add datastream" onClick={() => addDatastream()}><Plus size={16} />Add V pin</button>
           </div>
           <div className="datastream-registry-hero">
             <div>
@@ -428,7 +428,7 @@ export function TemplateStudioPage({
               <h2>Notification builder</h2>
               <p>Create event rules that feel simple for students but are structured like a real IoT operations tool.</p>
             </div>
-            <button className="primary small" type="button" onClick={() => addNotification()}><Plus size={16} />Add rule</button>
+            <button className="small studio-edit-action" type="button" onClick={() => addNotification()}><Plus size={16} />Add rule</button>
           </div>
           <div className="alert-center-hero">
             <div>

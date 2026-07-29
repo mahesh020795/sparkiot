@@ -1,4 +1,5 @@
 import { ArrowRight, CheckCircle2, Code2, Cpu, LayoutDashboard, PlayCircle, Rocket, Wifi } from "lucide-react";
+import { HeshBrand } from "../components/HeshBrand";
 import type { UserProfile } from "../lib/types";
 
 const steps = [
@@ -23,7 +24,11 @@ export function StarterWorkspacePage({
   const firstName = user?.full_name?.split(" ")[0] || "there";
 
   return (
-    <main className="starter-workspace">
+    <main className="starter-workspace" data-ui-mode="brand">
+      <header className="starter-brand-header">
+        <HeshBrand tagline />
+        <span>Guided setup for your first connected project</span>
+      </header>
       <section className="starter-hero">
         <div className="starter-hero-copy">
           <span className="section-kicker">Pro workspace</span>
