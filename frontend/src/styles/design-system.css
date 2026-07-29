@@ -5,31 +5,35 @@
 */
 
 :root {
-  --hesh-orange: #F25522;
+  --hesh-orange: #f25522;
   --hesh-ink: #121722;
-  --hesh-cobalt: #2457F5;
-  --hesh-online: #22A865;
-  --hesh-canvas: #F7F6F2;
+  --hesh-cobalt: #2457f5;
+  --hesh-online: #22a865;
+  --hesh-canvas: #f7f6f2;
 
   --spark-font-sans: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  --spark-bg: #f7f9fc;
+  --spark-bg: var(--hesh-canvas);
   --spark-surface: #ffffff;
   --spark-surface-raised: #ffffff;
-  --spark-surface-muted: #f1f5f9;
-  --spark-border: #e5edf6;
-  --spark-border-strong: #d6e1ee;
+  --spark-surface-muted: #fbfaf7;
+  --spark-border: #e8e4dc;
+  --spark-border-strong: #d8d3c9;
 
-  --spark-text: #0f172a;
-  --spark-text-soft: #334155;
-  --spark-muted: #64748b;
-  --spark-muted-2: #94a3b8;
+  --spark-text: var(--hesh-ink);
+  --spark-text-soft: #343b48;
+  --spark-muted: #687080;
+  --spark-muted-2: #8b93a1;
 
-  --spark-primary: #2563eb;
-  --spark-primary-strong: #1455ff;
-  --spark-primary-soft: #eff6ff;
-  --spark-success: #10b981;
-  --spark-success-soft: #ecfdf5;
+  --spark-primary: var(--hesh-cobalt);
+  --spark-primary-strong: #1947d1;
+  --spark-primary-soft: #edf2ff;
+  --spark-success: var(--hesh-online);
+  --spark-success-strong: #147a4b;
+  --spark-success-soft: #eaf8f0;
+  --spark-action: var(--hesh-orange);
+  --spark-action-strong: #de4718;
+  --spark-action-soft: #fff0ea;
   --spark-warning: #f59e0b;
   --spark-warning-soft: #fffbeb;
   --spark-danger: #ef4444;
@@ -51,8 +55,8 @@
   --spark-space-8: 2rem;
   --spark-space-10: 2.5rem;
 
-  --spark-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 18px 44px rgba(15, 23, 42, 0.045);
-  --spark-shadow-soft: 0 12px 32px rgba(15, 23, 42, 0.055);
+  --spark-shadow-card: 0 1px 2px rgba(18, 23, 34, 0.035), 0 12px 28px rgba(18, 23, 34, 0.045);
+  --spark-shadow-soft: 0 8px 22px rgba(18, 23, 34, 0.05);
 
   --spark-sidebar-width: 17rem;
   --spark-page-pad-x: clamp(1.25rem, 2.4vw, 2.5rem);
@@ -128,7 +132,7 @@ body {
 .spark-ui .action-button,
 .spark-ui .primary,
 .spark-ui .template-open-button {
-  min-height: 44px;
+  min-height: var(--spark-control-height, 44px);
   border-radius: var(--spark-radius-sm);
   font-size: 0.9rem;
   font-weight: 800;
@@ -138,16 +142,25 @@ body {
 .spark-ui .primary,
 .spark-ui .action-button.primary,
 .spark-ui .template-open-button {
-  border-color: #0f172a;
-  background: #0f172a;
-  color: #ffffff;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+  border-color: var(--hesh-orange);
+  background: var(--hesh-orange);
+  color: var(--hesh-ink);
+  box-shadow: 0 10px 22px rgba(242, 85, 34, 0.18);
+}
+
+.spark-ui .primary:hover,
+.spark-ui .action-button.primary:hover,
+.spark-ui .template-open-button:hover {
+  border-color: var(--spark-action-strong);
+  background: var(--spark-action-strong);
+  color: var(--hesh-ink);
+  box-shadow: 0 12px 26px rgba(242, 85, 34, 0.22);
 }
 
 .spark-ui select,
 .spark-ui input,
 .spark-ui textarea {
-  min-height: 44px;
+  min-height: var(--spark-control-height, 44px);
   border: 1px solid var(--spark-border-strong);
   border-radius: var(--spark-radius-sm);
   background: var(--spark-surface);
@@ -165,11 +178,11 @@ body {
   border-color: #dbe7ff;
   border-radius: 16px;
   background:
-    linear-gradient(45deg, transparent 50%, #2563eb 50%) calc(100% - 1.12rem) 52% / 0.42rem 0.42rem no-repeat,
-    linear-gradient(135deg, #2563eb 50%, transparent 50%) calc(100% - 0.82rem) 52% / 0.42rem 0.42rem no-repeat,
-    linear-gradient(180deg, #ffffff, #fbfdff);
+    linear-gradient(45deg, transparent 50%, var(--hesh-cobalt) 50%) calc(100% - 1.12rem) 52% / 0.42rem 0.42rem no-repeat,
+    linear-gradient(135deg, var(--hesh-cobalt) 50%, transparent 50%) calc(100% - 0.82rem) 52% / 0.42rem 0.42rem no-repeat,
+    linear-gradient(180deg, var(--spark-surface), #fdfdfc);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  color: #0f172a;
+  color: var(--spark-text);
   font-weight: 850;
 }
 
@@ -180,9 +193,30 @@ body {
 
 .spark-ui select:focus,
 .spark-ui select.spark-native-select:focus {
-  border-color: #93c5fd;
+  border-color: var(--hesh-cobalt);
   outline: none;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--hesh-cobalt) 14%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.spark-ui button:focus-visible,
+.spark-ui [href]:focus-visible,
+.spark-ui input:focus-visible,
+.spark-ui select:focus-visible,
+.spark-ui textarea:focus-visible,
+.spark-ui [tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 3px solid var(--hesh-cobalt);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spark-ui *,
+  .spark-ui *::before,
+  .spark-ui *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 .spark-ui .brand {
@@ -197,8 +231,8 @@ body {
   height: 42px;
   flex: 0 0 42px;
   border-radius: 14px;
-  background: var(--spark-primary-soft);
-  color: var(--spark-primary);
+  background: var(--spark-action-soft);
+  color: var(--hesh-orange);
 }
 
 .spark-ui .brand strong {
@@ -244,8 +278,8 @@ body {
 }
 
 .spark-ui .sidebar nav button.active {
-  background: var(--spark-primary-soft);
-  color: var(--spark-primary-strong);
+  background: #edf2ff;
+  color: var(--hesh-cobalt);
 }
 
 .spark-ui .workspace-card,
@@ -254,9 +288,9 @@ body {
 .spark-ui .plan-card {
   margin: 0 var(--spark-space-4) var(--spark-space-4);
   padding: var(--spark-space-4);
-  border: 1px solid #dbeafe;
+  border: 1px solid color-mix(in srgb, var(--hesh-orange) 22%, white);
   border-radius: var(--spark-radius-md);
-  background: var(--spark-primary-soft);
+  background: var(--spark-action-soft);
   box-shadow: none;
 }
 
@@ -516,8 +550,8 @@ body {
   width: 0.65rem;
   height: 0.65rem;
   border-radius: 999px;
-  background: #10b981;
-  box-shadow: 0 0 0 0.4rem #ecfdf5;
+  background: var(--spark-success);
+  box-shadow: 0 0 0 0.4rem var(--spark-success-soft);
 }
 
 .spark-ui .setup-summary-main .section-kicker {
@@ -599,9 +633,9 @@ body {
 }
 
 .spark-ui .setup-summary-actions .primary {
-  border: 0;
-  background: var(--spark-text);
-  color: #ffffff;
+  border: 1px solid var(--hesh-orange);
+  background: var(--hesh-orange);
+  color: var(--hesh-ink);
 }
 
 .spark-ui .support-page,
@@ -675,7 +709,7 @@ body {
   border: 0;
   border-bottom: 1px solid var(--spark-border);
   border-radius: 0;
-  background: rgba(255, 255, 255, 0.88);
+  background: color-mix(in srgb, var(--spark-surface) 94%, transparent);
   backdrop-filter: blur(12px);
   box-shadow: none;
 }
@@ -687,14 +721,14 @@ body {
   align-items: center;
   gap: var(--spark-space-3);
   padding: var(--spark-space-3) var(--spark-space-4);
-  border: 1px solid #bfdbfe;
+  border: 1px solid color-mix(in srgb, var(--hesh-cobalt) 24%, white);
   border-radius: var(--spark-radius-md);
   background: var(--spark-primary-soft);
   color: var(--spark-primary);
 }
 
 .spark-ui .command-status strong {
-  color: #075985;
+  color: var(--spark-primary-strong);
   font-size: 0.86rem;
   font-weight: 900;
 }
@@ -1116,9 +1150,24 @@ body {
 }
 
 .spark-ui .online-pill {
-  border-color: #bbf7d0;
+  border-color: color-mix(in srgb, var(--hesh-online) 34%, white);
   background: var(--spark-success-soft);
-  color: #047857;
+  color: var(--spark-success-strong);
+}
+
+.spark-ui .status-dot.online {
+  background: var(--spark-success);
+}
+
+.spark-ui .command-status.online {
+  border-color: color-mix(in srgb, var(--hesh-online) 32%, white);
+  background: var(--spark-success-soft);
+  color: var(--spark-success-strong);
+}
+
+.spark-ui .command-status.online svg,
+.spark-ui .command-status.online strong {
+  color: var(--spark-success-strong);
 }
 
 .spark-ui .provisioning-meta-row {
@@ -4197,10 +4246,10 @@ body {
 }
 
 /*
-  Spark IoT Product UI Standard v3
-  Final authoritative layer for sale-ready screens. Keep global rhythm here:
-  typography, dashboard header sizing, KPI containment, project card metrics,
-  and shared premium widget anatomy.
+  Hesh IoT Product UI Standard v4
+  Final authoritative layer for student-to-business operations. Keep global
+  rhythm here: typography, dashboard header sizing, KPI containment, project
+  card metrics, and shared operational widget anatomy.
 */
 
 :root {
@@ -4212,7 +4261,7 @@ body {
   --spark-widget-min-h: 15rem;
   --spark-dashboard-metric-max: 34rem;
   --spark-dashboard-selector-max: 19rem;
-  --spark-product-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 18px 40px rgba(15, 23, 42, 0.055);
+  --spark-product-card-shadow: 0 1px 2px rgba(18, 23, 34, 0.035), 0 12px 28px rgba(18, 23, 34, 0.045);
 }
 
 .spark-ui .product-header-grid {
@@ -4296,6 +4345,10 @@ body {
   display: grid;
   align-content: start;
   gap: 0.95rem;
+  border: 1px solid var(--spark-border);
+  border-radius: var(--spark-radius-lg);
+  background: var(--spark-surface);
+  box-shadow: var(--spark-product-card-shadow);
 }
 
 .spark-ui .project-stat-row {
@@ -4327,8 +4380,8 @@ body {
   align-content: stretch;
   gap: 0.9rem;
   border-radius: 24px;
-  background: #ffffff;
-  border: 1px solid #e5edf6;
+  background: var(--spark-surface);
+  border: 1px solid var(--spark-border);
   box-shadow: var(--spark-product-card-shadow);
   overflow: clip;
 }
@@ -4339,7 +4392,7 @@ body {
 
 .spark-ui .spark-widget-card::after {
   height: 2px;
-  background: #2563eb;
+  background: var(--hesh-cobalt);
   opacity: 0.76;
 }
 
@@ -4355,9 +4408,9 @@ body {
   width: 2.7rem;
   height: 2.7rem;
   border-radius: 0.95rem;
-  background: #eff6ff;
-  color: #2563eb;
-  box-shadow: inset 0 0 0 1px #dbeafe;
+  background: var(--spark-primary-soft);
+  color: var(--hesh-cobalt);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hesh-cobalt) 18%, white);
 }
 
 .spark-ui .spark-widget-card .widget-title-wrap > span {
@@ -4380,7 +4433,8 @@ body {
   min-height: 2rem;
   padding: 0 0.65rem;
   border-radius: 999px;
-  background: #f8fafc;
+  border-color: var(--spark-border);
+  background: var(--spark-surface-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4806,13 +4860,13 @@ body {
   grid-template-columns: auto auto minmax(0, 1fr);
   gap: 0.75rem;
   padding: 0.72rem 1.05rem;
-  border-color: #dbeafe;
+  border-color: color-mix(in srgb, var(--hesh-cobalt) 18%, white);
   border-radius: 16px;
-  background: #f1f5f9;
+  background: var(--spark-surface-muted);
 }
 
 .spark-ui.dashboard-shell .cockpit-simulation-strip strong {
-  color: #155dfc;
+  color: var(--hesh-cobalt);
   font-size: 0.85rem;
 }
 
@@ -4845,18 +4899,18 @@ body {
   justify-content: space-between;
   gap: 0.85rem;
   padding: 0 1.05rem;
-  border: 1px solid #dbe7ff;
+  border: 1px solid var(--spark-border-strong);
   border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-  color: #0f172a;
+  background: linear-gradient(180deg, var(--spark-surface), #fdfdfc);
+  color: var(--spark-text);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
   cursor: pointer;
 }
 
 .spark-ui .spark-select-trigger:hover,
 .spark-ui .spark-select-trigger[aria-expanded="true"] {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  border-color: var(--hesh-cobalt);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--hesh-cobalt) 14%, transparent);
 }
 
 .spark-ui .spark-select-trigger strong {
@@ -4893,7 +4947,7 @@ body {
 
 .spark-ui .spark-select-trigger svg {
   flex: 0 0 auto;
-  color: #1d4ed8;
+  color: var(--hesh-cobalt);
   transition: transform 140ms ease;
 }
 
@@ -4910,9 +4964,9 @@ body {
   display: grid;
   gap: 0.35rem;
   padding: 0.45rem;
-  border: 1px solid #dbe7ff;
+  border: 1px solid var(--spark-border-strong);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.98);
+  background: color-mix(in srgb, var(--spark-surface) 98%, transparent);
   box-shadow: 0 22px 54px rgba(15, 23, 42, 0.16);
 }
 
@@ -4924,24 +4978,24 @@ body {
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: #0f172a;
+  color: var(--spark-text);
   font-size: 0.95rem;
   font-weight: 850;
   text-align: left;
 }
 
 .spark-ui .spark-select-option:hover {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--spark-primary-soft);
+  color: var(--hesh-cobalt);
 }
 
 .spark-ui .spark-select-option.selected {
-  background: linear-gradient(135deg, #eff6ff, #f8fbff);
-  color: #1d4ed8;
+  background: var(--spark-primary-soft);
+  color: var(--hesh-cobalt);
 }
 
 .spark-ui .spark-select-option svg {
-  color: #2563eb;
+  color: var(--hesh-cobalt);
 }
 
 .spark-ui .spark-select-native-proxy {
@@ -4962,9 +5016,9 @@ body {
 
 .spark-ui.dashboard-shell .product-header-grid .spark-page-header-selector select {
   height: 46px;
-  border-color: #eef2f7;
+  border-color: var(--spark-border);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--spark-surface);
 }
 
 .spark-ui.dashboard-shell .product-header-grid .spark-page-header-metrics {
@@ -4988,23 +5042,24 @@ body {
   padding-top: 1.3rem;
   padding-bottom: 1.3rem;
   border-top: 1px solid var(--spark-border);
-  background: #ffffff;
+  background: var(--spark-surface);
 }
 
 .spark-ui.dashboard-shell .dashboard-toolbar.gemini-action-strip .command-status {
   min-width: min(42rem, 100%);
   min-height: 72px;
   border-radius: 16px;
-  background: #eff6ff;
+  border-color: color-mix(in srgb, var(--hesh-cobalt) 22%, white);
+  background: var(--spark-primary-soft);
 }
 
 .spark-ui.dashboard-shell .dashboard-toolbar.gemini-action-strip .command-status strong {
-  color: #075985;
+  color: var(--spark-primary-strong);
   font-size: 0.95rem;
 }
 
 .spark-ui.dashboard-shell .dashboard-toolbar.gemini-action-strip .command-status small {
-  color: #2f7cff;
+  color: var(--hesh-cobalt);
   font-size: 0.73rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5076,20 +5131,20 @@ body {
   -webkit-appearance: none;
   min-height: 46px;
   padding-right: 2.65rem !important;
-  border-color: #dbe7ff !important;
+  border-color: var(--spark-border-strong) !important;
   border-radius: 16px !important;
   background:
-    linear-gradient(45deg, transparent 50%, #2563eb 50%) calc(100% - 1.12rem) 52% / 0.42rem 0.42rem no-repeat,
-    linear-gradient(135deg, #2563eb 50%, transparent 50%) calc(100% - 0.82rem) 52% / 0.42rem 0.42rem no-repeat,
-    linear-gradient(180deg, #ffffff, #fbfdff) !important;
-  color: #0f172a;
+    linear-gradient(45deg, transparent 50%, var(--hesh-cobalt) 50%) calc(100% - 1.12rem) 52% / 0.42rem 0.42rem no-repeat,
+    linear-gradient(135deg, var(--hesh-cobalt) 50%, transparent 50%) calc(100% - 0.82rem) 52% / 0.42rem 0.42rem no-repeat,
+    linear-gradient(180deg, var(--spark-surface), #fdfdfc) !important;
+  color: var(--spark-text);
   font-weight: 850;
 }
 
 .spark-ui select:not([multiple]):focus {
-  border-color: #93c5fd !important;
+  border-color: var(--hesh-cobalt) !important;
   outline: none;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--hesh-cobalt) 14%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .spark-ui .confirm-dialog-backdrop {

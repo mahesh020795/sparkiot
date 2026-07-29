@@ -529,7 +529,7 @@ describe("App", () => {
     expect(css).toContain("appearance: none");
     expect(css).toContain("select.spark-native-select");
     expect(css).toContain(".spark-ui select:not([multiple])");
-    expect(css).toContain("linear-gradient(45deg, transparent 50%, #2563eb 50%)");
+    expect(css).toContain("linear-gradient(45deg, transparent 50%, var(--hesh-cobalt) 50%)");
   });
 
   it("builds same-origin websocket URLs when the production API base is relative", () => {
