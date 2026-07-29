@@ -21,7 +21,24 @@ LEGACY_BRAND_HEX_VALUES = {
 
 def active_app_css_without_disabled_legacy_block() -> str:
     app_css = APP_CSS.read_text(encoding="utf-8")
-    return app_css.split(DISABLED_LEGACY_MARKER, 1)[0]
+    return app_css.split(f"/* {DISABLED_LEGACY_MARKER}", 1)[0]
+
+
+def active_frontend_author_css() -> str:
+    """Return active author CSS in the import order declared by main.tsx."""
+    return "\n".join(
+        [
+            active_app_css_without_disabled_legacy_block(),
+            DESIGN_SYSTEM_CSS.read_text(encoding="utf-8"),
+        ]
+    )
+
+
+def test_active_author_css_excludes_disabled_layer_with_balanced_comments():
+    app_css = active_app_css_without_disabled_legacy_block()
+
+    assert DISABLED_LEGACY_MARKER not in app_css
+    assert app_css.count("/*") == app_css.count("*/")
 
 
 def rule_bodies_for_selector(css: str, selector: str) -> list[str]:
@@ -50,14 +67,297 @@ def declarations_for_property(body: str, property_name: str) -> list[str]:
     ]
 
 
-def final_property_value(css: str, selector: str, property_name: str) -> str:
-    values = [
-        value
-        for body in rule_bodies_for_selector(css, selector)
-        for value in declarations_for_property(body, property_name)
-    ]
-    assert values, f"missing {property_name!r} ownership for {selector!r}"
-    return values[-1]
+def split_modeled_selector_list(selector_list: str) -> list[str]:
+    selectors: list[str] = []
+    current: list[str] = []
+    depth = 0
+    quote = ""
+    for character in selector_list:
+        if quote:
+            current.append(character)
+            if character == quote:
+                quote = ""
+            continue
+        if character in {'"', "'"}:
+            quote = character
+            current.append(character)
+        elif character in "([":
+            depth += 1
+            current.append(character)
+        elif character in ")]":
+            depth -= 1
+            current.append(character)
+        elif character == "," and depth == 0:
+            selectors.append("".join(current).strip())
+            current = []
+        else:
+            current.append(character)
+    selectors.append("".join(current).strip())
+    return [selector for selector in selectors if selector]
+
+
+def modeled_selector_chain(selector: str) -> tuple[list[str], list[str]]:
+    compounds: list[str] = []
+    combinators: list[str] = []
+    current: list[str] = []
+    pending_combinator = ""
+    depth = 0
+    quote = ""
+
+    def flush_compound() -> None:
+        nonlocal current, pending_combinator
+        compound = "".join(current).strip()
+        if not compound:
+            return
+        if compounds:
+            combinators.append(pending_combinator or " ")
+        compounds.append(compound)
+        current = []
+        pending_combinator = ""
+
+    for character in selector.strip():
+        if quote:
+            current.append(character)
+            if character == quote:
+                quote = ""
+            continue
+        if character in {'"', "'"}:
+            quote = character
+            current.append(character)
+        elif character in "([":
+            depth += 1
+            current.append(character)
+        elif character in ")]":
+            depth -= 1
+            current.append(character)
+        elif depth == 0 and character in "+~":
+            raise ValueError(
+                "modeled cascade does not support sibling combinators"
+            )
+        elif depth == 0 and character == ">":
+            flush_compound()
+            pending_combinator = ">"
+        elif depth == 0 and character.isspace():
+            flush_compound()
+            if compounds and not pending_combinator:
+                pending_combinator = " "
+        else:
+            current.append(character)
+    flush_compound()
+    assert compounds, f"empty modeled selector {selector!r}"
+    return compounds, combinators
+
+
+def modeled_compound_constraints(compound: str) -> dict[str, object]:
+    working = compound
+    functions = re.findall(r":{1,2}[\w-]+\([^()]*\)", working)
+    working = re.sub(r":{1,2}[\w-]+\([^()]*\)", "", working)
+    pseudo_elements = re.findall(r"::[\w-]+", working)
+    working = re.sub(r"::[\w-]+", "", working)
+    attributes = re.findall(r"\[[^\]]+\]", working)
+    working = re.sub(r"\[[^\]]+\]", "", working)
+    ids = re.findall(r"#[\w-]+", working)
+    working = re.sub(r"#[\w-]+", "", working)
+    classes = re.findall(r"\.[\w-]+", working)
+    working = re.sub(r"\.[\w-]+", "", working)
+    pseudo_classes = re.findall(r":[\w-]+", working)
+    working = re.sub(r":[\w-]+", "", working).strip()
+    tag = "" if working in {"", "*"} else working
+    if tag and not re.fullmatch(r"[a-zA-Z][\w-]*", tag):
+        raise ValueError(f"unsupported modeled compound {compound!r}")
+    return {
+        "tag": tag,
+        "ids": set(ids),
+        "classes": set(classes),
+        "attributes": set(attributes),
+        "pseudo_classes": set(pseudo_classes),
+        "pseudo_elements": set(pseudo_elements),
+        "functions": set(functions),
+    }
+
+
+def modeled_compound_matches(rule_compound: str, target_compound: str) -> bool:
+    rule = modeled_compound_constraints(rule_compound)
+    target = modeled_compound_constraints(target_compound)
+    if rule["tag"] and rule["tag"] != target["tag"]:
+        return False
+    if rule["pseudo_elements"] != target["pseudo_elements"]:
+        return False
+    for key in [
+        "ids",
+        "classes",
+        "attributes",
+        "pseudo_classes",
+        "functions",
+    ]:
+        if not rule[key].issubset(target[key]):
+            return False
+    return True
+
+
+def modeled_selector_matches(rule_selector: str, target_selector: str) -> bool:
+    rule_compounds, rule_combinators = modeled_selector_chain(rule_selector)
+    target_compounds, _ = modeled_selector_chain(target_selector)
+    rule_index = len(rule_compounds) - 1
+    target_index = len(target_compounds) - 1
+    if not modeled_compound_matches(
+        rule_compounds[rule_index], target_compounds[target_index]
+    ):
+        return False
+
+    while rule_index > 0:
+        combinator = rule_combinators[rule_index - 1]
+        rule_index -= 1
+        target_index -= 1
+        if combinator == ">":
+            if target_index < 0 or not modeled_compound_matches(
+                rule_compounds[rule_index], target_compounds[target_index]
+            ):
+                return False
+            continue
+        while target_index >= 0 and not modeled_compound_matches(
+            rule_compounds[rule_index], target_compounds[target_index]
+        ):
+            target_index -= 1
+        if target_index < 0:
+            return False
+    return True
+
+
+def modeled_selector_specificity(selector: str) -> tuple[int, int, int]:
+    ids = classes = elements = 0
+    compounds, _ = modeled_selector_chain(selector)
+    for compound in compounds:
+        constraints = modeled_compound_constraints(compound)
+        ids += len(constraints["ids"])
+        classes += (
+            len(constraints["classes"])
+            + len(constraints["attributes"])
+            + len(constraints["pseudo_classes"])
+        )
+        elements += bool(constraints["tag"]) + len(
+            constraints["pseudo_elements"]
+        )
+        for function in constraints["functions"]:
+            match = re.fullmatch(r"(:{1,2})([\w-]+)\((.*)\)", function)
+            assert match
+            prefix, name, arguments = match.groups()
+            if prefix == "::":
+                elements += 1
+            elif name == "where":
+                continue
+            elif name in {"is", "not", "has"}:
+                argument_specificities = [
+                    modeled_selector_specificity(argument)
+                    for argument in split_modeled_selector_list(arguments)
+                ]
+                nested_ids, nested_classes, nested_elements = max(
+                    argument_specificities
+                )
+                ids += nested_ids
+                classes += nested_classes
+                elements += nested_elements
+            else:
+                classes += 1
+    return ids, classes, elements
+
+
+def modeled_author_cascade_value(css: str, selector: str, property_name: str) -> str:
+    """Return a winner in the contract's constrained author-CSS model.
+
+    The model covers grouped author rules, type/class/id/attribute selectors,
+    pseudo-classes/elements, non-nested :is/:not/:has/:where specificity,
+    descendant and child chains, !important, specificity, declaration order,
+    and source order. The caller supplies one concrete selector witness
+    containing every ancestor and state needed by applicable rules.
+
+    This is intentionally not a browser cascade: it does not resolve a DOM,
+    sibling combinators, CSS escapes/nesting, layers/origins/inline styles,
+    inheritance, shorthands, or whether media/container/supports rules are
+    active. Contract callers use it only for the supported static ownership
+    cases and must not infer runtime behavior outside that scope.
+    """
+    css_without_comments = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+    candidates: list[tuple[tuple[bool, tuple[int, int, int], int, int], str]] = []
+    rules = re.finditer(r"([^{}]+)\{([^{}]*)\}", css_without_comments, re.DOTALL)
+    for rule_order, rule in enumerate(rules):
+        selector_group, body = rule.groups()
+        for rule_selector in split_modeled_selector_list(selector_group):
+            if rule_selector.startswith("@") or not modeled_selector_matches(
+                rule_selector, selector
+            ):
+                continue
+            specificity = modeled_selector_specificity(rule_selector)
+            for declaration_order, value in enumerate(
+                declarations_for_property(body, property_name)
+            ):
+                important = bool(
+                    re.search(r"!important\s*$", value, flags=re.IGNORECASE)
+                )
+                candidates.append(
+                    (
+                        (important, specificity, rule_order, declaration_order),
+                        value,
+                    )
+                )
+    assert candidates, f"missing {property_name!r} ownership for {selector!r}"
+    return max(candidates, key=lambda candidate: candidate[0])[1]
+
+
+def test_modeled_author_cascade_detects_later_higher_specificity_winner():
+    css = """
+    .fixture button.primary { color: expected; }
+    .fixture .toolbar button.primary { color: override; }
+    """
+
+    assert (
+        modeled_author_cascade_value(
+            css, ".fixture .toolbar button.primary.feature", "color"
+        )
+        == "override"
+    )
+
+
+def test_modeled_author_cascade_detects_applicable_important_winner():
+    css = """
+    .fixture button.primary { color: override !important; }
+    .fixture .toolbar button.primary.feature { color: expected; }
+    """
+
+    assert (
+        modeled_author_cascade_value(
+            css, ".fixture .toolbar button.primary.feature", "color"
+        )
+        == "override !important"
+    )
+
+
+def test_modeled_author_cascade_uses_source_order_after_equal_specificity():
+    css = """
+    .fixture .toolbar button.primary { color: first; }
+    .fixture .panel button.primary { color: second; }
+    """
+
+    assert (
+        modeled_author_cascade_value(
+            css, ".fixture .toolbar .panel button.primary.feature", "color"
+        )
+        == "second"
+    )
+
+
+def test_modeled_author_cascade_does_not_apply_element_rule_to_pseudo_element():
+    css = """
+    .fixture .handle { border-color: wrong !important; }
+    .fixture .handle::after { border-color: expected; }
+    """
+
+    assert (
+        modeled_author_cascade_value(
+            css, ".fixture .handle::after", "border-color"
+        )
+        == "expected"
+    )
 
 
 def css_hex_token(css: str, token_name: str) -> str:
@@ -143,33 +443,33 @@ def test_hesh_v4_semantics_map_brand_actions_interactions_and_health():
         assert expected in design_system
 
     assert (
-        final_property_value(design_system, ".spark-ui .primary", "background")
+        modeled_author_cascade_value(design_system, ".spark-ui .primary", "background")
         == "var(--hesh-orange)"
     )
     assert (
-        final_property_value(design_system, ".spark-ui .primary", "color")
+        modeled_author_cascade_value(design_system, ".spark-ui .primary", "color")
         == "var(--hesh-ink)"
     )
     assert (
-        final_property_value(
+        modeled_author_cascade_value(
             design_system, ".spark-ui .sidebar nav button.active", "background"
         )
         == "#edf2ff"
     )
     assert (
-        final_property_value(
+        modeled_author_cascade_value(
             design_system, ".spark-ui .sidebar nav button.active", "color"
         )
         == "var(--hesh-cobalt)"
     )
     assert (
-        final_property_value(
+        modeled_author_cascade_value(
             design_system, ".spark-ui button:focus-visible", "outline"
         )
         == "3px solid var(--hesh-cobalt)"
     )
     assert (
-        final_property_value(
+        modeled_author_cascade_value(
             design_system, ".spark-ui .status-dot.online", "background"
         )
         == "var(--spark-success)"
@@ -192,8 +492,8 @@ def test_hesh_v4_canonical_brand_and_primary_rules_exclude_legacy_brand_hex():
 
 
 def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size():
-    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
     app_css = active_app_css_without_disabled_legacy_block()
+    author_css = active_frontend_author_css()
 
     for selector in [
         ".spark-ui .entity-card-actions button.entity-edit-button",
@@ -201,11 +501,11 @@ def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size()
         ".spark-ui .account-quickstart-card > button",
     ]:
         assert (
-            final_property_value(design_system, selector, "background")
+            modeled_author_cascade_value(author_css, selector, "background")
             == "var(--hesh-orange)"
         )
         assert (
-            final_property_value(design_system, selector, "color")
+            modeled_author_cascade_value(author_css, selector, "color")
             == "var(--hesh-ink)"
         )
 
@@ -215,7 +515,7 @@ def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size()
         ".spark-ui .account-quickstart-card > button",
     ]:
         assert (
-            final_property_value(design_system, selector, "min-height")
+            modeled_author_cascade_value(author_css, selector, "min-height")
             == "var(--spark-control-height)"
         )
 
@@ -229,11 +529,11 @@ def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size()
         ".spark-ui .account-quickstart-card > button.primary:hover",
     ]:
         assert (
-            final_property_value(design_system, selector, "background")
+            modeled_author_cascade_value(author_css, selector, "background")
             == "var(--spark-action-strong)"
         )
         assert (
-            final_property_value(design_system, selector, "color")
+            modeled_author_cascade_value(author_css, selector, "color")
             == "var(--hesh-ink)"
         )
 
@@ -242,7 +542,9 @@ def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size()
         assert focus_rules
         assert all("#2563eb" not in body.lower() for body in focus_rules)
         assert (
-            final_property_value(app_css, selector, "border-color")
+            modeled_author_cascade_value(
+                author_css, f".spark-ui {selector}", "border-color"
+            )
             == "var(--hesh-cobalt) !important"
         )
 
@@ -259,28 +561,43 @@ def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size()
             "rgba(37, 99, 235" not in body for body in focus_visible_rules
         )
         assert (
-            final_property_value(app_css, selector, "outline")
+            modeled_author_cascade_value(
+                author_css, f".spark-ui {selector}", "outline"
+            )
             == "3px solid var(--hesh-cobalt)"
         )
 
 
-def test_hesh_v4_final_select_focus_ownership():
-    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+def test_hesh_v4_modeled_author_cascade_owns_select_focus():
+    author_css = active_frontend_author_css()
 
-    select_focus = ".spark-ui select:not([multiple]):focus"
-    assert (
-        final_property_value(design_system, select_focus, "border-color")
-        == "var(--hesh-cobalt) !important"
-    )
-    assert (
-        final_property_value(design_system, select_focus, "outline")
-        == "3px solid var(--hesh-cobalt)"
-    )
-    assert final_property_value(design_system, select_focus, "outline-offset") == "2px"
+    for select_focus in [
+        ".spark-ui select:not([multiple]):focus:focus-visible",
+        (
+            ".spark-ui .project-switcher "
+            "select:not([multiple]):focus:focus-visible"
+        ),
+        (
+            ".spark-ui .account-quickstart-grid "
+            "select:not([multiple]):focus:focus-visible"
+        ),
+    ]:
+        assert (
+            modeled_author_cascade_value(author_css, select_focus, "border-color")
+            == "var(--hesh-cobalt) !important"
+        )
+        assert (
+            modeled_author_cascade_value(author_css, select_focus, "outline")
+            == "3px solid var(--hesh-cobalt)"
+        )
+        assert (
+            modeled_author_cascade_value(author_css, select_focus, "outline-offset")
+            == "2px"
+        )
 
 
-def test_hesh_v4_final_compact_control_target_ownership():
-    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+def test_hesh_v4_modeled_author_cascade_owns_compact_control_targets():
+    author_css = active_frontend_author_css()
 
     for selector in [
         ".spark-ui .quick-test-command-grid button",
@@ -288,26 +605,27 @@ def test_hesh_v4_final_compact_control_target_ownership():
         ".spark-ui .launch-wizard-step button",
     ]:
         assert (
-            final_property_value(design_system, selector, "min-height")
+            modeled_author_cascade_value(author_css, selector, "min-height")
             == "var(--spark-control-height)"
         )
 
     assert (
-        final_property_value(
-            design_system, ".spark-ui .connection-line button", "width"
+        modeled_author_cascade_value(
+            author_css, ".spark-ui .connection-line button", "width"
         )
         == "var(--spark-control-height)"
     )
     assert (
-        final_property_value(
-            design_system, ".spark-ui .connection-line button", "height"
+        modeled_author_cascade_value(
+            author_css, ".spark-ui .connection-line button", "height"
         )
         == "var(--spark-control-height)"
     )
 
 
-def test_hesh_v4_final_primary_hover_ownership_has_accessible_contrast():
+def test_hesh_v4_modeled_author_cascade_owns_accessible_primary_hovers():
     design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+    author_css = active_frontend_author_css()
 
     hover_selectors = [
         ".spark-ui .primary:hover",
@@ -323,11 +641,11 @@ def test_hesh_v4_final_primary_hover_ownership_has_accessible_contrast():
     ]
     for selector in hover_selectors:
         assert (
-            final_property_value(design_system, selector, "background")
+            modeled_author_cascade_value(author_css, selector, "background")
             == "var(--spark-action-strong)"
         )
         assert (
-            final_property_value(design_system, selector, "color")
+            modeled_author_cascade_value(author_css, selector, "color")
             == "var(--hesh-ink)"
         )
 
@@ -337,61 +655,66 @@ def test_hesh_v4_final_primary_hover_ownership_has_accessible_contrast():
     ) >= 4.5
 
 
-def test_hesh_v4_final_selection_ownership():
-    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
-    app_css = active_app_css_without_disabled_legacy_block()
+def test_hesh_v4_modeled_author_cascade_owns_selection():
+    author_css = active_frontend_author_css()
 
     assert (
-        final_property_value(
-            design_system, ".spark-ui .builder-cell.selected", "outline"
+        modeled_author_cascade_value(
+            author_css, ".spark-ui .builder-cell.selected", "outline"
         )
         == "3px solid color-mix(in srgb, var(--hesh-cobalt) 25%, transparent)"
     )
     assert (
-        final_property_value(app_css, ".builder-cell.selected > .widget", "outline")
+        modeled_author_cascade_value(
+            author_css,
+            ".spark-ui .builder-cell.selected > .widget",
+            "outline",
+        )
         == "2px solid var(--hesh-cobalt)"
     )
 
 
-def test_hesh_v4_final_resize_handle_ownership():
-    app_css = active_app_css_without_disabled_legacy_block()
+def test_hesh_v4_modeled_author_cascade_owns_resize_handles():
+    author_css = active_frontend_author_css()
 
-    handle_after = ".react-grid-item > .react-resizable-handle::after"
+    handle_after = ".spark-ui .react-grid-item > .react-resizable-handle::after"
     assert (
-        final_property_value(app_css, handle_after, "border-right")
+        modeled_author_cascade_value(author_css, handle_after, "border-right")
         == "3px solid var(--hesh-cobalt) !important"
     )
     assert (
-        final_property_value(app_css, handle_after, "border-bottom")
+        modeled_author_cascade_value(author_css, handle_after, "border-bottom")
         == "3px solid var(--hesh-cobalt) !important"
     )
     for selector in [
-        ".react-grid-item > .react-resizable-handle-s::after",
-        ".react-grid-item > .react-resizable-handle-n::after",
+        ".spark-ui .react-grid-item > .react-resizable-handle-s::after",
+        ".spark-ui .react-grid-item > .react-resizable-handle-n::after",
     ]:
         assert (
-            final_property_value(app_css, selector, "border-bottom")
+            modeled_author_cascade_value(author_css, selector, "border-bottom")
             == "3px solid var(--hesh-cobalt) !important"
         )
     assert (
-        final_property_value(
-            app_css,
-            ".react-grid-item > .react-resizable-handle-e::after",
+        modeled_author_cascade_value(
+            author_css,
+            ".spark-ui .react-grid-item > .react-resizable-handle-e::after",
             "border-right",
         )
         == "3px solid var(--hesh-cobalt) !important"
     )
 
 
-def test_hesh_v4_final_dashboard_grid_and_overflow_ownership():
-    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+def test_hesh_v4_modeled_author_cascade_owns_dashboard_grid_and_overflow():
+    author_css = active_frontend_author_css()
 
     dashboard_grid = (
         ".spark-ui.dashboard-shell .product-header-grid.dashboard-header-grid"
     )
     assert (
         " ".join(
-            final_property_value(design_system, dashboard_grid, "grid-template-areas")
+            modeled_author_cascade_value(
+                author_css, dashboard_grid, "grid-template-areas"
+            )
             .replace("\n", " ")
             .split()
         )
@@ -404,21 +727,26 @@ def test_hesh_v4_final_dashboard_grid_and_overflow_ownership():
         ".spark-ui.dashboard-shell .spark-page-header-selector",
         ".spark-ui.dashboard-shell .project-switcher",
     ]:
-        assert final_property_value(design_system, selector, "overflow") == "visible"
+        assert (
+            modeled_author_cascade_value(author_css, selector, "overflow")
+            == "visible"
+        )
 
 
 def test_template_studio_canvas_label_does_not_claim_online_health_semantics():
-    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+    author_css = active_frontend_author_css()
     page = TEMPLATE_STUDIO_PAGE.read_text(encoding="utf-8")
 
     assert 'className="pill mode-pill">Actual dashboard canvas' in page
     assert 'className="pill online-pill">Actual dashboard canvas' not in page
     assert (
-        final_property_value(design_system, ".spark-ui .mode-pill", "background")
+        modeled_author_cascade_value(
+            author_css, ".spark-ui .mode-pill", "background"
+        )
         == "var(--spark-primary-soft)"
     )
     assert (
-        final_property_value(design_system, ".spark-ui .mode-pill", "color")
+        modeled_author_cascade_value(author_css, ".spark-ui .mode-pill", "color")
         == "var(--spark-primary-strong)"
     )
 
