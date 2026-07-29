@@ -481,7 +481,7 @@ export function TemplateStudioPage({
             <h2>Protocol summary</h2>
             <div className="firmware-install-card">
               <span className="section-kicker">Board setup checklist</span>
-              <h3>Install SparkIoT library</h3>
+              <h3>Install the Hesh IoT SparkIoT device library</h3>
               <ol>
                 <li><strong>Copy folder to Documents/Arduino/libraries/SparkIoT</strong><span>Use the repo folder at arduino/SparkIoT.</span></li>
                 <li><strong>Install PubSubClient</strong><span>Arduino IDE Library Manager, Nick O'Leary package.</span></li>

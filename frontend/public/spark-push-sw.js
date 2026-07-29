@@ -1,7 +1,7 @@
 self.addEventListener("push", (event) => {
   let payload = {
-    title: "Spark IoT Alert",
-    body: "A Spark IoT notification was received.",
+    title: "Hesh IoT Alert",
+    body: "A Hesh IoT notification was received.",
     created_at: new Date().toISOString()
   };
 
@@ -14,8 +14,8 @@ self.addEventListener("push", (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(payload.title || "Spark IoT Alert", {
-      body: payload.body || "A Spark IoT notification was received.",
+    self.registration.showNotification(payload.title || "Hesh IoT Alert", {
+      body: payload.body || "A Hesh IoT notification was received.",
       data: {
         notificationId: payload.id,
         createdAt: payload.created_at,

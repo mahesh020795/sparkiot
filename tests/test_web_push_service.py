@@ -1,4 +1,6 @@
 import json
+import subprocess
+import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -10,6 +12,60 @@ from app.services.push import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_service_worker_fallback_notifications_use_hesh_iot_brand():
+    harness = textwrap.dedent("""
+        const fs = require("node:fs");
+        const vm = require("node:vm");
+
+        const handlers = {};
+        let shownNotification;
+        const worker = {
+          addEventListener(name, handler) {
+            handlers[name] = handler;
+          },
+          registration: {
+            showNotification(title, options) {
+              shownNotification = { title, body: options.body };
+              return Promise.resolve();
+            }
+          },
+          clients: {}
+        };
+
+        vm.runInNewContext(
+          fs.readFileSync(process.argv[1], "utf8"),
+          { self: worker }
+        );
+
+        async function dispatch(data) {
+          let pending;
+          handlers.push({ data, waitUntil(promise) { pending = promise; } });
+          await pending;
+          return shownNotification;
+        }
+
+        (async () => {
+          const notifications = [
+            await dispatch(undefined),
+            await dispatch({ json: () => ({ title: "", body: "" }) })
+          ];
+          process.stdout.write(JSON.stringify(notifications));
+        })();
+    """)
+
+    result = subprocess.run(
+        ["node", "-e", harness, str(ROOT / "frontend" / "public" / "spark-push-sw.js")],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert json.loads(result.stdout) == [
+        {"title": "Hesh IoT Alert", "body": "A Hesh IoT notification was received."},
+        {"title": "Hesh IoT Alert", "body": "A Hesh IoT notification was received."},
+    ]
 
 
 def test_web_push_requires_complete_vapid_configuration():

@@ -2099,7 +2099,7 @@ describe("App", () => {
 
     expect(screen.getByTestId("firmware-export-panel")).toHaveClass("firmware-system-panel");
     expect(screen.getByText("Firmware export package")).toBeInTheDocument();
-    expect(screen.getByText("Install SparkIoT library")).toBeInTheDocument();
+    expect(screen.getByText("Install the Hesh IoT SparkIoT device library")).toBeInTheDocument();
     expect(screen.getByText("Copy folder to Documents/Arduino/libraries/SparkIoT")).toBeInTheDocument();
     expect(screen.getByText("Set WiFi and broker")).toBeInTheDocument();
     expect(screen.getByText(/Do not use localhost/)).toBeInTheDocument();

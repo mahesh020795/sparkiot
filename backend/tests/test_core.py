@@ -17,6 +17,7 @@ from app.api.routes.notifications import mark_notification_read
 from app.api.routes.realtime import realtime_subscription_scope
 from app.api.routes.telemetry import history_csv
 from app.core.config import get_settings
+from app.main import app as fastapi_app
 from app.services.email import EmailMessage, build_password_reset_email, build_verification_email, send_email
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, text
@@ -33,6 +34,10 @@ def memory_session():
     Base.metadata.create_all(bind=engine)
     Session = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     return Session()
+
+
+def test_openapi_title_uses_hesh_iot_product_name():
+    assert fastapi_app.openapi()["info"]["title"] == "Hesh IoT API"
 
 
 def test_register_creates_unverified_user_email_token_and_onboarding_state():

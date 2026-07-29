@@ -14,7 +14,7 @@ from app.services.mqtt_bridge import MqttIngestionBridge
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    app = FastAPI(title="Spark IoT API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
+    app = FastAPI(title=f"{settings.app_name} API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
     app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
     @app.middleware("http")
