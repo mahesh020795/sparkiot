@@ -6,7 +6,7 @@ type HeshBrandProps = {
 
 export function HeshBrand({ variant = "full", tagline = false, className = "" }: HeshBrandProps) {
   return (
-    <span className={`hesh-brand hesh-brand-${variant} ${className}`.trim()} aria-label="Hesh IoT">
+    <span className={`hesh-brand hesh-brand-${variant} ${className}`.trim()} role="img" aria-label="Hesh IoT">
       <span className="hesh-circuit" data-testid="hesh-circuit" aria-hidden="true">
         <i className="hesh-rail hesh-rail-left" /><i className="hesh-rail hesh-rail-right" />
         <b className="hesh-link" /><i className="hesh-node hesh-node-left" />
