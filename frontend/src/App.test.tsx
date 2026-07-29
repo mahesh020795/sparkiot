@@ -7,6 +7,9 @@ import { App, templateSaveErrorMessage } from "./App";
 import { api, realtimeUrl } from "./lib/api";
 import { copyText } from "./lib/clipboard";
 
+const readCss = (fileName: string) =>
+  readFileSync(resolve(__dirname, `styles/${fileName}`), "utf8").replace(/\r\n/g, "\n");
+
 vi.mock("echarts", () => ({
   init: () => ({ setOption: vi.fn(), dispose: vi.fn() })
 }));
@@ -360,7 +363,7 @@ describe("App", () => {
     fireEvent.click(dashboardSelector);
     expect(screen.getByRole("listbox", { name: "Dashboard projects" })).toHaveClass("spark-select-menu");
     expect(screen.getByRole("option", { name: "Smart Home" })).toHaveClass("spark-select-option");
-    const css = readFileSync(resolve(__dirname, "styles/design-system.css"), "utf8");
+    const css = readCss("design-system.css");
     expect(css).toContain(".spark-ui .product-header-grid {");
     expect(css).toContain("overflow: visible;");
     expect(css).toContain(".spark-ui .spark-page-header-selector {\n  position: relative;\n  z-index: 80;");
@@ -484,7 +487,7 @@ describe("App", () => {
   });
 
   it("keeps compact cards inside narrow screens with shared overflow-safe CSS", () => {
-    const css = `${readFileSync(resolve(__dirname, "styles/app.css"), "utf8")}\n${readFileSync(resolve(__dirname, "styles/design-system.css"), "utf8")}`;
+    const css = `${readCss("app.css")}\n${readCss("design-system.css")}`;
 
     expect(css).toContain("--spark-metric-min");
     expect(css).toContain("--spark-compact-metric-min");
@@ -701,7 +704,7 @@ describe("App", () => {
 
     expect(screen.getByRole("listbox", { name: "Temperature Alert datastream options" })).toHaveClass("spark-select-menu");
 
-    const css = readFileSync(resolve(__dirname, "styles/design-system.css"), "utf8");
+    const css = readCss("design-system.css");
     expect(css).toContain(".spark-ui .rule-editor {\n  overflow: visible;");
     expect(css).toContain(".spark-ui .rule-flow {\n  overflow: visible;");
     expect(css).toContain(".spark-ui .rule-flow .spark-select-menu {\n  z-index: 760;");
@@ -1264,7 +1267,7 @@ describe("App", () => {
     expect(screen.getByLabelText("Run time")).toHaveValue("06:00");
     expect(screen.getByLabelText("Repeat")).toHaveValue("mon,wed,fri");
     expect(screen.getByRole("button", { name: /Add demo schedule/i })).toBeInTheDocument();
-    const css = readFileSync(resolve(__dirname, "styles/design-system.css"), "utf8");
+    const css = readCss("design-system.css");
     expect(css).toContain(".spark-ui .premium-schedule-field input,");
     expect(css).toContain("padding: 0 1rem;");
   });
