@@ -282,6 +282,10 @@ body {
   color: var(--hesh-cobalt);
 }
 
+.spark-ui .mobile-nav-toggle {
+  display: none;
+}
+
 .spark-ui .workspace-card,
 .spark-ui .responsive-card,
 .spark-ui .qa-card,
@@ -915,13 +919,71 @@ body {
   }
 
   .spark-ui .sidebar {
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     height: auto;
+    min-height: 72px;
     max-height: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--spark-border);
+    box-shadow: var(--spark-shadow-soft);
+    scrollbar-gutter: auto;
   }
 
   .spark-ui .sidebar nav {
+    grid-column: 1 / -1;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: calc(100vh - 72px);
+    overflow-y: auto;
+  }
+
+  .spark-ui .sidebar .session-card {
+    grid-column: 1 / -1;
+  }
+
+  .spark-ui .mobile-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spark-space-2);
+    min-width: 96px;
+    margin-right: var(--spark-space-4);
+    border: 1px solid var(--spark-border-strong);
+    background: var(--spark-surface);
+    color: var(--hesh-cobalt);
+  }
+
+  .spark-ui .sidebar:not(.mobile-nav-open) nav,
+  .spark-ui .sidebar:not(.mobile-nav-open) .session-card {
+    display: none;
+  }
+
+  .spark-ui .gemini-widget-canvas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spark-ui .grid-cell {
+    grid-column: span 1 !important;
+  }
+
+  .spark-ui .demo-preview-banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .spark-ui .demo-preview-banner span {
+    min-width: 0;
+  }
+
+  .spark-ui .demo-preview-banner button {
+    width: 100%;
+    justify-content: center;
   }
 
   .spark-ui main,
@@ -5795,6 +5857,11 @@ body {
   border-color: var(--spark-action-strong);
   background: var(--spark-action-strong);
   color: var(--hesh-ink);
+}
+
+[data-ui-mode="brand"] .starter-actions button,
+[data-ui-mode="brand"] .starter-link-button {
+  min-height: var(--spark-control-height);
 }
 
 [data-ui-mode="brand"] .auth-card,

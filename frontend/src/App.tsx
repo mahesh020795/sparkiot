@@ -1,5 +1,5 @@
-import { ArrowRight, Bell, CalendarClock, CheckCircle2, ChevronDown, Copy, Cpu, Database, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, Pencil, PlugZap, Plus, RadioTower, Settings, TerminalSquare, Trash2, UserCircle, Workflow } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Bell, CalendarClock, CheckCircle2, ChevronDown, Copy, Cpu, Database, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, Menu, Pencil, PlugZap, Plus, RadioTower, Settings, TerminalSquare, Trash2, UserCircle, Workflow, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardPage, LocalDashboardPage } from "./pages/DashboardPage";
 import { DevicesPage } from "./pages/DevicesPage";
 import { HistoryPage } from "./pages/HistoryPage";
@@ -61,6 +61,8 @@ export function App() {
   const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
   const [demoPreviewMode, setDemoPreviewMode] = useState(false);
   const [dashboardSelectorOpen, setDashboardSelectorOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const mobileNavToggleRef = useRef<HTMLButtonElement>(null);
   const [templateStudioId, setTemplateStudioId] = useState<string | null>(null);
   const [templateStudioInitialStep, setTemplateStudioInitialStep] = useState<StudioLaunchStep>("Setup");
   const [templateSaveStates, setTemplateSaveStates] = useState<Record<string, SaveState>>(() => Object.fromEntries(demoTemplates.map((template) => [template.id, "saved"])));
@@ -74,7 +76,7 @@ export function App() {
   const selectedProject = useMemo(() => activeProjects.find((project) => project.id === selectedProjectId), [activeProjects, selectedProjectId]);
   const selectedProjectDevices = useMemo(() => activeDevices.filter((device) => device.project_id === selectedProjectId), [activeDevices, selectedProjectId]);
   const selectedDevice = selectedProjectDevices[0];
-  const selectedTemplate = useMemo(() => activeTemplates.find((template) => template.dashboard.project_id === selectedProjectId) ?? activeTemplates[0] ?? templates[0], [activeTemplates, selectedProjectId, templates]);
+  const selectedTemplate = useMemo(() => activeTemplates.find((template) => template.dashboard.project_id === selectedProjectId) ?? activeTemplates[0], [activeTemplates, selectedProjectId]);
   const dashboardSelectorProjects = useMemo(
     () => isAccountMode ? activeProjects.filter((project) => (accountDashboards[project.id]?.widgets.length ?? 0) > 0) : activeProjects,
     [accountDashboards, activeProjects, isAccountMode]
@@ -537,7 +539,7 @@ export function App() {
   }
 
   function openSelectedTemplateStudio(initialStep: StudioLaunchStep = "Setup") {
-    const template = selectedTemplate ?? activeTemplates[0] ?? templates[0];
+    const template = selectedTemplate ?? activeTemplates[0];
     if (!template) {
       setView("templates");
       setTemplateStudioId(null);
@@ -547,6 +549,15 @@ export function App() {
     setTemplateStudioInitialStep(initialStep);
     setTemplateStudioId(template.id);
     setView("templates");
+  }
+
+  function selectNavigationView(nextView: View) {
+    setView(nextView);
+    if (nextView === "templates") setTemplateStudioId(null);
+    if (mobileNavOpen) {
+      setMobileNavOpen(false);
+      mobileNavToggleRef.current?.focus();
+    }
   }
 
   if (authScreenOpen) {
@@ -605,9 +616,21 @@ export function App() {
 
   return (
     <div className={view === "dashboard" ? "app-shell spark-ui dashboard-shell" : "app-shell spark-ui"} data-testid="app-shell" data-ui-mode="operation">
-      <aside className="sidebar">
+      <aside className={`sidebar ${mobileNavOpen ? "mobile-nav-open" : ""}`.trim()} data-testid="product-sidebar">
         <div className="brand"><HeshBrand tagline /></div>
-        <nav aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => { setView(id); if (id === "templates") setTemplateStudioId(null); }}><Icon size={18} />{label}</button>)}</nav>
+        <button
+          type="button"
+          className="mobile-nav-toggle"
+          ref={mobileNavToggleRef}
+          aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
+          aria-controls="main-navigation"
+          aria-expanded={mobileNavOpen}
+          onClick={() => setMobileNavOpen((current) => !current)}
+        >
+          {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
+          <span>Menu</span>
+        </button>
+        <nav id="main-navigation" aria-label="Main navigation">{nav.map(([id, Icon, label]) => <button key={id} className={view === id ? "active" : ""} onClick={() => selectNavigationView(id)}><Icon size={18} />{label}</button>)}</nav>
         <div className={`session-card ${session ? "signed-in" : ""}`} data-testid="session-mode-card">
           <span className="section-kicker">{isAccountMode ? "Pro account" : demoPreviewMode ? "Demo preview" : "Demo workspace"}</span>
           <div><UserCircle size={16} /><strong>{isAccountMode ? userProfile?.full_name ?? userProfile?.email ?? "Hesh IoT account" : demoPreviewMode ? "Preview dashboard" : "Sample workspace"}</strong></div>
@@ -700,6 +723,7 @@ export function App() {
               accountMode={isAccountMode}
               onCreateTemplate={isAccountMode ? createAccountTemplate : createDemoTemplate}
               onDeleteTemplate={deleteTemplate}
+              onOpenSetup={() => setView("setup")}
               onOpen={(template) => {
                 setSelectedProjectId(template.dashboard.project_id);
                 setTemplateStudioInitialStep("Setup");
@@ -1480,6 +1504,7 @@ function TemplateLibrary({
   accountMode = false,
   onCreateTemplate,
   onDeleteTemplate,
+  onOpenSetup,
   onOpen
 }: {
   templates: DeviceTemplate[];
@@ -1487,6 +1512,7 @@ function TemplateLibrary({
   accountMode?: boolean;
   onCreateTemplate?: (projectId: string, board: DeviceTemplate["board"], preset: TemplatePreset) => Promise<DeviceTemplate>;
   onDeleteTemplate: (templateId: string) => Promise<void>;
+  onOpenSetup: () => void;
   onOpen: (template: DeviceTemplate) => void;
 }) {
   const templateLimit = 10;
@@ -1581,6 +1607,17 @@ function TemplateLibrary({
       )}
 
       {createMessage && <span className={`project-create-state ${createState}`}>{createMessage}</span>}
+
+      {accountMode && projects.length === 0 && (
+        <article className="panel template-library-empty" aria-labelledby="template-library-empty-title">
+          <div>
+            <span className="section-kicker">Project required</span>
+            <h2 id="template-library-empty-title">Create your first workspace</h2>
+            <p>Template Studio needs a project for its dashboard and device bindings. Return to the launch wizard to build the project, template, and starter device together.</p>
+          </div>
+          <button className="primary" type="button" onClick={onOpenSetup}><ArrowRight size={16} />Back to launch wizard</button>
+        </article>
+      )}
 
       <section className="template-library-grid">
         {templates.map((template) => (

@@ -141,6 +141,42 @@ describe("App", () => {
     expect(wizardSteps.slice(0, 4)).toEqual(["Choose template", "Create project", "Add datastreams", "Add device"]);
   });
 
+  it("keeps a zero-template account on a guided creation path when opening Template Studio", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
+    vi.spyOn(api, "me").mockResolvedValue({
+      full_name: "New Owner",
+      email: "new@acme.test",
+      tenant_id: "tenant-new",
+      plan_code: "pro",
+      email_verified: true,
+      onboarding_step: "starter_workspace",
+    });
+    vi.spyOn(api, "projects").mockResolvedValue([]);
+    vi.spyOn(api, "devices").mockResolvedValue([]);
+    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "notifications").mockResolvedValue([]);
+    vi.spyOn(api, "schedules").mockResolvedValue([]);
+    vi.spyOn(api, "onboarding").mockResolvedValue({
+      current_step: "starter_workspace",
+      completed_steps: ["verify_email"],
+      demo_viewed: false,
+      first_project_id: null,
+    });
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: /Create first project/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /Open template studio/i }));
+
+    expect(await screen.findByText("0/10 templates used")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Create your first workspace/i })).toBeInTheDocument();
+    const continueAction = screen.getByRole("button", { name: /Back to launch wizard/i });
+    expect(continueAction).toBeEnabled();
+    expect(screen.queryByText("Hesh IoT Template Studio")).not.toBeInTheDocument();
+
+    fireEvent.click(continueAction);
+    expect(await screen.findByRole("heading", { name: "Hesh IoT Launch Wizard" })).toBeInTheDocument();
+  });
+
   it("uses a neutral dashboard title for authenticated accounts with no projects", async () => {
     localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
     vi.spyOn(api, "me").mockResolvedValue({
@@ -433,6 +469,28 @@ describe("App", () => {
     expect(screen.queryByText("Launch checklist")).not.toBeInTheDocument();
     expect(screen.queryByText("Project → Template → Device → Code → Board Test")).not.toBeInTheDocument();
     expect(navigation).not.toHaveTextContent("Setup Flow");
+  });
+
+  it("provides an expanded mobile navigation control that closes after selection", async () => {
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
+
+    const toggle = screen.getByRole("button", { name: "Open navigation" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveAttribute("aria-controls", "main-navigation");
+
+    fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Close navigation" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("product-sidebar")).toHaveClass("mobile-nav-open");
+
+    const templatesButton = within(screen.getByRole("navigation", { name: "Main navigation" })).getByRole("button", { name: "Templates" });
+    templatesButton.focus();
+    fireEvent.click(templatesButton);
+    const closedToggle = screen.getByRole("button", { name: "Open navigation" });
+    expect(closedToggle).toHaveAttribute("aria-expanded", "false");
+    expect(closedToggle).toHaveFocus();
+    expect(screen.getByTestId("product-sidebar")).not.toHaveClass("mobile-nav-open");
+    expect(await screen.findByText("3/10 templates used")).toBeInTheDocument();
   });
 
   it("keeps the overview minimal without setup summary or launch checklist clutter", async () => {

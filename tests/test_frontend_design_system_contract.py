@@ -304,6 +304,24 @@ def modeled_author_cascade_value(css: str, selector: str, property_name: str) ->
     return max(candidates, key=lambda candidate: candidate[0])[1]
 
 
+def media_query_block(css: str, query: str) -> str:
+    marker = f"@media {query}"
+    start = css.find(marker)
+    assert start >= 0, f"missing media query {query!r}"
+    opening = css.find("{", start + len(marker))
+    assert opening >= 0
+    depth = 1
+    index = opening + 1
+    while index < len(css) and depth:
+        if css[index] == "{":
+            depth += 1
+        elif css[index] == "}":
+            depth -= 1
+        index += 1
+    assert depth == 0, f"unterminated media query {query!r}"
+    return css[opening + 1 : index - 1]
+
+
 def test_modeled_author_cascade_detects_later_higher_specificity_winner():
     css = """
     .fixture button.primary { color: expected; }
@@ -621,6 +639,52 @@ def test_hesh_v4_modeled_author_cascade_owns_compact_control_targets():
         )
         == "var(--spark-control-height)"
     )
+
+
+def test_hesh_v4_mobile_navigation_dashboard_and_guided_action_contracts():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+    author_css = active_frontend_author_css()
+    tablet = media_query_block(design_system, "(max-width: 980px)")
+    phone = media_query_block(design_system, "(max-width: 640px)")
+
+    for selector, property_name, expected in [
+        (".spark-ui .sidebar", "min-height", "72px"),
+        (".spark-ui .sidebar", "overflow", "visible"),
+        (".spark-ui .mobile-nav-toggle", "display", "inline-flex"),
+        (".spark-ui .sidebar:not(.mobile-nav-open) nav", "display", "none"),
+        (
+            ".spark-ui .gemini-widget-canvas",
+            "grid-template-columns",
+            "repeat(2, minmax(0, 1fr))",
+        ),
+        (".spark-ui .grid-cell", "grid-column", "span 1 !important"),
+        (".spark-ui .demo-preview-banner", "display", "grid"),
+        (
+            ".spark-ui .demo-preview-banner",
+            "grid-template-columns",
+            "minmax(0, 1fr)",
+        ),
+    ]:
+        assert (
+            modeled_author_cascade_value(tablet, selector, property_name)
+            == expected
+        )
+
+    assert (
+        modeled_author_cascade_value(
+            phone, ".spark-ui .gemini-widget-canvas", "grid-template-columns"
+        )
+        == "1fr"
+    )
+
+    for selector in [
+        '[data-ui-mode="brand"] .starter-actions button',
+        '[data-ui-mode="brand"] .starter-link-button',
+    ]:
+        assert (
+            modeled_author_cascade_value(author_css, selector, "min-height")
+            == "var(--spark-control-height)"
+        )
 
 
 def test_hesh_v4_modeled_author_cascade_owns_accessible_primary_hovers():
