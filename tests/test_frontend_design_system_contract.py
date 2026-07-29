@@ -132,6 +132,71 @@ def test_hesh_v4_canonical_brand_and_primary_rules_exclude_legacy_brand_hex():
         assert all(legacy_hex not in body for body in canonical_bodies)
 
 
+def test_hesh_v4_specific_controls_cannot_override_action_focus_or_target_size():
+    design_system = DESIGN_SYSTEM_CSS.read_text(encoding="utf-8")
+    app_css = active_app_css_without_disabled_legacy_block()
+
+    for selector in [
+        ".spark-ui .entity-card-actions button.entity-edit-button",
+        ".spark-ui .entity-card-actions .template-open-button.entity-edit-button",
+        ".spark-ui .account-quickstart-card > button",
+    ]:
+        action_rules = rule_bodies_for_selector(design_system, selector)
+        assert action_rules
+        assert any("background: var(--hesh-orange)" in body for body in action_rules)
+        assert any("color: var(--hesh-ink)" in body for body in action_rules)
+
+    for selector in [
+        ".spark-ui .account-quickstart-grid input",
+        ".spark-ui .account-quickstart-grid select",
+        ".spark-ui .account-quickstart-card > button",
+    ]:
+        control_rules = rule_bodies_for_selector(design_system, selector)
+        assert control_rules
+        assert any(
+            "min-height: var(--spark-control-height)" in body
+            for body in control_rules
+        )
+
+    for selector in [
+        ".spark-ui .setup-summary-actions .primary:hover",
+        ".spark-ui .entity-card-actions button.entity-edit-button:hover",
+        (
+            ".spark-ui .entity-card-actions "
+            ".template-open-button.entity-edit-button:hover"
+        ),
+        ".spark-ui .account-quickstart-card > button.primary:hover",
+    ]:
+        scoped_hover_rules = rule_bodies_for_selector(design_system, selector)
+        assert scoped_hover_rules
+        assert any(
+            "background: var(--spark-action-strong)" in body
+            for body in scoped_hover_rules
+        )
+
+    for selector in ["input:focus", "select:focus", "textarea:focus"]:
+        focus_rules = rule_bodies_for_selector(app_css, selector)
+        assert focus_rules
+        assert all("#2563eb" not in body.lower() for body in focus_rules)
+        assert any("border-color: var(--hesh-cobalt)" in body for body in focus_rules)
+
+    for selector in [
+        "button:focus-visible",
+        "a:focus-visible",
+        "input:focus-visible",
+        "select:focus-visible",
+        "textarea:focus-visible",
+    ]:
+        focus_visible_rules = rule_bodies_for_selector(app_css, selector)
+        assert focus_visible_rules
+        assert all(
+            "rgba(37, 99, 235" not in body for body in focus_visible_rules
+        )
+        assert any(
+            "var(--hesh-cobalt)" in body for body in focus_visible_rules
+        )
+
+
 def test_app_css_does_not_reintroduce_final_dashboard_header_override_layer():
     app_css = active_app_css_without_disabled_legacy_block()
 

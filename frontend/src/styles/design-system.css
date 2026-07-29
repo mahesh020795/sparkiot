@@ -638,6 +638,12 @@ body {
   color: var(--hesh-ink);
 }
 
+.spark-ui .setup-summary-actions .primary:hover {
+  border-color: var(--spark-action-strong);
+  background: var(--spark-action-strong);
+  color: var(--hesh-ink);
+}
+
 .spark-ui .support-page,
 .spark-ui .overview-page {
   display: grid;
@@ -1287,10 +1293,18 @@ body {
 
 .spark-ui .entity-card-actions button.entity-edit-button,
 .spark-ui .entity-card-actions .template-open-button.entity-edit-button {
-  border-color: #0f172a;
-  background: #0f172a;
-  color: #ffffff;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+  border-color: var(--hesh-orange);
+  background: var(--hesh-orange);
+  color: var(--hesh-ink);
+  box-shadow: 0 10px 22px rgba(242, 85, 34, 0.18);
+}
+
+.spark-ui .entity-card-actions button.entity-edit-button:hover,
+.spark-ui .entity-card-actions .template-open-button.entity-edit-button:hover {
+  border-color: var(--spark-action-strong);
+  background: var(--spark-action-strong);
+  color: var(--hesh-ink);
+  box-shadow: 0 12px 26px rgba(242, 85, 34, 0.22);
 }
 
 .spark-ui .entity-delete-button {
@@ -4631,29 +4645,36 @@ body {
 .spark-ui .account-quickstart-grid select {
   width: 100%;
   min-width: 0;
-  min-height: 2.35rem;
+  min-height: var(--spark-control-height);
   padding: 0 0.7rem;
   border-radius: 12px;
-  border: 1px solid #dbe8f7;
-  background: #ffffff;
-  color: #0f172a;
+  border: 1px solid var(--spark-border-strong);
+  background: var(--spark-surface);
+  color: var(--spark-text);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
 .spark-ui .account-quickstart-card > button {
-  min-height: 2.45rem;
+  min-height: var(--spark-control-height);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.42rem;
-  border: 0;
+  border: 1px solid var(--hesh-orange);
   border-radius: 14px;
-  background: #0f172a;
-  color: #ffffff;
+  background: var(--hesh-orange);
+  color: var(--hesh-ink);
   font-size: 0.82rem;
   font-weight: 950;
   cursor: pointer;
+  box-shadow: 0 10px 22px rgba(242, 85, 34, 0.18);
+}
+
+.spark-ui .account-quickstart-card > button.primary:hover {
+  border-color: var(--spark-action-strong);
+  background: var(--spark-action-strong);
+  color: var(--hesh-ink);
 }
 
 .spark-ui .account-quickstart-card > button:disabled {
