@@ -56,7 +56,6 @@ export function App() {
   const [accountLatest, setAccountLatest] = useState<Record<string, Telemetry>>({});
   const [accountNotifications, setAccountNotifications] = useState<NotificationItem[]>([]);
   const [accountSchedules, setAccountSchedules] = useState<ScheduleItem[]>([]);
-  const [accountUsage, setAccountUsage] = useState<{ devices: number; max_devices: number; projects: number; max_projects: number; retention_days: number } | null>(null);
   const [accountLoadState, setAccountLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
@@ -139,12 +138,11 @@ export function App() {
         setAccountLatest({});
         setAccountNotifications([]);
         setAccountSchedules([]);
-        setAccountUsage(null);
         setUserProfile(null);
         setOnboarding(null);
         setDemoPreviewMode(false);
         setAccountLoadState("idle");
-        if (!demoProjects.some((project) => project.id === selectedProjectId)) setSelectedProjectId(demoProjects[0].id);
+        setSelectedProjectId((current) => demoProjects.some((project) => project.id === current) ? current : demoProjects[0].id);
         return;
       }
       setAccountLoadState("loading");
@@ -160,13 +158,12 @@ export function App() {
           setAccountLoadState("ready");
           return;
         }
-        const [projects, devices, accountTemplateRows, notifications, schedules, usage] = await Promise.all([
+        const [projects, devices, accountTemplateRows, notifications, schedules] = await Promise.all([
           api.projects(),
           api.devices(),
           api.templates().catch(() => []),
           api.notifications().catch(() => []),
-          api.schedules().catch(() => []),
-          api.usage().catch(() => null)
+          api.schedules().catch(() => [])
         ]);
         if (!mounted) return;
         setAccountProjects(projects);
@@ -175,9 +172,8 @@ export function App() {
         setTemplateSaveStates((current) => ({ ...current, ...Object.fromEntries(accountTemplateRows.map((template) => [template.id, "saved" as SaveState])) }));
         setAccountNotifications(notifications);
         setAccountSchedules(schedules);
-        setAccountUsage(usage);
         setAccountLoadState("ready");
-        if (projects.length && !projects.some((project) => project.id === selectedProjectId)) setSelectedProjectId(projects[0].id);
+        if (projects.length) setSelectedProjectId((current) => projects.some((project) => project.id === current) ? current : projects[0].id);
       } catch {
         if (mounted) setAccountLoadState("error");
       }
@@ -970,7 +966,7 @@ function LaunchWizardPanel({
 }
 
 function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: { projectId: string; devices: Device[]; latest: Record<string, Telemetry>; accountMode?: boolean }) {
-  const fallback: LiveBoardTestPayload = {
+  const fallback = useMemo<LiveBoardTestPayload>(() => ({
     tenant_id: tenantFromDeviceTopic(devices[0]?.telemetry_topic) ?? "demo-tenant",
     project_id: projectId,
     mqtt: {
@@ -988,7 +984,7 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
       command_topic: device.command_topic
     })),
     latest
-  };
+  }), [devices, latest, projectId]);
   const [payload, setPayload] = useState<LiveBoardTestPayload>(fallback);
   const [commandLogs, setCommandLogs] = useState<CommandLogItem[]>([]);
   const [status, setStatus] = useState<"connecting" | "live" | "offline">("connecting");
@@ -1019,7 +1015,7 @@ function LiveBoardTestView({ projectId, devices, latest, accountMode = false }: 
       mounted = false;
       window.clearInterval(id);
     };
-  }, [accountMode, devices, projectId, latest]);
+  }, [accountMode, devices, fallback, projectId, latest]);
 
   const device = payload.devices[0] ?? fallback.devices[0];
   const latestRows = Object.values(payload.latest).filter((reading) => reading.device_id === device?.id);

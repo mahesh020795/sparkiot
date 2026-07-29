@@ -9,7 +9,7 @@ from app.core.database import Base, ensure_runtime_indexes, make_engine
 from app.core.security import create_access_token, hash_secret, verify_secret
 from app.models.domain import AlertRule, CommandLog, Dashboard, Device, DeviceTemplateRecord, EmailVerificationToken, Notification, OnboardingState, PasswordResetToken, Project, RefreshToken, Schedule, Telemetry, Tenant, User
 from app.api.routes.auth import confirm_email_verification, confirm_password_reset, me, register, request_password_reset, resend_email_verification
-from app.api.routes.onboarding import get_onboarding, update_onboarding
+from app.api.routes.onboarding import update_onboarding
 from app.api.routes.templates import create_template, list_templates, update_template
 from app.api.routes.devices import command_logs, send_command
 from app.api.routes.schedules import delete_schedule

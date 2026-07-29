@@ -22,7 +22,7 @@ export async function copyText(value: string) {
   try {
     copied = document.execCommand("copy");
   } catch {
-    copied = false;
+    // Keep the false fallback when legacy clipboard access is denied.
   } finally {
     textarea.remove();
   }

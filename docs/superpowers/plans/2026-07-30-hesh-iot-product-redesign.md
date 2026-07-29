@@ -247,11 +247,11 @@ Commit: `feat: balance Hesh onboarding and operations`
 - Consumes: complete validated Hesh IoT frontend and unchanged compatibility protocols.
 - Produces: documented, reviewed, reversible release on `main`.
 
-- [ ] **Step 1: Update product documentation with the compatibility boundary**
+- [x] **Step 1: Update product documentation with the compatibility boundary**
 
 Describe Hesh IoT as the product name and `SparkIoT` as the retained device library/API compatibility name. Do not rename repository paths or firmware examples in commands.
 
-- [ ] **Step 2: Run complete automated verification**
+- [x] **Step 2: Run complete automated verification**
 
 Run: `cd frontend && pnpm test && pnpm build && pnpm lint`
 

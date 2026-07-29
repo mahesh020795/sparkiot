@@ -1,12 +1,16 @@
-# Spark IoT MVP
+# Hesh IoT MVP
 
-Spark IoT is a Rectronx IoT SaaS starter for a lower-cost Blynk-style product. The current web-first build opens directly to the dashboard with local demo data, so customers can see the core control experience before login, project creation, templates and billing are added.
+Hesh IoT is a Rectronx IoT SaaS platform for students, makers, educators, operators, and growing businesses. The web-first build opens directly to a guided demo dashboard so customers can understand the board-to-cloud control experience before creating an account.
 
-The repository also includes the FastAPI modular monolith, PostgreSQL, Valkey, Mosquitto MQTT, WebSocket realtime foundation, seed data, MQTT ingestion bridge, persisted Template Studio data, and an installable SparkIoT Arduino IDE library for real ESP32/ESP8266 testing plus Arduino `Client` adapter boards such as Ethernet and WiFiNINA.
+The repository also includes the FastAPI modular monolith, PostgreSQL, Valkey, Mosquitto MQTT, WebSocket realtime foundation, seed data, MQTT ingestion bridge, persisted Template Studio data, and the installable `SparkIoT` Arduino IDE library for real ESP32/ESP8266 testing plus Arduino `Client` adapter boards such as Ethernet and WiFiNINA.
 
-## Official Spark IoT account model
+## Product name and compatibility
 
-Spark IoT uses a clean SaaS plan ladder. During the current MVP/test phase, new signups default to **Pro** so Rectronx can test real boards, email verification, projects, templates and device provisioning without billing friction.
+**Hesh IoT** is the customer-facing product and brand. **`SparkIoT`** remains the device-library and API compatibility name in this release, so existing firmware, credentials, topics, integrations, and stored data continue to work unchanged. In particular, keep the Arduino class/header `SparkIoT`, MQTT namespace `spark/v1`, `SPARK_*` firmware constants, API routes, environment keys, database identifiers, repository paths, and firmware example filenames exactly as documented below.
+
+## Official Hesh IoT account model
+
+Hesh IoT uses a clean SaaS plan ladder. During the current MVP/test phase, new signups default to **Pro** so Rectronx can test real boards, email verification, projects, templates and device provisioning without billing friction.
 
 | Plan | Price | Best for | Limits |
 | --- | ---: | --- | --- |
@@ -48,7 +52,7 @@ ESP32 irrigation token: spk_dev_irrigation_demo_9f3a
 
 ## SaaS Authentication
 
-Spark IoT includes production-shaped SaaS auth surfaces:
+Hesh IoT includes production-shaped SaaS auth surfaces:
 
 - Existing account login
 - Pro workspace signup
@@ -57,13 +61,13 @@ Spark IoT includes production-shaped SaaS auth surfaces:
 
 Password reset tokens are stored only as SHA-256 hashes and expire after 30 minutes. Confirming a reset updates the Argon2 password hash and revokes the user's existing refresh tokens so old sessions are signed out.
 
-Spark IoT is Resend-ready for real verification and reset emails. For the current Rectronx test domain, put the Resend API key only in the VPS `.env` file, never in Git:
+Hesh IoT is Resend-ready for real verification and reset emails. For the current Rectronx test domain, put the Resend API key only in the VPS `.env` file, never in Git:
 
 ```env
 ENVIRONMENT=production
 APP_PUBLIC_URL=http://iot.rectronx.com
 RESEND_API_KEY=re_your_resend_key
-SMTP_FROM_EMAIL=Spark IoT <no-reply@rectronx.com>
+SMTP_FROM_EMAIL=Hesh IoT <no-reply@rectronx.com>
 EXPOSE_DEV_EMAIL_TOKENS=false
 ```
 
@@ -76,7 +80,7 @@ SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
 SMTP_USERNAME=your-smtp-user
 SMTP_PASSWORD=your-smtp-password
-SMTP_FROM_EMAIL=Spark IoT <no-reply@rectronx.com>
+SMTP_FROM_EMAIL=Hesh IoT <no-reply@rectronx.com>
 SMTP_USE_TLS=true
 ```
 
@@ -84,7 +88,7 @@ For local development only, `EXPOSE_DEV_EMAIL_TOKENS=true` allows `/api/v1/auth/
 
 ### First-login SaaS onboarding
 
-New accounts start in a guided Pro workspace. Spark IoT creates the tenant, owner user, Pro plan and onboarding state, but it does not create a real template, project, device or dashboard until the user starts setup.
+New accounts start in a guided Pro workspace. Hesh IoT creates the tenant, owner user, Pro plan and onboarding state, but it does not create a real template, project, device or dashboard until the user starts setup.
 
 The demo dashboard remains available from the Pro Workspace as a clearly labelled preview using simulated telemetry. It is separate from customer-owned tenant data.
 
@@ -171,7 +175,7 @@ SparkIoT.ack("V3", true, "Pump command applied");
 SparkIoT.publishStatus("online");
 ```
 
-For Ethernet, WiFiNINA, WiFiS3, MKR GSM/NB, and similar boards, connect the network first and pass the board's `Client` object into Spark IoT:
+For Ethernet, WiFiNINA, WiFiS3, MKR GSM/NB, and similar boards, connect the network first and pass the board's `Client` object into the Hesh IoT `SparkIoT` device library:
 
 ```cpp
 EthernetClient networkClient;
@@ -204,7 +208,7 @@ Included examples:
 
 Before uploading, replace WiFi credentials and set `BROKER_HOST` to your PC/Laptop LAN IP address, not `127.0.0.1`. For the current Rectronx MQTT subdomain test, use `mqtt.rectronx.com`.
 
-For authenticated customer workspaces, open `Templates` first and create the reusable board model. Then create a `Project` from that template, configure its virtual pins/datastreams, and open `Devices` to provision the physical board. Copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Spark IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
+For authenticated customer workspaces, open `Templates` first and create the reusable board model. Then create a `Project` from that template, configure its virtual pins/datastreams, and open `Devices` to provision the physical board. Copy the one-time token immediately into the Arduino sketch or Code tab output. To replace a lost/shared credential later, click `Regenerate token`. Hesh IoT stores only token hashes, so raw tokens are hidden again after refresh and old board credentials stop working after rotation.
 
 See:
 
@@ -228,7 +232,7 @@ VAPID_PUBLIC_KEY=your-public-vapid-key
 VAPID_SUBJECT=mailto:admin@yourdomain.com
 ```
 
-Without VAPID keys, Spark IoT still creates in-app notifications and alert history, but skips browser push delivery safely.
+Without VAPID keys, Hesh IoT still creates in-app notifications and alert history, but skips browser push delivery safely.
 
 After signing in, open `Settings -> Browser push` and click `Enable browser push` to register the browser service worker and save the subscription to `/api/v1/notifications/push-subscriptions`.
 
@@ -259,7 +263,7 @@ Push code to GitHub:
 ```bash
 git remote add origin https://github.com/mahesh020795/sparkiot.git
 git add .
-git commit -m "Initial Spark IoT MVP"
+git commit -m "Initial Hesh IoT MVP"
 git branch -M main
 git push -u origin main
 ```

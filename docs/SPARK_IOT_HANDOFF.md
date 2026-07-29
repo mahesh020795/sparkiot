@@ -1,12 +1,16 @@
-# Spark IoT product and engineering handoff
+# Hesh IoT product and engineering handoff
 
-This document is the working map for Spark IoT. Keep it updated whenever a page, backend route, device protocol, workflow, or deployment assumption changes. It is written for a future developer or AI agent that needs to continue the project without rereading the full chat history.
+This document is the working map for Hesh IoT. Keep it updated whenever a page, backend route, device protocol, workflow, or deployment assumption changes. It is written for a future developer or AI agent that needs to continue the project without rereading the full chat history.
+
+## Product name and compatibility boundary
+
+**Hesh IoT** is the product name shown to customers. **`SparkIoT`** is retained as the device-library and API compatibility name so deployed boards and integrations do not break. Keep the Arduino header/class `SparkIoT`, MQTT namespace `spark/v1`, `SPARK_*` firmware constants, API routes, environment keys, database identifiers, repository paths, and firmware example filenames unchanged unless a separately planned compatibility migration replaces them.
 
 ## Product direction
 
-Spark IoT is a lower-cost, Rectronx-branded Blynk-style IoT SaaS for students, makers, universities, and small businesses. The intended customer flow is:
+Hesh IoT is a distinctive Rectronx IoT SaaS for students, makers, educators, operators, and growing businesses. The intended customer flow is:
 
-1. Customer visits Spark IoT.
+1. Customer visits Hesh IoT.
 2. Customer signs up or starts a free/demo trial.
 3. Customer creates or selects a reusable template.
 4. Customer creates a project and applies a template.
@@ -19,10 +23,10 @@ The MVP keeps the architecture simple and cheap: React/Vite frontend, FastAPI mo
 
 ## Account tiers
 
-Spark IoT now uses this official SaaS plan ladder in both frontend copy and backend usage metadata:
+Hesh IoT now uses this official SaaS plan ladder in both frontend copy and backend usage metadata:
 
-- Free: RM0/month. 1 user, 1 project, 1 device, 40,000 messages/month, 7-day data retention, no automation, core widgets, Spark IoT branding and community support.
-- Plus: RM25/month. 1 user, 3 projects, 3 devices, 1,000,000 messages/month, 30-day data retention, 5 automations, core + smart widgets, Spark IoT branding and standard support.
+- Free: RM0/month. 1 user, 1 project, 1 device, 40,000 messages/month, 7-day data retention, no automation, core widgets, Hesh IoT branding and community support.
+- Plus: RM25/month. 1 user, 3 projects, 3 devices, 1,000,000 messages/month, 30-day data retention, 5 automations, core + smart widgets, Hesh IoT branding and standard support.
 - Pro: RM49/month. 1 user, 10 projects, 10 devices, 10,000,000 messages/month, 90-day data retention, 20 automations, core + smart + advanced widgets, full API access and priority support.
 - Max: RM99/month. 10 users, 30 projects, 30 devices, 50,000,000 messages/month, 365-day data retention, 100 automations, team collaboration, fleet/OTA features and priority support.
 - Enterprise: contact sales. Custom limits, all widgets, white-label platform, custom domain, organization management, advanced security, optional dedicated infrastructure, SLA and custom integrations.
@@ -171,7 +175,7 @@ The seeded Smart Irrigation dashboard includes level widgets so customers can im
 - `V13` / `Flood Level`: float `m`, rendered by `flood_level`, warning at `1.5 m`, danger at `2 m`, location `Riverside Pump Station`.
 - `V14` / `Threshold Monitor`: float `%`, rendered by `threshold_monitor`, warning at `70%`, danger at `90%`.
 
-Firmware can publish the normal Spark IoT envelope to these pins:
+Firmware can publish the normal Hesh IoT `SparkIoT` compatibility envelope to these pins:
 
 ```json
 {"token":"DEVICE_TOKEN","value":72,"unit":"%"}
@@ -310,7 +314,7 @@ Public interface examples:
 
 ## Arduino examples and library direction
 
-Arduino examples live under `examples/arduino/`. The intended library is SparkIoT Arduino Library v1 for ESP32, ESP8266, and common Arduino-compatible boards.
+Arduino examples live under `examples/arduino/`. The retained device library is the Hesh IoT `SparkIoT` Arduino Library v1 for ESP32, ESP8266, and common Arduino-compatible boards.
 
 Core firmware flow:
 

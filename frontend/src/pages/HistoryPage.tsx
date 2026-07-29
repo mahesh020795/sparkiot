@@ -78,7 +78,7 @@ export function HistoryPage({ devices, initialLatest, accountMode = false }: { d
     return () => {
       mounted = false;
     };
-  }, [accountMode, selectedDevice?.id, selectedChannel]);
+  }, [accountMode, fallbackRows, historyChannel, selectedDevice]);
 
   return (
     <section className="panel data-history-panel" data-testid="data-history-page">

@@ -17,9 +17,14 @@ const WEEK_DAYS = [
   { key: "sunday", short: "S", label: "Sunday" }
 ];
 
+function asValueRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null ? value as Record<string, unknown> : undefined;
+}
+
 export function Widget({ config, reading, devices, onCommand }: { config: WidgetConfig; reading?: Telemetry; devices: Device[]; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
-  const value = reading?.value as any;
-  const raw = typeof value === "object" && value !== null && "raw" in value ? value.raw : value;
+  const value = reading?.value;
+  const valueRecord = asValueRecord(value);
+  const raw = valueRecord && "raw" in valueRecord ? valueRecord.raw : value;
   const device = devices.find((item) => item.id === config.deviceId);
   if (config.type === "gauge" || config.type === "meter") return <GaugeWidget config={config} value={Number(raw ?? 0)} />;
   if (config.type === "chart") return <ChartWidget config={config} value={Number(raw ?? 0)} />;
@@ -81,7 +86,7 @@ function GaugeWidget({ config, value }: { config: WidgetConfig; value: number })
         data: [{ value }]
       }]
     });
-  }, [config.max, config.min, config.unit, value]);
+  }, [config.color, config.max, config.min, config.unit, value]);
 
   useResizeSignal(ref, () => chartRef.current?.resize?.());
 
@@ -121,21 +126,22 @@ function ChartWidget({ config, value }: { config: WidgetConfig; value: number })
         data: [value - 2, value - 1, value, value + 1, value]
       }]
     });
-  }, [value]);
+  }, [config.color, value]);
 
   useResizeSignal(ref, () => chartRef.current?.resize?.());
 
   return <article className="widget spark-widget-card widget-chart"><WidgetHeader config={config} /><div className="widget-live-value compact"><span>Trend</span><strong>{value}{config.unit ?? ""}</strong></div><div className="chart" ref={ref} /><WidgetFooter config={config} value="5-point demo history" /></article>;
 }
 
-function MapWidget({ config, value }: { config: WidgetConfig; value: any }) {
+function MapWidget({ config, value }: { config: WidgetConfig; value: unknown }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const valueRecord = asValueRecord(value);
 
   useEffect(() => {
     if (!ref.current) return;
-    const lat = Number(value?.lat ?? 3.139);
-    const lng = Number(value?.lng ?? 101.6869);
+    const lat = Number(valueRecord?.lat ?? 3.139);
+    const lng = Number(valueRecord?.lng ?? 101.6869);
     const map = L.map(ref.current, { zoomControl: false }).setView([lat, lng], 14);
     mapRef.current = map;
     L.tileLayer(import.meta.env.VITE_MAP_TILE_URL ?? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: import.meta.env.VITE_MAP_ATTRIBUTION ?? "OpenStreetMap" }).addTo(map);
@@ -144,15 +150,17 @@ function MapWidget({ config, value }: { config: WidgetConfig; value: any }) {
       map.remove();
       mapRef.current = null;
     };
-  }, [value]);
+  }, [valueRecord]);
 
   useResizeSignal(ref, () => mapRef.current?.invalidateSize?.());
 
   return <article className="widget spark-widget-card widget-gps cockpit-media-widget"><WidgetHeader config={config} icon={<MapPinned size={16} />} /><div className="media-frame"><div className="map" ref={ref} /></div><WidgetFooter config={config} value="Click on map nodes to override solenoid output" label="SPATIAL MAP" /></article>;
 }
 
-function CameraWidget({ config, value }: { config: WidgetConfig; value: any }) {
-  return <article className="widget spark-widget-card widget-camera cockpit-media-widget"><WidgetHeader config={config} icon={<Camera size={16} />} /><div className="media-frame camera-frame"><img className="camera" src={value?.url ?? "https://placehold.co/640x360?text=ESP32-CAM"} alt="Camera snapshot" /><span className="camera-live-badge">Video out</span></div><WidgetFooter config={config} value="Use PTZ overlays to shift simulated camera horizon" label="VIDEO OUT" /></article>;
+function CameraWidget({ config, value }: { config: WidgetConfig; value: unknown }) {
+  const valueRecord = asValueRecord(value);
+  const source = typeof valueRecord?.url === "string" ? valueRecord.url : "https://placehold.co/640x360?text=ESP32-CAM";
+  return <article className="widget spark-widget-card widget-camera cockpit-media-widget"><WidgetHeader config={config} icon={<Camera size={16} />} /><div className="media-frame camera-frame"><img className="camera" src={source} alt="Camera snapshot" /><span className="camera-live-badge">Video out</span></div><WidgetFooter config={config} value="Use PTZ overlays to shift simulated camera horizon" label="VIDEO OUT" /></article>;
 }
 
 function TankLevelWidget({ config, value }: { config: WidgetConfig; value: number | null }) {
@@ -242,10 +250,14 @@ function ThresholdMonitorWidget({ config, value }: { config: WidgetConfig; value
   );
 }
 
-function ScheduleWidget({ config, value, onCommand }: { config: WidgetConfig; value: any; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
+function ScheduleWidget({ config, value, onCommand }: { config: WidgetConfig; value: unknown; onCommand?: (config: WidgetConfig, value: unknown) => void }) {
   const maxTimeSlots = clampTimeSlotCount(config.maxTimeSlots ?? config.timeSlots?.length ?? 3);
-  const defaultDays = useMemo(() => normalizeScheduleDays(value?.days ?? config.days), [config.days, value?.days]);
-  const defaultTimes = useMemo(() => normalizeScheduleTimes(value?.timeSlots ?? value?.times ?? config.timeSlots, maxTimeSlots), [config.timeSlots, maxTimeSlots, value?.timeSlots, value?.times]);
+  const valueRecord = asValueRecord(value);
+  const scheduleDays = valueRecord?.days;
+  const scheduleTimeSlots = valueRecord?.timeSlots;
+  const scheduleTimes = valueRecord?.times;
+  const defaultDays = useMemo(() => normalizeScheduleDays(scheduleDays ?? config.days), [config.days, scheduleDays]);
+  const defaultTimes = useMemo(() => normalizeScheduleTimes(scheduleTimeSlots ?? scheduleTimes ?? config.timeSlots, maxTimeSlots), [config.timeSlots, maxTimeSlots, scheduleTimeSlots, scheduleTimes]);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(() => new Set(defaultDays));
   const [times, setTimes] = useState<string[]>(defaultTimes);
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0);
