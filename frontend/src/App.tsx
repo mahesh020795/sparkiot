@@ -1,5 +1,5 @@
 import { ArrowRight, Bell, CalendarClock, CheckCircle2, ChevronDown, Copy, Cpu, Database, LayoutDashboard, Lock, LogIn, LogOut, MapPinned, Menu, Pencil, PlugZap, Plus, RadioTower, Settings, TerminalSquare, Trash2, UserCircle, Workflow, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardPage, LocalDashboardPage } from "./pages/DashboardPage";
 import { DevicesPage } from "./pages/DevicesPage";
 import { HistoryPage } from "./pages/HistoryPage";
@@ -60,6 +60,7 @@ export function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
   const [demoPreviewMode, setDemoPreviewMode] = useState(false);
+  const [demoPreviewProjectId, setDemoPreviewProjectId] = useState(demoProjects[0].id);
   const [dashboardSelectorOpen, setDashboardSelectorOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const mobileNavToggleRef = useRef<HTMLButtonElement>(null);
@@ -73,10 +74,11 @@ export function App() {
   const activeDevices = isAccountMode ? accountDevices : demoDeviceRows;
   const activeLatest = isAccountMode ? accountLatest : demoLatest;
   const activeTemplates = isAccountMode ? accountTemplates : templates;
-  const selectedProject = useMemo(() => activeProjects.find((project) => project.id === selectedProjectId), [activeProjects, selectedProjectId]);
-  const selectedProjectDevices = useMemo(() => activeDevices.filter((device) => device.project_id === selectedProjectId), [activeDevices, selectedProjectId]);
+  const activeSelectedProjectId = session && demoPreviewMode ? demoPreviewProjectId : selectedProjectId;
+  const selectedProject = useMemo(() => activeProjects.find((project) => project.id === activeSelectedProjectId), [activeProjects, activeSelectedProjectId]);
+  const selectedProjectDevices = useMemo(() => activeDevices.filter((device) => device.project_id === activeSelectedProjectId), [activeDevices, activeSelectedProjectId]);
   const selectedDevice = selectedProjectDevices[0];
-  const selectedTemplate = useMemo(() => activeTemplates.find((template) => template.dashboard.project_id === selectedProjectId) ?? activeTemplates[0], [activeTemplates, selectedProjectId]);
+  const selectedTemplate = useMemo(() => activeTemplates.find((template) => template.dashboard.project_id === activeSelectedProjectId) ?? activeTemplates[0], [activeTemplates, activeSelectedProjectId]);
   const dashboardSelectorProjects = useMemo(
     () => isAccountMode ? activeProjects.filter((project) => (accountDashboards[project.id]?.widgets.length ?? 0) > 0) : activeProjects,
     [accountDashboards, activeProjects, isAccountMode]
@@ -98,6 +100,11 @@ export function App() {
     ["settings", Settings, "Settings"]
   ] as const;
 
+  const closeMobileNavigation = useCallback((returnFocus = false) => {
+    setMobileNavOpen(false);
+    if (returnFocus) mobileNavToggleRef.current?.focus();
+  }, []);
+
   useEffect(() => {
     document.body.classList.toggle("hesh-mobile-nav-locked", mobileNavOpen);
 
@@ -105,6 +112,26 @@ export function App() {
       document.body.classList.remove("hesh-mobile-nav-locked");
     };
   }, [mobileNavOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closeMobileNavigation(true);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [closeMobileNavigation, mobileNavOpen]);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const desktopQuery = window.matchMedia("(min-width: 981px)");
+    function handleDesktopChange(event: MediaQueryListEvent) {
+      if (event.matches) closeMobileNavigation();
+    }
+    if (desktopQuery.matches) closeMobileNavigation();
+    desktopQuery.addEventListener("change", handleDesktopChange);
+    return () => desktopQuery.removeEventListener("change", handleDesktopChange);
+  }, [closeMobileNavigation]);
 
   async function refreshAccountData() {
     if (!session) return;
@@ -250,6 +277,7 @@ export function App() {
   }
 
   function handleLogin(nextSession: Session) {
+    closeMobileNavigation();
     setSession(nextSession);
     setAuthScreenOpen(false);
     setAuthLinkRoute(null);
@@ -261,6 +289,7 @@ export function App() {
   }
 
   function signOut() {
+    closeMobileNavigation();
     clearSession();
     setSession(null);
     setAuthScreenOpen(false);
@@ -519,6 +548,11 @@ export function App() {
   }
 
   async function openDemoPreview() {
+    const previewProjectId = templates.find((template) => template.dashboard.project_id === demoPreviewProjectId)?.dashboard.project_id
+      ?? templates[0]?.dashboard.project_id
+      ?? demoProjectRows[0]?.id
+      ?? demoProjects[0].id;
+    setDemoPreviewProjectId(previewProjectId);
     setDemoPreviewMode(true);
     if (onboarding) {
       const updated = { ...onboarding, demo_viewed: true };
@@ -559,12 +593,16 @@ export function App() {
     setView("templates");
   }
 
+  function selectActiveProject(projectId: string) {
+    if (session && demoPreviewMode) setDemoPreviewProjectId(projectId);
+    else setSelectedProjectId(projectId);
+  }
+
   function selectNavigationView(nextView: View) {
     setView(nextView);
     if (nextView === "templates") setTemplateStudioId(null);
     if (mobileNavOpen) {
-      setMobileNavOpen(false);
-      mobileNavToggleRef.current?.focus();
+      closeMobileNavigation(true);
     }
   }
 
@@ -633,7 +671,7 @@ export function App() {
           aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
           aria-controls="main-navigation"
           aria-expanded={mobileNavOpen}
-          onClick={() => setMobileNavOpen((current) => !current)}
+          onClick={() => mobileNavOpen ? closeMobileNavigation(true) : setMobileNavOpen(true)}
         >
           {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
           <span>Menu</span>
@@ -647,11 +685,16 @@ export function App() {
           {session ? (
             <button type="button" onClick={signOut}><LogOut size={16} />Sign out</button>
           ) : (
-            <button type="button" className="primary" onClick={() => setAuthScreenOpen(true)}><LogIn size={16} />Sign in to account</button>
+            <button type="button" className="primary" onClick={() => { closeMobileNavigation(); setAuthScreenOpen(true); }}><LogIn size={16} />Sign in to account</button>
           )}
         </div>
       </aside>
-      <main className={view === "dashboard" ? "dashboard-main" : undefined}>
+      <main
+        className={view === "dashboard" ? "dashboard-main" : undefined}
+        data-testid="app-main"
+        inert={mobileNavOpen ? true : undefined}
+        aria-hidden={mobileNavOpen ? true : undefined}
+      >
         <header className={view === "dashboard" ? "topbar app-page-header cockpit-header" : "topbar app-page-header"} data-testid="cockpit-header">
           <div className={view === "dashboard" ? "dashboard-header-grid spark-page-header-grid product-header-grid" : "standard-header-grid product-header-grid"} data-testid={view === "dashboard" ? "dashboard-header-grid" : undefined}>
           <div className={view === "dashboard" ? "cockpit-title-block spark-page-header-primary" : "cockpit-title-block"} data-testid={view === "dashboard" ? "dashboard-header-primary" : undefined}>
@@ -662,16 +705,16 @@ export function App() {
             {view === "dashboard" && dashboardSelectorProjects.length > 0 && (
               <DashboardProjectSelector
                 projects={dashboardSelectorProjects}
-                selectedProjectId={selectedProjectId}
+                selectedProjectId={activeSelectedProjectId}
                 open={dashboardSelectorOpen}
                 onToggle={() => setDashboardSelectorOpen((current) => !current)}
                 onSelect={(projectId) => {
-                  setSelectedProjectId(projectId);
+                  selectActiveProject(projectId);
                   setDashboardSelectorOpen(false);
                 }}
               />
             )}
-            {view !== "dashboard" && activeProjects.length > 0 && <SparkSelect ariaLabel="Project selector" value={selectedProjectId} onChange={setSelectedProjectId} options={activeProjects.map((project) => ({ value: project.id, label: project.name }))} />}
+            {view !== "dashboard" && activeProjects.length > 0 && <SparkSelect ariaLabel="Project selector" value={activeSelectedProjectId} onChange={selectActiveProject} options={activeProjects.map((project) => ({ value: project.id, label: project.name }))} />}
           </div>
           </div>
         </header>
@@ -702,13 +745,13 @@ export function App() {
         )}
         {view === "dashboard" && (isAccountMode ? (
           <DashboardPage
-            key={selectedProjectId}
-            projectId={selectedProjectId}
+            key={activeSelectedProjectId}
+            projectId={activeSelectedProjectId}
             devices={selectedProjectDevices}
             onCreateDashboard={() => setView("setup")}
-            onPreviewDemo={() => setDemoPreviewMode(true)}
+            onPreviewDemo={() => void openDemoPreview()}
           />
-        ) : <LocalDashboardPage key={selectedTemplate.id} projectId={selectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedProjectDevices} />)}
+        ) : <LocalDashboardPage key={selectedTemplate.id} projectId={activeSelectedProjectId} initialDashboard={selectedTemplate.dashboard} initialLatest={demoLatest} devices={selectedProjectDevices} />)}
         {view === "projects" && <ProjectsView projects={activeProjects} templates={activeTemplates} accountMode={isAccountMode} onCreateProject={isAccountMode ? createAccountProject : createDemoProject} onUpdateProject={updateProject} onDeleteProject={deleteProject} />}
         {view === "templates" && (
           templateStudioId ? (
@@ -752,14 +795,14 @@ export function App() {
             onDeleteDevice={deleteDevice}
           />
         )}
-        {view === "live" && <LiveBoardTestView projectId={selectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} latest={activeLatest} accountMode={isAccountMode} />}
+        {view === "live" && <LiveBoardTestView projectId={activeSelectedProjectId} devices={selectedDevice ? [selectedDevice] : activeDevices} latest={activeLatest} accountMode={isAccountMode} />}
         {view === "schedules" && (
           <SchedulesPage
             accountMode={isAccountMode}
             projects={activeProjects}
             devices={activeDevices}
             schedules={accountSchedules}
-            selectedProjectId={selectedProjectId}
+            selectedProjectId={activeSelectedProjectId}
             onCreateSchedule={createAccountSchedule}
             onDeleteSchedule={deleteSchedule}
           />

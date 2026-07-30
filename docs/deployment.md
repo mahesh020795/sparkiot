@@ -1,4 +1,4 @@
-# Spark IoT Deployment
+# Hesh IoT Deployment
 
 This repository supports three workflows:
 
@@ -52,7 +52,7 @@ Set these values for the current demo VPS:
 CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:8080,http://iot.rectronx.com,http://iot.rectronx.com:5173,https://iot.rectronx.com,https://iot.rectronx.com:5173
 APP_PUBLIC_URL=http://iot.rectronx.com
 RESEND_API_KEY=<your-resend-api-key>
-SMTP_FROM_EMAIL=Spark IoT <no-reply@rectronx.com>
+SMTP_FROM_EMAIL=Hesh IoT <no-reply@rectronx.com>
 EXPOSE_DEV_EMAIL_TOKENS=false
 VITE_API_BASE=/api/v1
 VITE_MQTT_HOST=mqtt.rectronx.com
@@ -153,7 +153,7 @@ VITE_MQTT_HOST=mqtt.rectronx.com
 VITE_MQTT_PORT=1883
 JWT_SECRET=<long-random-secret>
 RESEND_API_KEY=<your-resend-api-key>
-SMTP_FROM_EMAIL=Spark IoT <no-reply@rectronx.com>
+SMTP_FROM_EMAIL=Hesh IoT <no-reply@rectronx.com>
 EXPOSE_DEV_EMAIL_TOKENS=false
 ```
 

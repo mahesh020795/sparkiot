@@ -1,8 +1,8 @@
-# Spark IoT Board Testing Guide
+# Hesh IoT Board Testing Guide
 
-Use this guide to test Spark IoT with a real ESP32 or NodeMCU ESP8266 on your local WiFi.
+Use this guide to test Hesh IoT with a real ESP32 or NodeMCU ESP8266 on your local WiFi.
 
-## 1. Start Spark IoT locally
+## 1. Start Hesh IoT locally
 
 ```bash
 cp .env.example .env
@@ -89,7 +89,7 @@ Install:
 
 ## 4. Use the generated Code tab
 
-In Spark IoT:
+In Hesh IoT:
 
 1. Open `Templates`.
 2. In account mode, create a template first if the project does not have one yet.
@@ -103,7 +103,7 @@ In Spark IoT:
    - `ROTATE_TOKEN_TO_REVEAL_ONCE` if the selected account device token is hidden
 7. Upload to the board.
 
-The generated sketch includes command acknowledgement support for boolean virtual pins. When a dashboard switch sends a command, the board echoes the updated telemetry value and publishes an ACK packet back to Spark IoT so the `Board Test` command monitor can prove the full loop.
+The generated sketch includes command acknowledgement support for boolean virtual pins. When a dashboard switch sends a command, the board echoes the updated telemetry value and publishes an ACK packet back to Hesh IoT so the `Board Test` command monitor can prove the full loop.
 
 For complete library install and API details, see `docs/arduino-library.md`.
 
@@ -253,7 +253,7 @@ The board serial monitor should show the command and toggle `LED_BUILTIN`.
 
 ## 9. Dashboard command test
 
-To prove Spark IoT dashboard controls are publishing MQTT commands, open a terminal on the VPS and subscribe to the command topic:
+To prove Hesh IoT dashboard controls are publishing MQTT commands, open a terminal on the VPS and subscribe to the command topic:
 
 ```bash
 docker compose exec mosquitto mosquitto_sub \
@@ -261,7 +261,7 @@ docker compose exec mosquitto mosquitto_sub \
   -t spark/v1/demo-tenant/device-irrigation/command/#
 ```
 
-Then open the Spark IoT dashboard in your browser and click the Pump Control switch. The terminal should print payloads like:
+Then open the Hesh IoT dashboard in your browser and click the Pump Control switch. The terminal should print payloads like:
 
 ```json
 {"value":true}

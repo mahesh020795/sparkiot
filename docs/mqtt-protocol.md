@@ -1,4 +1,4 @@
-# Spark IoT MQTT Protocol v1
+# Hesh IoT MQTT Protocol v1
 
 ## Topics
 
@@ -23,7 +23,7 @@ Devices publish telemetry, ack and status in their own namespace. Devices subscr
 }
 ```
 
-`message_id` is optional but recommended. Spark IoT treats repeated telemetry with the same tenant, device, channel, and `message_id` as the same reading. This lets ESP32/ESP8266 boards safely retry MQTT publishes after weak WiFi without duplicating history rows or retriggering alert rules.
+`message_id` is optional but recommended. Hesh IoT treats repeated telemetry with the same tenant, device, channel, and `message_id` as the same reading. This lets ESP32/ESP8266 boards safely retry MQTT publishes after weak WiFi without duplicating history rows or retriggering alert rules.
 
 The telemetry table also defines a database-level unique retry guard for non-empty `message_id` values, so the storage layer protects history even if two retry packets arrive at nearly the same time.
 

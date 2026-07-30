@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -248,6 +248,35 @@ describe("App", () => {
     expect(connectionStatus).not.toHaveTextContent("Beta Meter");
   });
 
+  it("scopes account demo preview to demo devices and restores the selected account project", async () => {
+    localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
+    const accountProject = { id: "account-project-not-in-demo", name: "Customer Greenhouse", description: "Real workspace", is_active: true };
+    const emptyDashboard = { id: "account-dashboard", project_id: accountProject.id, name: "Customer Greenhouse Dashboard", revision: 1, widgets: [] };
+    vi.spyOn(api, "me").mockResolvedValue({ full_name: "Acme Owner", email: "owner@acme.test", tenant_id: "tenant-1", plan_code: "pro", email_verified: true, onboarding_step: "dashboard" });
+    vi.spyOn(api, "usage").mockResolvedValue(plusUsage({ projects: 1, devices: 1 }));
+    vi.spyOn(api, "projects").mockResolvedValue([accountProject]);
+    vi.spyOn(api, "devices").mockResolvedValue([{ id: "account-device", project_id: accountProject.id, name: "Customer ESP32", board: "ESP32", is_online: false, telemetry_topic: "spark/v1/tenant-1/account-device/telemetry/{channel}", command_topic: "spark/v1/tenant-1/account-device/command/{channel}" }]);
+    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "notifications").mockResolvedValue([]);
+    vi.spyOn(api, "schedules").mockResolvedValue([]);
+    vi.spyOn(api, "dashboard").mockResolvedValue(emptyDashboard);
+    vi.spyOn(api, "latest").mockResolvedValue([]);
+    vi.spyOn(api, "onboarding").mockResolvedValue({ current_step: "dashboard", completed_steps: ["verify_email", "project"], demo_viewed: false, first_project_id: accountProject.id });
+
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Customer Greenhouse Dashboard" })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: /View demo dashboard/i }));
+
+    expect(await screen.findByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
+    const previewConnection = screen.getByRole("status", { name: "Device connection" });
+    expect(previewConnection).toHaveTextContent("Connected");
+    expect(previewConnection).toHaveTextContent("ESP32 Irrigation Node is online");
+    expect(previewConnection).not.toHaveTextContent("No devices");
+
+    fireEvent.click(within(screen.getByRole("status", { name: "Demo dashboard status" })).getByRole("button", { name: "Back to workspace" }));
+    expect(await screen.findByRole("heading", { name: "Customer Greenhouse Dashboard" })).toBeInTheDocument();
+  });
+
   it("opens the simulated demo dashboard from the verified starter workspace", async () => {
     localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
     vi.spyOn(api, "me").mockResolvedValue({
@@ -483,6 +512,8 @@ describe("App", () => {
     fireEvent.click(toggle);
     expect(screen.getByRole("button", { name: "Close navigation" })).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByTestId("product-sidebar")).toHaveClass("mobile-nav-open");
+    expect(screen.getByTestId("app-main")).toHaveAttribute("inert");
+    expect(screen.getByTestId("app-main")).toHaveAttribute("aria-hidden", "true");
     expect(document.body).toHaveClass("hesh-mobile-nav-locked");
 
     fireEvent.click(screen.getByRole("button", { name: "Close navigation" }));
@@ -501,6 +532,63 @@ describe("App", () => {
     expect(screen.getByTestId("product-sidebar")).not.toHaveClass("mobile-nav-open");
     expect(document.body).not.toHaveClass("hesh-mobile-nav-locked");
     expect(await screen.findByText("3/10 templates used")).toBeInTheDocument();
+  });
+
+  it("closes expanded mobile navigation with Escape and returns focus to its toggle", async () => {
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+    const templatesButton = within(screen.getByRole("navigation", { name: "Main navigation" })).getByRole("button", { name: "Templates" });
+    templatesButton.focus();
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    const toggle = screen.getByRole("button", { name: "Open navigation" });
+    expect(toggle).toHaveFocus();
+    expect(screen.getByTestId("app-main")).not.toHaveAttribute("inert");
+    expect(screen.getByTestId("app-main")).not.toHaveAttribute("aria-hidden");
+    expect(document.body).not.toHaveClass("hesh-mobile-nav-locked");
+  });
+
+  it("cleans up expanded mobile navigation before opening sign in", async () => {
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in to account" }));
+
+    expect(await screen.findByRole("heading", { name: "Sign in to your IoT control center" })).toBeInTheDocument();
+    expect(document.body).not.toHaveClass("hesh-mobile-nav-locked");
+    fireEvent.click(screen.getByRole("button", { name: "Continue demo mode" }));
+    expect(screen.getByRole("button", { name: "Open navigation" })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes expanded mobile navigation when the viewport crosses to desktop", async () => {
+    let desktop = false;
+    const listeners = new Set<(event: MediaQueryListEvent) => void>();
+    const mediaQuery = {
+      get matches() { return desktop; },
+      media: "(min-width: 981px)",
+      onchange: null,
+      addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
+      removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as MediaQueryList;
+    vi.stubGlobal("matchMedia", vi.fn(() => mediaQuery));
+
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Smart Irrigation Dashboard" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+    expect(document.body).toHaveClass("hesh-mobile-nav-locked");
+
+    desktop = true;
+    act(() => listeners.forEach((listener) => listener({ matches: true, media: mediaQuery.media } as MediaQueryListEvent)));
+
+    expect(screen.getByRole("button", { name: "Open navigation" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByTestId("app-main")).not.toHaveAttribute("inert");
+    expect(document.body).not.toHaveClass("hesh-mobile-nav-locked");
   });
 
   it("keeps the overview minimal without setup summary or launch checklist clutter", async () => {
@@ -803,8 +891,10 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Datastreams"));
     expect(screen.queryByDisplayValue("Datastream V3")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Add V pin/i }));
-    expect(screen.getByDisplayValue("Datastream V3")).toBeInTheDocument();
+    const numericDatastreamName = screen.getByDisplayValue("Datastream V3");
+    expect(numericDatastreamName).toBeInTheDocument();
     expect(screen.getByDisplayValue("V3")).toBeInTheDocument();
+    expect((numericDatastreamName.closest("article") as HTMLElement).style.getPropertyValue("--stream-color")).toBe("#2563eb");
 
     fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
     expect(screen.queryByText("Camera Snapshot")).not.toBeInTheDocument();
@@ -826,6 +916,34 @@ describe("App", () => {
     const beforeRules = screen.getAllByDisplayValue("Voltage Alert").length;
     fireEvent.click(screen.getByRole("button", { name: /Add rule/i }));
     expect(screen.getAllByDisplayValue("Voltage Alert").length).toBe(beforeRules + 1);
+  });
+
+  it("uses Product Cobalt when a numeric widget has no saved colour", async () => {
+    vi.spyOn(api, "demoTemplates").mockResolvedValue([{
+      id: "template-without-colour",
+      name: "Unstyled Numeric Sensor",
+      board: "ESP32",
+      description: "Legacy widget without saved colour",
+      revision: 1,
+      datastreams: [],
+      notifications: [],
+      dashboard: {
+        id: "dashboard-without-colour",
+        project_id: "project-irrigation",
+        name: "Unstyled Numeric Sensor Dashboard",
+        revision: 1,
+        widgets: [{ id: "widget-without-colour", type: "value", title: "Legacy reading", x: 0, y: 0, w: 3, h: 2, deviceId: "device-irrigation", channel: "V0" }]
+      }
+    }]);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText("Templates"));
+    const templateCard = await screen.findByRole("article", { name: /Unstyled Numeric Sensor template/i });
+    fireEvent.click(within(templateCard).getByRole("button", { name: /Edit template/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Dashboard.*Canvas builder/i }));
+
+    expect(screen.getByLabelText("Colour")).toHaveValue("#2563eb");
+    expect(screen.getByLabelText("Colour")).not.toHaveValue("#f26a21");
   });
 
   it("lets notification rule dropdown menus escape the rule block", async () => {

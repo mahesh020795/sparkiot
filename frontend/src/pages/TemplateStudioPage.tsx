@@ -644,7 +644,7 @@ function DashboardBuilder({ template, device, latest, layout, widgetAddStatus, s
                   options={template.datastreams.map((stream) => ({ value: stream.id, label: `${stream.pin} - ${stream.name}`, hint: stream.dataType }))}
                 />
               </label>
-              <label>Colour<input type="color" value={selectedWidget.color ?? selectedDatastream?.color ?? "#f26a21"} onChange={(event) => onUpdateWidget(selectedWidget.id, { color: event.target.value })} /></label>
+              <label>Colour<input type="color" value={selectedWidget.color ?? selectedDatastream?.color ?? "#2563eb"} onChange={(event) => onUpdateWidget(selectedWidget.id, { color: event.target.value })} /></label>
               <label>
                 Align
                 <SparkSelect
@@ -937,7 +937,7 @@ function colorForType(type: Datastream["dataType"]) {
   if (type === "gps") return "#0891b2";
   if (type === "image") return "#475569";
   if (type === "string") return "#334155";
-  return "#f26a21";
+  return "#2563eb";
 }
 
 function sanitizeSketchName(name: string) {

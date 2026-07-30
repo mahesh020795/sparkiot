@@ -56,7 +56,7 @@ Signed-in tenants use authenticated template endpoints for real customer project
 - `GET /api/v1/templates/{template_id}` loads one tenant template.
 - `PUT /api/v1/templates/{template_id}` saves template metadata, board, datastreams, notification rules, and dashboard widget JSON.
 
-The payload shape matches the demo Template Studio payload. Spark IoT enforces one template per project and uses `revision` checks on both the template and dashboard. Duplicate project templates return `409` with `template_project_exists`; stale template saves return `409` with `stale_template_revision`.
+The payload shape matches the demo Template Studio payload. Hesh IoT enforces one template per project and uses `revision` checks on both the template and dashboard. Duplicate project templates return `409` with `template_project_exists`; stale template saves return `409` with `stale_template_revision`.
 
 
 ## Demo History and CSV Export
@@ -81,7 +81,7 @@ The API verifies the requested device belongs to the authenticated user's tenant
 
 ## Web Push
 
-Spark IoT stores browser Web Push subscriptions and dispatches push payloads when notifications are created or threshold alerts fire.
+Hesh IoT stores browser Web Push subscriptions and dispatches push payloads when notifications are created or threshold alerts fire.
 
 - `GET /api/v1/notifications` lists in-app notification history for the authenticated tenant user.
 - `POST /api/v1/notifications` creates an in-app notification and attempts browser push delivery when VAPID is configured.
@@ -90,11 +90,11 @@ Spark IoT stores browser Web Push subscriptions and dispatches push payloads whe
 - `POST /api/v1/notifications/push-subscriptions` upserts the authenticated user's subscription endpoint and keys.
 - `DELETE /api/v1/notifications/push-subscriptions` removes the authenticated user's subscription endpoint.
 
-Push delivery is enabled only when `VAPID_PRIVATE_KEY`, `VAPID_PUBLIC_KEY`, and `VAPID_SUBJECT` are configured. If VAPID keys are empty, Spark IoT still stores in-app notifications and skips browser delivery safely.
+Push delivery is enabled only when `VAPID_PRIVATE_KEY`, `VAPID_PUBLIC_KEY`, and `VAPID_SUBJECT` are configured. If VAPID keys are empty, Hesh IoT still stores in-app notifications and skips browser delivery safely.
 
 ## Schedules
 
-Spark IoT schedule rules provide the Blynk Timer-style automation foundation for time input, day input, and scheduled commands.
+Hesh IoT schedule rules provide the Blynk Timer-style automation foundation for time input, day input, and scheduled commands.
 
 - `GET /api/v1/schedules` lists the authenticated tenant's schedules.
 - `POST /api/v1/schedules` creates a schedule for one project device channel.

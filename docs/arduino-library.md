@@ -1,6 +1,6 @@
 # SparkIoT Arduino Library
 
-SparkIoT Arduino Library v1.0.0 is the beginner-friendly board SDK for Spark IoT. It gives ESP32, ESP8266, and Arduino `Client`-compatible network boards a Blynk-style virtual pin API while keeping the production MQTT protocol hidden inside the library.
+SparkIoT Arduino Library v1.0.0 is the beginner-friendly board SDK for Hesh IoT. It gives ESP32, ESP8266, and Arduino `Client`-compatible network boards a Blynk-style virtual pin API while keeping the production MQTT protocol hidden inside the library.
 
 ## Supported boards in v1
 
@@ -105,7 +105,7 @@ String telemetry, camera URLs, and ACK messages are escaped before publishing, s
 
 Use this flow for a real ESP32/ESP8266 customer test:
 
-1. Create or select a Spark IoT project.
+1. Create or select a Hesh IoT project.
 2. Select the template and device.
 3. Open **Board Test**.
 4. Copy the MQTT host, tenant ID, device ID, device token and V pin topics into the generated Arduino sketch.
@@ -153,7 +153,7 @@ SparkIoT.begin(networkClient, BROKER_HOST, BROKER_PORT, SPARK_TENANT_ID, SPARK_D
 
 ## Protocol mapping
 
-The library publishes to the same Spark IoT MQTT topics as the backend:
+The library publishes to the same Hesh IoT MQTT topics as the backend:
 
 ```text
 spark/v1/{tenant_id}/{device_id}/telemetry/{channel}
@@ -184,5 +184,5 @@ ACK packets do not include the token because they are used as command-log confir
 - Use a domain and TLS before public customer use.
 - Do not use `localhost` from a real board. From ESP32/ESP8266, `localhost` means the board itself; use your VPS IP or MQTT domain, such as `mqtt.rectronx.com` for the current test server.
 - Do not hard-code production tokens in public repositories.
-- Rotate device tokens from the Spark IoT device provisioning screen when a board is lost or shared.
+- Rotate device tokens from the Hesh IoT device provisioning screen when a board is lost or shared.
 - Use the Code tab to generate the correct tenant, device, token, and virtual pin mappings from each customer template.
