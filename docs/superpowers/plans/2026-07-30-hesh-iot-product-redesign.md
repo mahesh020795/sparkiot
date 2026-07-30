@@ -261,7 +261,7 @@ Run: `.venv/Scripts/python -m ruff check backend/app backend/tests`
 
 Run: `git diff --check`
 
-- [ ] **Step 3: Perform visual and responsive QA**
+- [x] **Step 3: Perform visual and responsive QA**
 
 Run the app and inspect authentication, starter workspace, dashboard, Template Studio, empty dashboard, confirmation dialog, and mobile navigation at 375px, 768px, 1024px, and wide desktop. Verify no horizontal overflow, clipped menus, console errors, inaccessible focus, or colour-only status.
 
