@@ -252,11 +252,21 @@ describe("App", () => {
     localStorage.setItem("spark_iot_session", JSON.stringify({ access_token: "token", refresh_token: "refresh" }));
     const accountProject = { id: "account-project-not-in-demo", name: "Customer Greenhouse", description: "Real workspace", is_active: true };
     const emptyDashboard = { id: "account-dashboard", project_id: accountProject.id, name: "Customer Greenhouse Dashboard", revision: 1, widgets: [] };
+    const accountTemplate = {
+      id: "account-template",
+      name: "Customer Greenhouse",
+      board: "ESP32" as const,
+      description: "Real workspace template",
+      revision: 1,
+      datastreams: [{ id: "account-temperature", name: "Temperature", pin: "V0" as const, dataType: "float" as const, unit: "C", min: 0, max: 100, color: "#2563eb" }],
+      notifications: [],
+      dashboard: { ...emptyDashboard, widgets: [{ id: "account-value", type: "value", title: "Temperature", x: 0, y: 0, w: 3, h: 2, deviceId: "account-device", channel: "V0", datastreamId: "account-temperature" }] }
+    };
     vi.spyOn(api, "me").mockResolvedValue({ full_name: "Acme Owner", email: "owner@acme.test", tenant_id: "tenant-1", plan_code: "pro", email_verified: true, onboarding_step: "dashboard" });
     vi.spyOn(api, "usage").mockResolvedValue(plusUsage({ projects: 1, devices: 1 }));
     vi.spyOn(api, "projects").mockResolvedValue([accountProject]);
     vi.spyOn(api, "devices").mockResolvedValue([{ id: "account-device", project_id: accountProject.id, name: "Customer ESP32", board: "ESP32", is_online: false, telemetry_topic: "spark/v1/tenant-1/account-device/telemetry/{channel}", command_topic: "spark/v1/tenant-1/account-device/command/{channel}" }]);
-    vi.spyOn(api, "templates").mockResolvedValue([]);
+    vi.spyOn(api, "templates").mockResolvedValue([accountTemplate]);
     vi.spyOn(api, "notifications").mockResolvedValue([]);
     vi.spyOn(api, "schedules").mockResolvedValue([]);
     vi.spyOn(api, "dashboard").mockResolvedValue(emptyDashboard);
@@ -273,8 +283,14 @@ describe("App", () => {
     expect(previewConnection).toHaveTextContent("ESP32 Irrigation Node is online");
     expect(previewConnection).not.toHaveTextContent("No devices");
 
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Main navigation" })).getByRole("button", { name: "Templates" }));
+    const smartHomeTemplate = await screen.findByRole("article", { name: /Smart Home template/i });
+    fireEvent.click(within(smartHomeTemplate).getByRole("button", { name: /Edit template/i }));
+    expect(await screen.findByText("Hesh IoT Template Studio")).toBeInTheDocument();
     fireEvent.click(within(screen.getByRole("status", { name: "Demo dashboard status" })).getByRole("button", { name: "Back to workspace" }));
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Main navigation" })).getByRole("button", { name: "Dashboard" }));
     expect(await screen.findByRole("heading", { name: "Customer Greenhouse Dashboard" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Smart Home Dashboard" })).not.toBeInTheDocument();
   });
 
   it("opens the simulated demo dashboard from the verified starter workspace", async () => {

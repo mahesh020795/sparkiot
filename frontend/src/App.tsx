@@ -411,7 +411,7 @@ export function App() {
       is_active: true
     };
     setDemoProjectRows((current) => [created, ...current]);
-    setSelectedProjectId(created.id);
+    selectActiveProject(created.id);
     if (project.template_id) {
       const sourceTemplate = activeTemplates.find((template) => template.id === project.template_id);
       if (sourceTemplate) {
@@ -455,9 +455,9 @@ export function App() {
       setDemoDeviceRows((current) => current.filter((device) => device.project_id !== projectId));
       setTemplates((current) => current.filter((template) => template.dashboard.project_id !== projectId));
     }
-    if (selectedProjectId === projectId) {
+    if (activeSelectedProjectId === projectId) {
       const fallback = activeProjects.find((project) => project.id !== projectId);
-      if (fallback) setSelectedProjectId(fallback.id);
+      if (fallback) selectActiveProject(fallback.id);
     }
   }
 
@@ -507,7 +507,7 @@ export function App() {
       }
     };
     setTemplates((current) => [created, ...current]);
-    setSelectedProjectId(project.id);
+    selectActiveProject(project.id);
     setTemplateStudioInitialStep("Setup");
     setTemplateStudioId(created.id);
     return created;
@@ -587,7 +587,7 @@ export function App() {
       setTemplateStudioId(null);
       return;
     }
-    setSelectedProjectId(template.dashboard.project_id);
+    selectActiveProject(template.dashboard.project_id);
     setTemplateStudioInitialStep(initialStep);
     setTemplateStudioId(template.id);
     setView("templates");
@@ -776,7 +776,7 @@ export function App() {
               onDeleteTemplate={deleteTemplate}
               onOpenSetup={() => setView("setup")}
               onOpen={(template) => {
-                setSelectedProjectId(template.dashboard.project_id);
+                selectActiveProject(template.dashboard.project_id);
                 setTemplateStudioInitialStep("Setup");
                 setTemplateStudioId(template.id);
               }}
