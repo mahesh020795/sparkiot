@@ -1129,6 +1129,67 @@ body {
   }
 }
 
+/* Hesh IoT V2 brand layer — shared visual language with the public landing page. */
+:root {
+  --hesh-orange: #ff5a1f;
+  --hesh-orange-deep: #e94716;
+  --hesh-ink: #11161f;
+  --hesh-canvas: #f7f4ee;
+  --spark-bg: #f7f4ee;
+  --spark-surface: #fffdf9;
+  --spark-surface-raised: #ffffff;
+  --spark-surface-muted: #f3efe7;
+  --spark-border: #e7dfd4;
+  --spark-border-strong: #d8cfc2;
+  --spark-text: #11161f;
+  --spark-text-soft: #303846;
+  --spark-muted: #6c7280;
+  --spark-primary: #ff5a1f;
+  --spark-primary-strong: #e94716;
+  --spark-primary-soft: #fff0e9;
+  --spark-action: #ff5a1f;
+  --spark-action-strong: #e94716;
+  --spark-action-soft: #fff0e9;
+  --spark-radius-sm: 14px;
+  --spark-radius-md: 18px;
+  --spark-radius-lg: 24px;
+  --spark-radius-xl: 30px;
+  --spark-shadow-card: 0 1px 2px rgba(17, 22, 31, .04), 0 18px 46px rgba(17, 22, 31, .07);
+}
+
+.spark-ui { background: var(--spark-bg); }
+.spark-ui .sidebar { background: var(--hesh-ink); border-right-color: rgba(255,255,255,.08); }
+.spark-ui .brand { border-bottom-color: rgba(255,255,255,.1); }
+.spark-ui .brand strong, .spark-ui .brand div > span { color: #fff; }
+.spark-ui .brand div > span { color: #aeb5c0; }
+.spark-ui .sidebar nav { padding-top: 1.5rem; }
+.spark-ui .sidebar nav button { color: #aeb5c0; border-radius: 14px; }
+.spark-ui .sidebar nav button:hover { color: #fff; background: rgba(255,255,255,.08); }
+.spark-ui .sidebar nav button.active { color: var(--hesh-ink); background: var(--hesh-orange); box-shadow: 0 10px 24px rgba(255,90,31,.24); }
+.spark-ui .session-card, .spark-ui .workspace-card, .spark-ui .responsive-card, .spark-ui .qa-card { margin-left: 1rem; margin-right: 1rem; border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.07); box-shadow: none; }
+.spark-ui .session-card strong, .spark-ui .workspace-card strong, .spark-ui .responsive-card strong, .spark-ui .qa-card strong { color: #fff; }
+.spark-ui .session-card small, .spark-ui .workspace-card small, .spark-ui .responsive-card small, .spark-ui .qa-card small { color: #b9c0cb; }
+.spark-ui main, .spark-ui .dashboard-main { background: var(--spark-bg); }
+.spark-ui .topbar { padding: 1.1rem 0 1.15rem; border-bottom: 1px solid var(--spark-border); }
+.spark-ui .topbar h1, .spark-ui .overview-hero h2 { color: var(--hesh-ink); letter-spacing: -.06em; }
+.spark-ui .topbar p, .spark-ui .overview-hero p, .spark-ui .panel p { color: var(--spark-muted); }
+.spark-ui .panel, .spark-ui .widget, .spark-ui .data-history-panel, .spark-ui .notification-inbox, .spark-ui .device-card, .spark-ui .settings-card { border-color: var(--spark-border); border-radius: var(--spark-radius-lg); background: var(--spark-surface); box-shadow: var(--spark-shadow-card); }
+.spark-ui .overview-hero, .spark-ui .support-hero, .spark-ui .template-library-card, .spark-ui .provisioning-card, .spark-ui .live-connection-card, .spark-ui .live-topic-card, .spark-ui .live-values-panel, .spark-ui .command-monitor-panel { border-color: var(--spark-border); border-radius: var(--spark-radius-xl); background: linear-gradient(135deg, #fffdf9 0%, #fffaf5 62%, #fff 100%); box-shadow: var(--spark-shadow-card); }
+.spark-ui .overview-hero::after { background: radial-gradient(circle, rgba(255,90,31,.18), transparent 68%); }
+.spark-ui .overview-metric { border-color: var(--spark-border); background: rgba(255,255,255,.76); box-shadow: 0 12px 30px rgba(17,22,31,.06); }
+.spark-ui .overview-metric.orange > span, .spark-ui .overview-metric.blue > span { color: var(--hesh-orange); background: var(--spark-primary-soft); }
+.spark-ui .section-kicker, .spark-ui .panel-title svg, .spark-ui .settings-card svg, .spark-ui .device-card .panel-title svg { color: var(--hesh-orange); }
+.spark-ui .design-system-badge, .spark-ui .template-board-badge { border-color: #ffd3c1; background: var(--spark-primary-soft); color: var(--hesh-orange-deep); }
+.spark-ui .primary, .spark-ui .action-button.primary, .spark-ui .template-open-button { background: var(--hesh-orange); border-color: var(--hesh-orange); color: var(--hesh-ink); box-shadow: 0 12px 24px rgba(255,90,31,.2); }
+.spark-ui .primary:hover, .spark-ui .action-button.primary:hover, .spark-ui .template-open-button:hover { background: var(--hesh-orange-deep); border-color: var(--hesh-orange-deep); color: #fff; }
+.spark-ui button:hover { border-color: var(--hesh-orange); color: var(--hesh-orange-deep); }
+.spark-ui select, .spark-ui select.spark-native-select { border-color: var(--spark-border-strong); background-color: #fffdf9; }
+.spark-ui select:focus, .spark-ui select.spark-native-select:focus, .spark-ui input:focus, .spark-ui textarea:focus { border-color: var(--hesh-orange) !important; box-shadow: 0 0 0 4px rgba(255,90,31,.14); }
+.spark-ui .status-dot, .spark-ui .online-dot { background: var(--hesh-orange); }
+.spark-ui .hesh-brand .hesh-wordmark strong { color: #fff; }
+.spark-ui .hesh-brand .hesh-wordmark .hesh-word-iot { color: var(--hesh-orange); }
+.spark-ui .hesh-circuit { color: var(--hesh-orange); }
+
 /* Devices + Board Test standardization: board testing and provisioning surfaces. */
 .spark-ui .device-system-page,
 .spark-ui .live-system-page {
