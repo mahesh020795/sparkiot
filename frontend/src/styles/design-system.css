@@ -1158,17 +1158,17 @@ body {
 }
 
 .spark-ui { background: var(--spark-bg); }
-.spark-ui .sidebar { background: var(--hesh-ink); border-right-color: rgba(255,255,255,.08); }
-.spark-ui .brand { border-bottom-color: rgba(255,255,255,.1); }
-.spark-ui .brand strong, .spark-ui .brand div > span { color: #fff; }
-.spark-ui .brand div > span { color: #aeb5c0; }
+.spark-ui .sidebar { background: #fffdf9; border-right-color: var(--spark-border); }
+.spark-ui .brand { border-bottom-color: var(--spark-border); }
+.spark-ui .brand strong { color: var(--hesh-ink); }
+.spark-ui .brand div > span { color: #747b87; }
 .spark-ui .sidebar nav { padding-top: 1.5rem; }
-.spark-ui .sidebar nav button { color: #aeb5c0; border-radius: 14px; }
-.spark-ui .sidebar nav button:hover { color: #fff; background: rgba(255,255,255,.08); }
+.spark-ui .sidebar nav button { color: #5f6877; border-radius: 14px; }
+.spark-ui .sidebar nav button:hover { color: var(--hesh-ink); background: #f4efe7; }
 .spark-ui .sidebar nav button.active { color: var(--hesh-ink); background: var(--hesh-orange); box-shadow: 0 10px 24px rgba(255,90,31,.24); }
-.spark-ui .session-card, .spark-ui .workspace-card, .spark-ui .responsive-card, .spark-ui .qa-card { margin-left: 1rem; margin-right: 1rem; border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.07); box-shadow: none; }
-.spark-ui .session-card strong, .spark-ui .workspace-card strong, .spark-ui .responsive-card strong, .spark-ui .qa-card strong { color: #fff; }
-.spark-ui .session-card small, .spark-ui .workspace-card small, .spark-ui .responsive-card small, .spark-ui .qa-card small { color: #b9c0cb; }
+.spark-ui .session-card, .spark-ui .workspace-card, .spark-ui .responsive-card, .spark-ui .qa-card { margin-left: 1rem; margin-right: 1rem; border-color: var(--spark-border); background: #f7f2ea; box-shadow: none; }
+.spark-ui .session-card strong, .spark-ui .workspace-card strong, .spark-ui .responsive-card strong, .spark-ui .qa-card strong { color: var(--hesh-ink); }
+.spark-ui .session-card small, .spark-ui .workspace-card small, .spark-ui .responsive-card small, .spark-ui .qa-card small { color: #747b87; }
 .spark-ui main, .spark-ui .dashboard-main { background: var(--spark-bg); }
 .spark-ui .topbar { padding: 1.1rem 0 1.15rem; border-bottom: 1px solid var(--spark-border); }
 .spark-ui .topbar h1, .spark-ui .overview-hero h2 { color: var(--hesh-ink); letter-spacing: -.06em; }
@@ -1186,7 +1186,7 @@ body {
 .spark-ui select, .spark-ui select.spark-native-select { border-color: var(--spark-border-strong); background-color: #fffdf9; }
 .spark-ui select:focus, .spark-ui select.spark-native-select:focus, .spark-ui input:focus, .spark-ui textarea:focus { border-color: var(--hesh-orange) !important; box-shadow: 0 0 0 4px rgba(255,90,31,.14); }
 .spark-ui .status-dot, .spark-ui .online-dot { background: var(--hesh-orange); }
-.spark-ui .hesh-brand .hesh-wordmark strong { color: #fff; }
+.spark-ui .hesh-brand .hesh-wordmark strong { color: var(--hesh-ink); }
 .spark-ui .hesh-brand .hesh-wordmark .hesh-word-iot { color: var(--hesh-orange); }
 .spark-ui .hesh-circuit { color: var(--hesh-orange); }
 
