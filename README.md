@@ -38,6 +38,29 @@ Open:
 
 The frontend currently starts without login and shows the Smart Irrigation dashboard first.
 The Docker frontend image serves the built React app with Nginx. Vite dev server is not used in the production Compose stack.
+
+## Hesh IoT MCP server
+
+Hesh IoT exposes a tenant-scoped MCP-compatible JSON-RPC endpoint at `/api/v1/mcp`.
+AI clients authenticate with the same user access token used by the web API:
+
+```http
+POST /api/v1/mcp
+Authorization: Bearer <HESH_ACCESS_TOKEN>
+Content-Type: application/json
+```
+
+The MVP tool surface includes `list_projects`, `list_devices`, `get_dashboard`,
+`create_dashboard`, `send_device_command`, and `generate_firmware`. The server
+implements MCP `initialize`, `tools/list`, and `tools/call` methods and scopes
+every read/write to the authenticated tenant. It never exposes database
+credentials, device secrets, or raw MQTT credentials to the AI client.
+
+Example discovery request:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}
+```
 Nginx proxies browser calls from `/api/v1` to the FastAPI container, so the normal web app path does not require browser CORS.
 
 Backend demo login for API testing:
